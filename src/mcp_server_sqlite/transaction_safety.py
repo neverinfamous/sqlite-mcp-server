@@ -17,7 +17,8 @@ def safe_execute_query(db_path, query, params=None):
     
     This function wraps SQL write operations in explicit BEGIN/COMMIT
     transactions to ensure atomic operations, with proper rollback
-    on error or interruption.
+    on error or interruption. It also enables foreign key constraints
+    for each database connection.
     
     Args:
         db_path (str): Path to the SQLite database
@@ -32,15 +33,30 @@ def safe_execute_query(db_path, query, params=None):
     """
     logger.debug(f"Safe execution of query: {query}")
     
+    # Check for PRAGMA queries
+    is_pragma_query = query.strip().upper().startswith("PRAGMA")
+    
     # Skip transaction wrapping for read-only queries
-    is_read_query = query.strip().upper().startswith("SELECT")
+    is_read_query = query.strip().upper().startswith("SELECT") or is_pragma_query
     
     try:
         with closing(sqlite3.connect(db_path)) as conn:
             conn.row_factory = sqlite3.Row
+            
+            # Enable foreign key constraints for this connection
+            conn.execute("PRAGMA foreign_keys = ON")
+            
             cursor = conn.cursor()
             
             try:
+                # Special handling for PRAGMA foreign_keys
+                if is_pragma_query and "FOREIGN_KEYS" in query.strip().upper():
+                    # Execute the PRAGMA query directly
+                    cursor.execute("PRAGMA foreign_keys")
+                    results = [{"foreign_keys": row[0]} for row in cursor.fetchall()]
+                    logger.debug(f"PRAGMA query returned {results}")
+                    return results
+                
                 # Begin transaction for write operations
                 if not is_read_query:
                     logger.debug("Beginning transaction")
