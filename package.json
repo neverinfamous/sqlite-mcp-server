@@ -28,13 +28,10 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "dependencies": {
-    "better-sqlite3": "^11.5.0"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "eslint": "^9.0.0",
-    "prettier": "^3.0.0",
-    "@types/node": "^22.0.0"
+    "eslint": "^8.57.0",
+    "prettier": "^3.0.0"
   },
   "files": [
     "jsonb-utils.js",

@@ -7,13 +7,14 @@
  * @module jsonb-utils
  */
 
-const { Database } = require('better-sqlite3');
+// Note: This utility is designed to work with better-sqlite3 when available
+// For production use, install better-sqlite3: npm install better-sqlite3
 
 /**
  * Validates if SQLite version supports JSONB
  * Requires SQLite 3.45.0+
  * 
- * @param {Database} db - Better-sqlite3 database instance
+ * @param {Object} db - Database instance (better-sqlite3 compatible)
  * @returns {Object} Version information and support status
  */
 function checkJsonbSupport(db) {
@@ -81,7 +82,7 @@ function validateJson(jsonString) {
 /**
  * Creates JSON validation triggers for a table
  * 
- * @param {Database} db - Better-sqlite3 database instance 
+ * @param {Object} db - Database instance (better-sqlite3 compatible) 
  * @param {string} tableName - Name of the table
  * @param {string} columnName - Name of the JSON column
  * @returns {Object} Result of trigger creation

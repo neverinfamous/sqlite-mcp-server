@@ -46,11 +46,6 @@ updates:
     allow:
       - dependency-type: "direct"
       - dependency-type: "indirect"
-    # Ignore specific packages if needed
-    ignore:
-      # Example: ignore major version updates for critical dependencies
-      # - dependency-name: "mcp"
-      #   update-types: ["version-update:semver-major"]
 
   # JavaScript/Node.js dependencies (npm)
   # Note: This handles any package.json files if they exist
