@@ -1,0 +1,45 @@
+{
+  "name": "sqlite-mcp-server-js-utils",
+  "version": "2025.9.15",
+  "description": "JavaScript utilities for SQLite MCP Server JSONB operations",
+  "main": "jsonb-utils.js",
+  "scripts": {
+    "test": "node --test",
+    "lint": "eslint *.js utils/*.js",
+    "format": "prettier --write *.js utils/*.js"
+  },
+  "keywords": [
+    "sqlite",
+    "jsonb",
+    "mcp",
+    "utilities",
+    "database"
+  ],
+  "author": "Chris Adamic <writenotenow@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/neverinfamous/sqlite-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/neverinfamous/sqlite-mcp-server/issues"
+  },
+  "homepage": "https://github.com/neverinfamous/sqlite-mcp-server#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.5.0"
+  },
+  "devDependencies": {
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0",
+    "@types/node": "^22.0.0"
+  },
+  "files": [
+    "jsonb-utils.js",
+    "utils/",
+    "README.md",
+    "LICENSE"
+  ]
+}

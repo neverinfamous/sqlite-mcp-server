@@ -1,0 +1,126 @@
+# Dependabot configuration for automatic dependency updates
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # Python dependencies (pip)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "neverinfamous"
+    assignees:
+      - "neverinfamous"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "python"
+    # Group related updates together
+    groups:
+      mcp-related:
+        patterns:
+          - "mcp*"
+          - "pydantic*"
+          - "starlette*"
+          - "uvicorn*"
+          - "httpx*"
+      testing:
+        patterns:
+          - "pytest*"
+          - "coverage*"
+          - "*test*"
+      linting:
+        patterns:
+          - "black*"
+          - "isort*"
+          - "flake8*"
+          - "pyright*"
+    # Allow both direct and indirect dependency updates
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    # Ignore specific packages if needed
+    ignore:
+      # Example: ignore major version updates for critical dependencies
+      # - dependency-name: "mcp"
+      #   update-types: ["version-update:semver-major"]
+
+  # JavaScript/Node.js dependencies (npm)
+  # Note: This handles any package.json files if they exist
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:30"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "neverinfamous"
+    assignees:
+      - "neverinfamous"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "javascript"
+    # Group Node.js dependencies
+    groups:
+      sqlite-related:
+        patterns:
+          - "better-sqlite3*"
+          - "sqlite*"
+      utilities:
+        patterns:
+          - "*util*"
+          - "lodash*"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "neverinfamous"
+    assignees:
+      - "neverinfamous"
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:30"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "neverinfamous"
+    assignees:
+      - "neverinfamous"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci"
