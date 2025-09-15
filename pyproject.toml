@@ -1,17 +1,67 @@
 [project]
 name = "mcp-server-sqlite"
-version = "2025.1.14"
-description = "A simple SQLite MCP server"
+version = "2025.9.15"
+description = "A SQLite MCP server with JSONB support and advanced database operations"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["mcp>=1.0.0"]
+dependencies = ["mcp>=1.14.0"]
+authors = [
+    {name = "Chris Adamic", email = "writenotenow@gmail.com"},
+]
+license = {text = "MIT"}
+keywords = ["mcp", "sqlite", "database", "jsonb", "model-context-protocol"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.urls]
+Homepage = "https://github.com/neverinfamous/mcp_server_sqlite"
+Repository = "https://github.com/neverinfamous/mcp_server_sqlite"
+Issues = "https://github.com/neverinfamous/mcp_server_sqlite/issues"
+Documentation = "https://github.com/neverinfamous/mcp_server_sqlite#readme"
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling>=1.27.0"]
 build-backend = "hatchling.build"
 
 [tool.uv]
-dev-dependencies = ["pyright>=1.1.389"]
+dev-dependencies = [
+    "pyright>=1.1.405",
+    "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=24.0.0",
+    "isort>=5.13.0",
+    "flake8>=7.0.0",
+]
 
 [project.scripts]
 mcp-server-sqlite = "mcp_server_sqlite:main"
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.pyright]
+include = ["src"]
+exclude = ["**/node_modules", "**/__pycache__"]
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+addopts = "--cov=src --cov-report=term-missing --cov-report=html"

@@ -484,10 +484,9 @@ Planned improvements to the SQLite MCP Server include:
 
 ## Installation Requirements
 
-- **SQLite 3.45.0+**: Core database engine with JSONB support
-- **Node.js**: Runtime environment
-- **Visual Studio with C++ Build Tools**: Required for native module compilation
-- **better-sqlite3**: High-performance SQLite3 database library for Node.js
+- **Python 3.10+**: Programming language runtime
+- **SQLite 3.45.0+**: Core database engine with JSONB support (current system: 3.50.2)
+- **MCP 1.14.0+**: Model Context Protocol library
 
 ## Resources
 
@@ -589,3 +588,23 @@ Clear all notifications for a repository:
 UPDATE mike_notifications SET seen = 1, seen_at = datetime('now') 
 WHERE content LIKE '%repository-name%';
 ```
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to get started.
+
+Please note that this project is released with a [Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
+
+## Security
+
+If you discover a security vulnerability, please follow our [Security Policy](SECURITY.md) for responsible disclosure.
+
+## Support
+
+- 📝 [Open an issue](https://github.com/neverinfamous/mcp_server_sqlite/issues) for bug reports or feature requests
+- 💝 [Sponsor this project](https://github.com/sponsors/neverinfamous) to support development
+- 🌐 Visit [adamic.tech](https://adamic.tech) for more projects
+
+## License
+
+This project is licensed under the [MIT License](LICENSE) - see the LICENSE file for details.
