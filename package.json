@@ -30,7 +30,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "eslint": "^8.57.0",
+    "eslint": "^9.35.0",
     "prettier": "^3.0.0"
   },
   "files": [
