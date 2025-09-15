@@ -1,11 +1,9 @@
-# SQLite/Lite MCP Server
-*Last Updated Sepember 15, 2025 3:37 PM EST*
+# SQLite MCP Server
+*Last Updated Sepember 15, 2025 7:03 PM EST*
 
 ## Overview
 
-The Lite MCP Server (formerly known as SQLite MCP Server) is a powerful Model Context Protocol (MCP) server providing advanced database interaction and business intelligence capabilities through SQLite. This server features enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
-
-> **IMPORTANT:** The server formerly known as "sqlite" has been renamed to "lite" to avoid confusion with the MySQL MCP server. All commands must now reference "lite" rather than "sqlite". 
+The SQLite MCP Server provides advanced database interaction and business intelligence capabilities through SQLite featuring enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
 
 ## Key Features
 
@@ -23,7 +21,7 @@ The Lite MCP Server (formerly known as SQLite MCP Server) is a powerful Model Co
 
 ## Using Full-Text Search
 
-The Lite MCP Server provides powerful full-text search capabilities through its integrated FTS5 extension. This allows for efficient and accurate searching across all documentation and database content.
+The SQLite MCP Server provides powerful full-text search capabilities through its integrated FTS5 extension. This allows for efficient and accurate searching across all database content.
 
 ### Search Examples
 
@@ -153,7 +151,7 @@ The server exposes dynamic resources:
 
 ### 1. JSONB Binary Storage
 
-The Lite MCP Server implements SQLite 3.45's JSONB binary storage format for all JSON data, providing significant advantages:
+The SQLite MCP Server implements SQLite 3.45's JSONB binary storage format for all JSON data, providing significant advantages:
 
 - **Reduced Storage Size**: 15% space savings across migrated tables
 - **Faster Parsing**: No need to re-parse JSON text for each operation
@@ -211,7 +209,7 @@ The server now automatically enables foreign key constraints for all database co
 - **Improved Data Integrity**: Prevents orphaned records and maintains referential integrity
 - **Special Query Handling**: Proper handling of PRAGMA foreign_keys queries
 
-## Best Practices for Using Lite
+## Best Practices for Using SQLite MCP
 
 ### Standard Query Workflow
 
@@ -286,24 +284,9 @@ read_query({
 - **No enum type**: Use CHECK constraints instead of ENUM
 - **No LIMIT with OFFSET**: Use `LIMIT x OFFSET y` syntax
 
-## Avoiding MySQL/Lite Confusion
-
-### Lite vs MySQL Command Reference
-
-| Operation | Lite (SQLite) Command | MySQL Command | Key Difference |
-|-----------|----------------------|---------------|----------------|
-| **Read Data** | `read_query` | `query` | Different command names |
-| **Write Data** | `write_query` | `execute` | Different command names |
-| **List Tables** | `list_tables` | `list_tables` | Same name but different server |
-| **Describe Table** | `describe_table` | `describe_table` | Parameter naming: `table_name` vs `table` |
-| **Create Table** | `create_table` | N/A | SQLite-specific |
-| **Transaction** | Automatic | `execute` with "START TRANSACTION" | Different approach |
-| **Add Insights** | `append_insight` | N/A | SQLite-specific |
-| **JSON Validation** | `validate_json` | N/A | SQLite-specific |
-
 ### Correct Tool Usage Examples
 
-#### Lite Example
+#### SQLite Example
 
 ```javascript
 // Get table list from SQLite
@@ -354,14 +337,6 @@ describe_table({
 ```
 
 ## Troubleshooting
-
-### Common Errors When Mixing MySQL and Lite
-
-- **"Unknown command"**: You may be using `query` instead of `read_query` or `execute` instead of `write_query`
-- **"Parameter not found"**: Check if you're using `table` vs `table_name` parameters correctly
-- **"Syntax error near..."**: You may be using MySQL syntax in SQLite or vice versa
-- **"No such table"**: You may be querying a table that exists in the other database
-- **"malformed JSON"**: The JSON string is not valid
 
 ### JSONB-Specific Troubleshooting
 
@@ -444,7 +419,7 @@ Check these log files for troubleshooting:
 
 ### Database Maintenance and Verification
 
-The Lite MCP Server includes comprehensive database maintenance capabilities:
+The SQLite MCP Server includes comprehensive database maintenance capabilities:
 
 - **Integrity Checks**: Validates database structure, foreign keys, and data consistency
 - **Schema Tracking**: Monitors and documents database schema evolution over time 
@@ -493,7 +468,7 @@ The system can automatically repair common issues:
 
 ## Future Enhancements
 
-Planned improvements to the Lite MCP Server include:
+Planned improvements to the SQLite MCP Server include:
 
 1. **Enhanced Duplicate Detection**: More robust checks to prevent duplicate entries during registration
 
@@ -527,7 +502,7 @@ Planned improvements to the Lite MCP Server include:
 
 ### JSON Validation System
 
-The Lite MCP Server includes comprehensive JSON validation capabilities:
+The SQLite MCP Server includes comprehensive JSON validation capabilities:
 
 1. **Automatic JSON Field Validation**:
    - Validates formatting across all JSON fields in 32 columns
@@ -557,7 +532,7 @@ The migration to JSONB is transparent to users - simply continue using standard 
 
 ## Schema Documentation System
 
-The Lite MCP Server includes a comprehensive documentation system for database structure:
+The SQLite MCP Server includes a comprehensive documentation system for database structure:
 
 ### Generated Documentation Files
 
@@ -578,7 +553,7 @@ The documentation system maintains three primary types of documentation:
 
 ## Notification System
 
-The Lite MCP Server includes a notification system for alerting about database issues:
+The SQLite MCP Server includes a notification system for alerting about database issues:
 
 ### Notification Types
 
