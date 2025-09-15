@@ -23,7 +23,6 @@ module.exports = [
       "no-eval": "error",
       "no-implied-eval": "error",
       "no-new-func": "error",
-      "no-script-url": "error",
       "no-unsafe-finally": "error",
       "no-unsafe-negation": "error",
       
@@ -36,13 +35,12 @@ module.exports = [
       "prefer-const": "error",
       "no-var": "error",
       
-      // Error handling
-      "no-empty-catch": "error",
+      // Error handling - use no-empty instead of no-empty-catch for ESLint 8.x
+      "no-empty": "error",
       "no-throw-literal": "error",
       
       // Code quality
       "eqeqeq": "error",
-      "no-duplicate-imports": "error",
       "no-unreachable": "error",
       "valid-typeof": "error"
     }

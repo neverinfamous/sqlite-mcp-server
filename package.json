@@ -1,7 +1,7 @@
 {
   "name": "sqlite-mcp-server-js-utils",
   "version": "2025.9.15",
-  "description": "JavaScript utilities for SQLite MCP Server JSONB operations",
+  "description": "Optional JavaScript utilities for SQLite MCP Server JSONB operations (main server is Python-based)",
   "main": "jsonb-utils.js",
   "scripts": {
     "test": "node --test",

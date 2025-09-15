@@ -484,9 +484,17 @@ Planned improvements to the SQLite MCP Server include:
 
 ## Installation Requirements
 
+### Core Requirements (Required)
 - **Python 3.10+**: Programming language runtime
 - **SQLite 3.45.0+**: Core database engine with JSONB support (current system: 3.50.2)
 - **MCP 1.14.0+**: Model Context Protocol library
+
+### Optional JavaScript Utilities (Advanced Users Only)
+- **Node.js 18+**: For optional JavaScript JSONB utilities
+- **Visual Studio C++ Build Tools**: Required only if using JavaScript utilities with better-sqlite3
+- **Note**: The main MCP server is Python-based and works perfectly without any JavaScript dependencies
+
+**For most users**: You only need Python requirements. The JavaScript utilities are optional helpers for advanced use cases.
 
 ## Resources
 

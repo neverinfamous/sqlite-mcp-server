@@ -1,14 +1,21 @@
 /**
  * JSONB Utilities for SQLite MCP Server
  * 
- * Utilities for working with the JSONB binary format in SQLite 3.45.0+
- * These functions help manage binary JSON storage and validation.
+ * IMPORTANT: These JavaScript utilities are OPTIONAL helper functions.
+ * The main SQLite MCP Server is Python-based and works without these utilities.
+ * 
+ * These utilities are designed for advanced users who want to work with JSONB 
+ * binary format in SQLite 3.45.0+ using Node.js. They require better-sqlite3
+ * which needs native compilation.
+ * 
+ * For most users: Just use the Python MCP server directly - no JavaScript needed!
  * 
  * @module jsonb-utils
  */
 
-// Note: This utility is designed to work with better-sqlite3 when available
-// For production use, install better-sqlite3: npm install better-sqlite3
+// Note: This utility requires better-sqlite3 for database operations
+// Install with: npm install better-sqlite3 (requires Visual Studio C++ tools on Windows)
+// Alternative: Use the Python MCP server which handles SQLite operations natively
 
 /**
  * Validates if SQLite version supports JSONB
