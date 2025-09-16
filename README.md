@@ -489,16 +489,6 @@ python start_sqlite_mcp.py --db-path :memory:
 
 The server automatically detects project structure and creates appropriate database locations, supporting both relative and absolute paths for maximum flexibility.
 
-## Future Enhancements
-
-Planned improvements to the SQLite MCP Server include:
-
-1. **Full-Text Search Optimizations**:
-   - Phrase-based ranking improvements
-   - Custom tokenizers for technical terms
-   - Faceted search capabilities
-   - Search result caching
-
 ## Production Status ✅
 
 **Current Status**: **PRODUCTION READY** - Comprehensive system testing completed September 16, 2025
@@ -530,6 +520,36 @@ Planned improvements to the SQLite MCP Server include:
 - **Note**: The main MCP server is Python-based and works perfectly without any JavaScript dependencies
 
 **For most users**: You only need Python requirements. The JavaScript utilities are optional helpers for advanced use cases.
+
+## Planned Future Enhancements
+
+#### **1. Backup/Restore Operations - HIGH  PRIORITY**
+- **Missing**: SQLite backup API integration
+- **Current**: No built-in backup/restore tools
+
+#### **2. Full-Text Search (FTS5) - HIGH PRIORITY**
+- **Missing**: FTS5 virtual table creation and management
+- **Current Status**: Server supports FTS5 queries if tables exist, but no tools to create/manage FTS5 tables
+- **Impact**: High for search-heavy applications
+
+#### **3. Database Administration Tools - HIGH PRIORITY**
+- **Missing**: 
+  - `VACUUM` and `ANALYZE` operations
+  - Database integrity checks (`PRAGMA integrity_check`)
+  - Performance statistics (`PRAGMA stats`)
+  - Index usage analysis
+
+  #### **4. Virtual Table Management - MEDIUM PRIORITY**
+- **Missing**: Tools to create/manage virtual tables beyond FTS5
+- **Examples**: CSV virtual tables, memory virtual tables
+
+#### **5. R-Tree Index Support - LOW PRIORITY**
+- **Missing**: Spatial indexing for geometric data
+- **Current**: No specialized tools for R-Tree operations
+
+#### **6. Advanced PRAGMA Operations - LOW PRIORITY**
+- **Missing**: Comprehensive PRAGMA management tools
+- **Current**: Can execute PRAGMA via queries, but no specialized tools
 
 ## Resources
 
@@ -571,7 +591,6 @@ All JSON columns have been migrated to the JSONB binary storage format, providin
 - Improved type preservation
 
 The migration to JSONB is transparent to users - simply continue using standard JSON operations as shown in the examples.
-
 
 ## Contributing
 
