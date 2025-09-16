@@ -1,0 +1,79 @@
+name: Security Updates
+
+on:
+  schedule:
+    # Run security updates weekly on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  security-updates:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install safety bandit
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Run security audit with Safety
+      run: |
+        echo "🔍 Running Safety security audit..."
+        safety check --json > safety_report.json || true
+        
+        if [ -s safety_report.json ]; then
+          echo "⚠️ Security vulnerabilities found:"
+          cat safety_report.json
+        else
+          echo "✅ No security vulnerabilities found"
+        fi
+    
+    - name: Run Bandit security linter
+      run: |
+        echo "🔍 Running Bandit security linter..."
+        bandit -r src/ -f json -o bandit_report.json || true
+        
+        if [ -s bandit_report.json ]; then
+          echo "⚠️ Security issues found:"
+          cat bandit_report.json
+        else
+          echo "✅ No security issues found"
+        fi
+    
+    - name: Check for dependency updates
+      run: |
+        echo "🔍 Checking for dependency updates..."
+        pip list --outdated > outdated_packages.txt || true
+        
+        if [ -s outdated_packages.txt ]; then
+          echo "📦 Outdated packages found:"
+          cat outdated_packages.txt
+        else
+          echo "✅ All packages are up to date"
+        fi
+    
+    - name: Upload security reports as artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          safety_report.json
+          bandit_report.json
+          outdated_packages.txt
+        retention-days: 30

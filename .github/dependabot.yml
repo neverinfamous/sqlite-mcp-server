@@ -1,107 +1,58 @@
-# Dependabot configuration for automatic dependency updates
-# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+# Dependabot configuration for automated dependency updates
+# See: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
 version: 2
 updates:
-  # Python dependencies (pip)
+  # Python dependencies
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
       time: "09:00"
-    open-pull-requests-limit: 10
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "neverinfamous"
     assignees:
       - "neverinfamous"
     commit-message:
       prefix: "deps"
-      prefix-development: "deps-dev"
       include: "scope"
     labels:
       - "dependencies"
       - "python"
     # Group related updates together
     groups:
-      mcp-related:
-        patterns:
-          - "mcp*"
-          - "pydantic*"
-          - "starlette*"
-          - "uvicorn*"
-          - "httpx*"
-      testing:
+      development-dependencies:
         patterns:
           - "pytest*"
-          - "coverage*"
-          - "*test*"
-      linting:
-        patterns:
+          - "flake8*"
           - "black*"
           - "isort*"
-          - "flake8*"
           - "pyright*"
-    # Allow both direct and indirect dependency updates
-    allow:
-      - dependency-type: "direct"
-      - dependency-type: "indirect"
-
-  # JavaScript/Node.js dependencies (npm)
-  # Note: This handles any package.json files if they exist
-  - package-ecosystem: "npm"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:30"
-    open-pull-requests-limit: 5
-    assignees:
-      - "neverinfamous"
-    commit-message:
-      prefix: "deps"
-      prefix-development: "deps-dev"
-      include: "scope"
-    labels:
-      - "dependencies"
-      - "javascript"
-    # Group Node.js dependencies
-    groups:
-      sqlite-related:
+      core-dependencies:
         patterns:
-          - "better-sqlite3*"
-          - "sqlite*"
-      utilities:
-        patterns:
-          - "*util*"
-          - "lodash*"
+          - "mcp*"
+    # Security updates get priority
     allow:
-      - dependency-type: "direct"
-      - dependency-type: "indirect"
-
-  # Docker dependencies
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "tuesday"
-      time: "09:00"
-    open-pull-requests-limit: 3
-    assignees:
-      - "neverinfamous"
-    commit-message:
-      prefix: "deps"
-      include: "scope"
-    labels:
-      - "dependencies"
-      - "docker"
+      - dependency-type: "all"
+    ignore:
+      # Ignore major version updates for now (require manual review)
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions dependencies
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "tuesday"
-      time: "09:30"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
     open-pull-requests-limit: 3
+    reviewers:
+      - "neverinfamous"
     assignees:
       - "neverinfamous"
     commit-message:
@@ -110,4 +61,28 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
-      - "ci"
+      - "ci/cd"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 2
+    reviewers:
+      - "neverinfamous"
+    assignees:
+      - "neverinfamous"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+    # Only allow minor and patch updates for Docker base images
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]

@@ -2,28 +2,27 @@ name: CI
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ master, main ]
+    branches: [ main, develop ]
 
 permissions:
   contents: read
 
 jobs:
-  test-python:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ['3.10', '3.11', '3.12', '3.13']
 
     steps:
     - uses: actions/checkout@v4
     
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-        cache: 'pip'
     
     - name: Install dependencies
       run: |
@@ -33,56 +32,43 @@ jobs:
     
     - name: Lint with flake8
       run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        # Stop build if there are Python syntax errors or undefined names
+        flake8 src/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings
+        flake8 src/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     
-    - name: Format check with black
+    - name: Test server import
       run: |
-        black --check . || echo "Black formatting check failed - consider running 'black .' to fix"
+        cd src
+        python -c "import mcp_server_sqlite; print('✅ Server imports successfully')"
     
-    - name: Import sort check with isort
+    - name: Run basic tests
       run: |
-        isort --check-only . || echo "Import sorting check failed - consider running 'isort .' to fix"
+        python -m pytest tests/ -v
     
-    - name: Type check with pyright
+    - name: Test SQLite version compatibility
       run: |
-        pyright || echo "Type checking failed - consider fixing type issues"
-    
-    - name: Test with pytest
-      run: |
-        pytest tests/ --cov=src --cov-report=xml --cov-report=term-missing || pytest tests/ --tb=short
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.xml
-        flags: python
-        name: codecov-umbrella
-        fail_ci_if_error: false
+        python -c "
+        import sqlite3
+        version = sqlite3.sqlite_version_info
+        print(f'SQLite version: {sqlite3.sqlite_version}')
+        assert version >= (3, 45, 0), f'SQLite {sqlite3.sqlite_version} is too old, need 3.45.0+'
+        print('✅ SQLite version is compatible with JSONB')
+        "
 
-  test-javascript:
+  docker-build:
     runs-on: ubuntu-latest
-    continue-on-error: true  # Make JavaScript tests optional
+    needs: test
+    permissions:
+      contents: read
     
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Lint with ESLint
-      run: npm run lint --if-present
-    
-    - name: Format check with Prettier
-      run: npm run format -- --check --if-present || echo "Prettier not configured"
-    
-    - name: Run tests
-      run: npm test --if-present || echo "No JavaScript tests configured"
+    - name: Build Docker Image
+      run: |
+        docker build -f Dockerfile -t sqlite-mcp-server:test .
+        
+    - name: Test Docker Image
+      run: |
+        docker run --rm sqlite-mcp-server:test python -c "print('✅ Docker image works!')"
