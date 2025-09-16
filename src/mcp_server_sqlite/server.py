@@ -19,15 +19,7 @@ from .json_logger import JsonLogger
 from .schema_updater import SchemaUpdater
 from .diagnostics import DiagnosticsService
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler("sqlite_custom_mcp.log"),
-        logging.StreamHandler()
-    ]
-)
+# Logging is configured by the launcher - no need to configure here
 
 logger = logging.getLogger('mcp_sqlite_server')
 logger.info("Starting Enhanced MCP SQLite Server with JSONB support")
@@ -745,8 +737,18 @@ async def main(db_path: str):
             # Handle database administration tools
             elif name == "vacuum_database":
                 logger.info("Executing VACUUM operation")
-                results = db._execute_query("VACUUM")
-                return [types.TextContent(type="text", text="Database vacuum completed successfully")]
+                # VACUUM must run outside of transactions, so we use a direct connection
+                import sqlite3
+                from contextlib import closing
+                try:
+                    with closing(sqlite3.connect(db.db_path)) as conn:
+                        conn.execute("VACUUM")
+                        conn.commit()
+                    logger.info("VACUUM operation completed successfully")
+                    return [types.TextContent(type="text", text="Database vacuum completed successfully")]
+                except Exception as e:
+                    logger.error(f"VACUUM operation failed: {e}")
+                    return [types.TextContent(type="text", text=f"Database error: {str(e)}")]
 
             elif name == "analyze_database":
                 logger.info("Executing ANALYZE operation")
