@@ -696,6 +696,42 @@ async def main(db_path: str):
                     "required": ["table_name", "query"],
                 },
             ),
+            # Backup/Restore Tools
+            types.Tool(
+                name="backup_database",
+                description="Create a backup of the database to a file",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "backup_path": {"type": "string", "description": "Path where backup file will be created"},
+                        "overwrite": {"type": "boolean", "description": "Whether to overwrite existing backup file", "default": False}
+                    },
+                    "required": ["backup_path"],
+                },
+            ),
+            types.Tool(
+                name="restore_database",
+                description="Restore database from a backup file",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "backup_path": {"type": "string", "description": "Path to backup file to restore from"},
+                        "confirm": {"type": "boolean", "description": "Confirmation flag (required to prevent accidental restores)", "default": False}
+                    },
+                    "required": ["backup_path", "confirm"],
+                },
+            ),
+            types.Tool(
+                name="verify_backup",
+                description="Verify integrity of a backup file",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "backup_path": {"type": "string", "description": "Path to backup file to verify"},
+                    },
+                    "required": ["backup_path"],
+                },
+            ),
         ]
         
         # Add diagnostic tools if JSONB is supported
@@ -919,6 +955,147 @@ async def main(db_path: str):
                     }, indent=2))]
                 except Exception as e:
                     error_msg = f"FTS5 search failed: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            # Handle backup/restore tools
+            elif name == "backup_database":
+                logger.info(f"Creating database backup to: {arguments.get('backup_path')}")
+                backup_path = arguments["backup_path"]
+                overwrite = arguments.get("overwrite", False)
+                
+                import sqlite3
+                import os
+                from pathlib import Path
+                
+                try:
+                    # Check if backup file already exists
+                    if os.path.exists(backup_path) and not overwrite:
+                        error_msg = f"Backup file already exists: {backup_path}. Use overwrite=true to replace it."
+                        logger.error(error_msg)
+                        return [types.TextContent(type="text", text=error_msg)]
+                    
+                    # Create backup directory if it doesn't exist
+                    backup_dir = Path(backup_path).parent
+                    backup_dir.mkdir(parents=True, exist_ok=True)
+                    
+                    # Perform backup using SQLite backup API
+                    source_conn = sqlite3.connect(db.db_path)
+                    backup_conn = sqlite3.connect(backup_path)
+                    
+                    # Copy database using backup API
+                    source_conn.backup(backup_conn)
+                    
+                    source_conn.close()
+                    backup_conn.close()
+                    
+                    # Get backup file size for confirmation
+                    backup_size = os.path.getsize(backup_path)
+                    result_msg = f"Database backup created successfully: {backup_path} ({backup_size} bytes)"
+                    logger.info(result_msg)
+                    return [types.TextContent(type="text", text=result_msg)]
+                    
+                except Exception as e:
+                    error_msg = f"Backup failed: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "restore_database":
+                logger.info(f"Restoring database from: {arguments.get('backup_path')}")
+                backup_path = arguments["backup_path"]
+                confirm = arguments.get("confirm", False)
+                
+                if not confirm:
+                    error_msg = "Restore operation requires explicit confirmation. Set confirm=true to proceed."
+                    logger.warning(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+                
+                import sqlite3
+                import os
+                
+                try:
+                    # Check if backup file exists
+                    if not os.path.exists(backup_path):
+                        error_msg = f"Backup file not found: {backup_path}"
+                        logger.error(error_msg)
+                        return [types.TextContent(type="text", text=error_msg)]
+                    
+                    # Create a backup of current database before restore
+                    current_backup = f"{db.db_path}.pre_restore_backup"
+                    if os.path.exists(db.db_path):
+                        current_conn = sqlite3.connect(db.db_path)
+                        backup_conn = sqlite3.connect(current_backup)
+                        current_conn.backup(backup_conn)
+                        current_conn.close()
+                        backup_conn.close()
+                        logger.info(f"Current database backed up to: {current_backup}")
+                    
+                    # Perform restore
+                    backup_conn = sqlite3.connect(backup_path)
+                    target_conn = sqlite3.connect(db.db_path)
+                    backup_conn.backup(target_conn)
+                    backup_conn.close()
+                    target_conn.close()
+                    
+                    result_msg = f"Database restored successfully from: {backup_path}"
+                    logger.info(result_msg)
+                    return [types.TextContent(type="text", text=result_msg)]
+                    
+                except Exception as e:
+                    error_msg = f"Restore failed: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "verify_backup":
+                logger.info(f"Verifying backup file: {arguments.get('backup_path')}")
+                backup_path = arguments["backup_path"]
+                
+                import sqlite3
+                import os
+                
+                try:
+                    # Check if backup file exists
+                    if not os.path.exists(backup_path):
+                        error_msg = f"Backup file not found: {backup_path}"
+                        logger.error(error_msg)
+                        return [types.TextContent(type="text", text=error_msg)]
+                    
+                    # Get file size
+                    file_size = os.path.getsize(backup_path)
+                    
+                    # Test database connection and integrity
+                    conn = sqlite3.connect(backup_path)
+                    cursor = conn.cursor()
+                    
+                    # Run integrity check
+                    cursor.execute("PRAGMA integrity_check")
+                    integrity_result = cursor.fetchone()[0]
+                    
+                    # Get table count
+                    cursor.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table'")
+                    table_count = cursor.fetchone()[0]
+                    
+                    # Get database info
+                    cursor.execute("PRAGMA user_version")
+                    user_version = cursor.fetchone()[0]
+                    
+                    conn.close()
+                    
+                    verification_info = {
+                        "file_path": backup_path,
+                        "file_size_bytes": file_size,
+                        "integrity_check": integrity_result,
+                        "table_count": table_count,
+                        "user_version": user_version,
+                        "status": "valid" if integrity_result == "ok" else "corrupted"
+                    }
+                    
+                    result_msg = f"Backup verification completed"
+                    logger.info(result_msg)
+                    return [types.TextContent(type="text", text=json.dumps(verification_info, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"Backup verification failed: {str(e)}"
                     logger.error(error_msg)
                     return [types.TextContent(type="text", text=error_msg)]
 
