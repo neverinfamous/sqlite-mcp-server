@@ -1,0 +1,42 @@
+# Multi-stage build with distroless final image for maximum security
+FROM python:3.13-slim AS builder
+
+WORKDIR /app
+
+# Install uv for faster dependency resolution
+RUN pip install --no-cache-dir uv
+
+# Copy requirements and install dependencies
+COPY requirements.txt requirements-dev.txt pyproject.toml uv.lock ./
+RUN uv venv /app/.venv && \
+    source /app/.venv/bin/activate && \
+    uv sync --frozen --no-dev --no-editable
+
+# Copy source code and install the package
+COPY src/ ./src/
+RUN source /app/.venv/bin/activate && \
+    uv pip install --no-cache-dir -e .
+
+# Final stage - distroless image (minimal attack surface)
+FROM gcr.io/distroless/python3-debian12:latest
+
+WORKDIR /app
+
+# Copy virtual environment from builder
+COPY --from=builder /app/.venv /app/.venv
+
+# Copy source code
+COPY --from=builder /app/src /app/src
+
+# Set PATH to use virtual environment
+ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONPATH="/app/src"
+
+# Create non-root user (distroless already runs as non-root)
+USER 1000:1000
+
+# Expose port (if needed for HTTP mode)
+EXPOSE 8000
+
+# Use specific entrypoint
+ENTRYPOINT ["/app/.venv/bin/python", "-m", "mcp_server_sqlite"]
