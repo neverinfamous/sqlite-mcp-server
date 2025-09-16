@@ -83,9 +83,6 @@ jobs:
           - name: latest
             dockerfile: Dockerfile
             platforms: linux/amd64,linux/arm64
-          - name: alpine
-            dockerfile: Dockerfile.secure
-            platforms: linux/amd64,linux/arm64
 
     steps:
     - name: Checkout repository
