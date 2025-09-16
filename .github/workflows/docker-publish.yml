@@ -184,9 +184,8 @@ jobs:
         echo "Testing image: $FIRST_TAG"
         
         # Test that the image starts and server imports work
-        docker run --rm $FIRST_TAG python -c "
+        docker run --rm --entrypoint python $FIRST_TAG -c "
         import sys
-        sys.path.append('src')
         try:
             import mcp_server_sqlite
             print('✅ ${{ matrix.variant.name }} image: Server imports successfully')

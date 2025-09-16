@@ -72,4 +72,4 @@ jobs:
         
     - name: Test Docker Image
       run: |
-        docker run --rm sqlite-mcp-server:test python -c "print('✅ Docker image works!')"
+        docker run --rm --entrypoint python sqlite-mcp-server:test -c "print('✅ Docker image works!')"
