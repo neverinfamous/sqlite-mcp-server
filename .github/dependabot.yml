@@ -11,8 +11,6 @@ updates:
       day: "monday"
       time: "09:00"
     open-pull-requests-limit: 10
-    reviewers:
-      - "neverinfamous"
     assignees:
       - "neverinfamous"
     commit-message:
@@ -56,8 +54,6 @@ updates:
       day: "monday"
       time: "09:30"
     open-pull-requests-limit: 5
-    reviewers:
-      - "neverinfamous"
     assignees:
       - "neverinfamous"
     commit-message:
@@ -89,8 +85,6 @@ updates:
       day: "tuesday"
       time: "09:00"
     open-pull-requests-limit: 3
-    reviewers:
-      - "neverinfamous"
     assignees:
       - "neverinfamous"
     commit-message:
@@ -108,8 +102,6 @@ updates:
       day: "tuesday"
       time: "09:30"
     open-pull-requests-limit: 3
-    reviewers:
-      - "neverinfamous"
     assignees:
       - "neverinfamous"
     commit-message:
