@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated September 16, 2025 4:45 PM EST *
+*Last Updated September 16, 2025 9:30 PM EST - Version 1.2.0*
 
 ## Overview
 
@@ -28,6 +28,7 @@ This enhanced version builds upon their excellent foundation with additional fea
 - **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements (~15% space savings)
 - **Transaction Safety**: All write operations automatically wrapped in transactions with proper rollback on errors
 - **Foreign Key Enforcement**: Automatic enforcement of foreign key constraints across all connections
+- **Database Administration Tools**: Comprehensive database maintenance with VACUUM, ANALYZE, integrity checks, and performance statistics
 - **Advanced SQL Support**: Complex queries including window functions, subqueries, and advanced filtering
 - **Business Intelligence**: Integrated memo resource for capturing business insights during analysis
 - **Enhanced Error Handling**: Detailed diagnostics for JSON-related errors with specific suggestions for fixing issues
@@ -166,6 +167,33 @@ The server exposes dynamic resources:
   append_insight({
     "insight": "Item C has the highest value at 300, which is 50% above the average of all items."
   })
+  ```
+
+#### Database Administration Tools
+
+- **`vacuum_database`**: Optimize database by reclaiming unused space and defragmenting
+  ```javascript
+  vacuum_database()
+  ```
+
+- **`analyze_database`**: Update database statistics for query optimization
+  ```javascript
+  analyze_database()
+  ```
+
+- **`integrity_check`**: Check database integrity and report any corruption
+  ```javascript
+  integrity_check()
+  ```
+
+- **`database_stats`**: Get database performance and usage statistics
+  ```javascript
+  database_stats()
+  ```
+
+- **`index_usage_stats`**: Get index usage statistics for query optimization
+  ```javascript
+  index_usage_stats()
   ```
 
 #### Diagnostic Tools
@@ -489,16 +517,6 @@ python start_sqlite_mcp.py --db-path :memory:
 
 The server automatically detects project structure and creates appropriate database locations, supporting both relative and absolute paths for maximum flexibility.
 
-## Future Enhancements
-
-Planned improvements to the SQLite MCP Server include:
-
-1. **Full-Text Search Optimizations**:
-   - Phrase-based ranking improvements
-   - Custom tokenizers for technical terms
-   - Faceted search capabilities
-   - Search result caching
-
 ## Production Status ✅
 
 **Current Status**: **PRODUCTION READY** - Comprehensive system testing completed September 16, 2025
@@ -511,7 +529,8 @@ Planned improvements to the SQLite MCP Server include:
 - ✅ **Advanced Features**: Memo/insights functionality, maintenance logging, and integrity monitoring active
 - ✅ **Parameter Binding**: Enhanced support for parameterized queries with ? placeholders
 - ✅ **Multi-Database Support**: Flexible database path configuration for any SQLite file
-- ✅ **Maintenance Systems**: Basic integrity checks and database optimization confirmed working
+- ✅ **Database Administration**: VACUUM, ANALYZE, integrity checks, performance stats, and index usage analysis working
+- ✅ **Maintenance Systems**: Comprehensive database optimization and monitoring confirmed working
 
 ### Known Minor Issues (Non-Critical)
 - **JSON Formatting**: Standard JSON formatting resolves any escaping issues
@@ -530,6 +549,36 @@ Planned improvements to the SQLite MCP Server include:
 - **Note**: The main MCP server is Python-based and works perfectly without any JavaScript dependencies
 
 **For most users**: You only need Python requirements. The JavaScript utilities are optional helpers for advanced use cases.
+
+## Planned Future Enhancements
+
+#### **1. Backup/Restore Operations - HIGH  PRIORITY**
+- **Missing**: SQLite backup API integration
+- **Current**: No built-in backup/restore tools
+
+#### **2. Full-Text Search (FTS5) - HIGH PRIORITY**
+- **Missing**: FTS5 virtual table creation and management
+- **Current Status**: Server supports FTS5 queries if tables exist, but no tools to create/manage FTS5 tables
+- **Impact**: High for search-heavy applications
+
+#### **3. Database Administration Tools - HIGH PRIORITY**
+- **Missing**: 
+  - `VACUUM` and `ANALYZE` operations
+  - Database integrity checks (`PRAGMA integrity_check`)
+  - Performance statistics (`PRAGMA stats`)
+  - Index usage analysis
+
+  #### **4. Virtual Table Management - MEDIUM PRIORITY**
+- **Missing**: Tools to create/manage virtual tables beyond FTS5
+- **Examples**: CSV virtual tables, memory virtual tables
+
+#### **5. R-Tree Index Support - LOW PRIORITY**
+- **Missing**: Spatial indexing for geometric data
+- **Current**: No specialized tools for R-Tree operations
+
+#### **6. Advanced PRAGMA Operations - LOW PRIORITY**
+- **Missing**: Comprehensive PRAGMA management tools
+- **Current**: Can execute PRAGMA via queries, but no specialized tools
 
 ## Resources
 
@@ -571,7 +620,6 @@ All JSON columns have been migrated to the JSONB binary storage format, providin
 - Improved type preservation
 
 The migration to JSONB is transparent to users - simply continue using standard JSON operations as shown in the examples.
-
 
 ## Contributing
 

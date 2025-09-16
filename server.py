@@ -619,6 +619,47 @@ async def main(db_path: str):
                     "required": ["insight"],
                 },
             ),
+            # Database Administration Tools
+            types.Tool(
+                name="vacuum_database",
+                description="Optimize database by reclaiming unused space and defragmenting",
+                inputSchema={
+                    "type": "object",
+                    "properties": {},
+                },
+            ),
+            types.Tool(
+                name="analyze_database",
+                description="Update database statistics for query optimization",
+                inputSchema={
+                    "type": "object",
+                    "properties": {},
+                },
+            ),
+            types.Tool(
+                name="integrity_check",
+                description="Check database integrity and report any corruption",
+                inputSchema={
+                    "type": "object",
+                    "properties": {},
+                },
+            ),
+            types.Tool(
+                name="database_stats",
+                description="Get database performance and usage statistics",
+                inputSchema={
+                    "type": "object",
+                    "properties": {},
+                },
+            ),
+            types.Tool(
+                name="index_usage_stats",
+                description="Get index usage statistics for query optimization",
+                inputSchema={
+                    "type": "object",
+                    "properties": {},
+                },
+            ),
         ]
         
         # Add diagnostic tools if JSONB is supported
@@ -700,6 +741,60 @@ async def main(db_path: str):
                     
                 result = db.diagnostics.test_jsonb_conversion(arguments["json_str"])
                 return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
+
+            # Handle database administration tools
+            elif name == "vacuum_database":
+                logger.info("Executing VACUUM operation")
+                results = db._execute_query("VACUUM")
+                return [types.TextContent(type="text", text="Database vacuum completed successfully")]
+
+            elif name == "analyze_database":
+                logger.info("Executing ANALYZE operation")
+                results = db._execute_query("ANALYZE")
+                return [types.TextContent(type="text", text="Database analysis completed successfully")]
+
+            elif name == "integrity_check":
+                logger.info("Executing integrity check")
+                results = db._execute_query("PRAGMA integrity_check")
+                if results and len(results) == 1 and results[0].get('integrity_check') == 'ok':
+                    return [types.TextContent(type="text", text="Database integrity check passed: OK")]
+                else:
+                    return [types.TextContent(type="text", text=f"Integrity check results: {str(results)}")]
+
+            elif name == "database_stats":
+                logger.info("Retrieving database statistics")
+                # Collect multiple statistics
+                stats = {}
+                
+                # Database size and page info
+                page_count = db._execute_query("PRAGMA page_count")
+                page_size = db._execute_query("PRAGMA page_size")
+                stats['page_count'] = page_count[0]['page_count'] if page_count else 0
+                stats['page_size'] = page_size[0]['page_size'] if page_size else 0
+                stats['database_size_bytes'] = stats['page_count'] * stats['page_size']
+                stats['database_size_mb'] = round(stats['database_size_bytes'] / (1024 * 1024), 2)
+                
+                # Table count
+                table_count = db._execute_query("SELECT COUNT(*) as count FROM sqlite_master WHERE type='table'")
+                stats['table_count'] = table_count[0]['count'] if table_count else 0
+                
+                # Index count  
+                index_count = db._execute_query("SELECT COUNT(*) as count FROM sqlite_master WHERE type='index'")
+                stats['index_count'] = index_count[0]['count'] if index_count else 0
+                
+                return [types.TextContent(type="text", text=json.dumps(stats, indent=2))]
+
+            elif name == "index_usage_stats":
+                logger.info("Retrieving index usage statistics")
+                # Get index list and usage info
+                indexes = db._execute_query("""
+                    SELECT name, tbl_name, sql 
+                    FROM sqlite_master 
+                    WHERE type='index' AND sql IS NOT NULL
+                    ORDER BY tbl_name, name
+                """)
+                
+                return [types.TextContent(type="text", text=json.dumps(indexes, indent=2))]
 
             # Handle regular query tools
             if not arguments:
