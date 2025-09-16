@@ -6,6 +6,23 @@
 
 The SQLite MCP Server provides advanced database interaction and business intelligence capabilities through SQLite featuring enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
 
+## Attribution
+
+This project is based on the original SQLite MCP Server from the [Model Context Protocol Servers](https://github.com/modelcontextprotocol/servers/tree/2025.4.24/src/sqlite) repository. We extend our sincere gratitude to the original developers and the Model Context Protocol team for creating the foundational server that made this enhanced version possible.
+
+**Original Authors**: Model Context Protocol Team  
+**Original Repository**: https://github.com/modelcontextprotocol/servers  
+**License**: MIT License
+
+This enhanced version builds upon their excellent foundation with additional features including:
+- Enhanced JSONB binary storage support
+- Advanced transaction safety mechanisms  
+- Comprehensive parameter binding
+- Multi-database configuration support
+- Extended error handling and diagnostics
+- Production-ready Docker containerization
+- Comprehensive testing and validation
+
 ## Key Features
 
 - **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements (~15% space savings)
