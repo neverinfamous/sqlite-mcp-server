@@ -1,10 +1,10 @@
 # SQLite MCP Server
 
-*Last Updated September 16, 2025 7:30 PM EST - v1.3.0*
+*Last Updated September 16, 2025 8:45 PM EST - v1.4.0*
 
 ## Overview
 
-The SQLite MCP Server provides advanced database interaction and business intelligence capabilities through SQLite featuring Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
+The SQLite MCP Server provides advanced database interaction and business intelligence capabilities through SQLite featuring Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
 
 ## Key Features
 
@@ -20,6 +20,7 @@ The SQLite MCP Server provides advanced database interaction and business intell
 - **Comprehensive Schema Tools**: Enhanced tools for exploring and documenting database structure
 - **Database Administration Tools**: Complete suite of maintenance tools including VACUUM, ANALYZE, integrity checks, performance statistics, and index usage analysis
 - **Full-Text Search (FTS5)**: Comprehensive FTS5 implementation with table creation, index management, and enhanced search with BM25 ranking and snippets
+- **Backup/Restore Operations**: Enterprise-grade backup and restore capabilities with SQLite backup API, integrity verification, and safety confirmations
 - **Advanced SQLite Engine**: Upgraded to SQLite 3.45.x with significant performance enhancements
 
 ## Attribution
@@ -36,6 +37,7 @@ This enhanced version builds upon their excellent foundation with additional fea
 - Comprehensive parameter binding
 - Multi-database configuration support
 - Full-Text Search (FTS5)
+- Backup/Restore Operations
 - Database Administration Tools
 - Extended error handling and diagnostics
 - Production-ready Docker containerization
@@ -121,6 +123,46 @@ ORDER BY
   rank
 LIMIT 10;
 ```
+
+## Backup & Restore Operations
+
+The SQLite MCP Server provides enterprise-grade backup and restore capabilities using SQLite's native backup API for atomic, consistent operations.
+
+### Backup Operations
+
+**Create Database Backups:**
+```javascript
+backup_database({
+  "backup_path": "./backups/database_2025-09-16.db",
+  "overwrite": false  // Optional: prevent accidental overwrites
+})
+```
+
+**Verify Backup Integrity:**
+```javascript
+verify_backup({
+  "backup_path": "./backups/database_2025-09-16.db"
+})
+// Returns: file size, integrity check, table count, version info
+```
+
+### Restore Operations
+
+**Restore from Backup:**
+```javascript
+restore_database({
+  "backup_path": "./backups/database_2025-09-16.db",
+  "confirm": true  // Required for safety
+})
+```
+
+### Safety Features
+
+- **Confirmation Required**: All restore operations require explicit `confirm=true`
+- **Pre-restore Backup**: Current database automatically backed up before restore
+- **Integrity Verification**: Comprehensive backup validation before operations
+- **Atomic Operations**: Uses SQLite backup API for consistent, reliable operations
+- **Directory Creation**: Automatically creates backup directories as needed
 
 ## Components
 
@@ -584,19 +626,15 @@ The migration to JSONB is transparent to users - simply continue using standard 
 
 ## Planned Future Enhancements
 
-#### **1. Backup/Restore Operations - HIGH PRIORITY**
-- **Missing**: SQLite backup API integration
-- **Current**: No built-in backup/restore tools
-
-#### **2. Virtual Table Management - MEDIUM PRIORITY**
+#### **1. Virtual Table Management - MEDIUM PRIORITY**
 - **Missing**: Tools to create/manage virtual tables beyond FTS5
 - **Examples**: CSV virtual tables, memory virtual tables
 
-#### **3. R-Tree Index Support - LOW PRIORITY**
+#### **2. R-Tree Index Support - LOW PRIORITY**
 - **Missing**: Spatial indexing for geometric data
 - **Current**: No specialized tools for R-Tree operations
 
-#### **4. Advanced PRAGMA Operations - LOW PRIORITY**
+#### **3. Advanced PRAGMA Operations - LOW PRIORITY**
 - **Missing**: Comprehensive PRAGMA management tools
 - **Current**: Can execute PRAGMA via queries, but no specialized tools
 
