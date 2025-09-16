@@ -1,61 +1,40 @@
-# Multi-stage build for security and smaller size
-FROM python:3.13-alpine AS builder
+# Alpine-based Dockerfile for reduced attack surface
+FROM python:3.13-alpine
 
-# Install build dependencies
+WORKDIR /app
+
+# Install system dependencies
 RUN apk add --no-cache \
     build-base \
     libffi-dev \
     openssl-dev \
     sqlite-dev \
-    && apk upgrade
-
-WORKDIR /app
+    sqlite \
+    && apk upgrade \
+    && rm -rf /var/cache/apk/*
 
 # Install uv for faster dependency resolution
 RUN pip install --no-cache-dir uv
 
-# Copy requirements and lock file
+# Copy project files
 COPY requirements.txt requirements-dev.txt pyproject.toml uv.lock ./
-
-# Copy source code first
 COPY src/ ./src/
 
-# Create virtual environment and install dependencies
-RUN uv venv /app/.venv && \
-    source /app/.venv/bin/activate && \
-    uv sync --frozen --no-dev
-
-# Final stage - minimal runtime image
-FROM python:3.13-alpine
-
-# Install runtime dependencies only
-RUN apk add --no-cache \
-    sqlite \
-    libffi \
-    openssl \
-    && apk upgrade \
-    && rm -rf /var/cache/apk/*
+# Install dependencies using uv
+RUN uv sync --frozen --no-dev
 
 # Create non-root user for security
 RUN addgroup -g 1000 app && \
     adduser -u 1000 -G app -s /bin/sh -D app
 
-WORKDIR /app
-
-# Copy virtual environment from builder
-COPY --from=builder --chown=app:app /app/.venv /app/.venv
-
-# Create data directory
+# Create data directory and set permissions
 RUN mkdir -p /app/data && chown -R app:app /app
 
 # Switch to non-root user
 USER app
 
-# Set PATH to use virtual environment
-ENV PATH="/app/.venv/bin:$PATH"
-
 # Expose port (if needed for HTTP mode)
 EXPOSE 8000
 
-# Use non-root user and specific entrypoint
-ENTRYPOINT ["mcp-server-sqlite"]
+# Use uv to run the application
+ENTRYPOINT ["uv", "run", "mcp-server-sqlite"]
