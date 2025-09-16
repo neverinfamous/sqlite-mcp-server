@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated September 16, 2025 4:45 PM EST *
+*Last Updated September 16, 2025 9:30 PM EST - Version 1.2.0*
 
 ## Overview
 
@@ -28,6 +28,7 @@ This enhanced version builds upon their excellent foundation with additional fea
 - **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements (~15% space savings)
 - **Transaction Safety**: All write operations automatically wrapped in transactions with proper rollback on errors
 - **Foreign Key Enforcement**: Automatic enforcement of foreign key constraints across all connections
+- **Database Administration Tools**: Comprehensive database maintenance with VACUUM, ANALYZE, integrity checks, and performance statistics
 - **Advanced SQL Support**: Complex queries including window functions, subqueries, and advanced filtering
 - **Business Intelligence**: Integrated memo resource for capturing business insights during analysis
 - **Enhanced Error Handling**: Detailed diagnostics for JSON-related errors with specific suggestions for fixing issues
@@ -166,6 +167,33 @@ The server exposes dynamic resources:
   append_insight({
     "insight": "Item C has the highest value at 300, which is 50% above the average of all items."
   })
+  ```
+
+#### Database Administration Tools
+
+- **`vacuum_database`**: Optimize database by reclaiming unused space and defragmenting
+  ```javascript
+  vacuum_database()
+  ```
+
+- **`analyze_database`**: Update database statistics for query optimization
+  ```javascript
+  analyze_database()
+  ```
+
+- **`integrity_check`**: Check database integrity and report any corruption
+  ```javascript
+  integrity_check()
+  ```
+
+- **`database_stats`**: Get database performance and usage statistics
+  ```javascript
+  database_stats()
+  ```
+
+- **`index_usage_stats`**: Get index usage statistics for query optimization
+  ```javascript
+  index_usage_stats()
   ```
 
 #### Diagnostic Tools
@@ -501,7 +529,8 @@ The server automatically detects project structure and creates appropriate datab
 - ✅ **Advanced Features**: Memo/insights functionality, maintenance logging, and integrity monitoring active
 - ✅ **Parameter Binding**: Enhanced support for parameterized queries with ? placeholders
 - ✅ **Multi-Database Support**: Flexible database path configuration for any SQLite file
-- ✅ **Maintenance Systems**: Basic integrity checks and database optimization confirmed working
+- ✅ **Database Administration**: VACUUM, ANALYZE, integrity checks, performance stats, and index usage analysis working
+- ✅ **Maintenance Systems**: Comprehensive database optimization and monitoring confirmed working
 
 ### Known Minor Issues (Non-Critical)
 - **JSON Formatting**: Standard JSON formatting resolves any escaping issues
