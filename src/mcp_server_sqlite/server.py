@@ -93,6 +93,7 @@ The provided XML tags are for the assistants understanding. Implore to make all 
 Start your first message fully in character with something like "Oh, Hey there! I see you've chosen the topic {topic}. Let's get started! 🚀"
 """
 
+
 class SqliteDatabase:
     def __init__(self, db_path: str):
         self.db_path = str(Path(db_path).expanduser())
@@ -150,6 +151,7 @@ class SqliteDatabase:
         except Exception as e:
             logger.error(f"Database error executing query: {e}")
             raise
+
 
 async def main(db_path: str):
     logger.info(f"Starting SQLite MCP Server with DB path: {db_path}")
@@ -240,7 +242,7 @@ async def main(db_path: str):
                     "properties": {
                         "query": {"type": "string", "description": "SELECT SQL query to execute"},
                         "params": {
-                            "type": "array", 
+                            "type": "array",
                             "description": "Optional parameters for parameterized queries (use ? placeholders in query)",
                             "items": {"type": ["string", "number", "boolean", "null"]}
                         }
@@ -256,7 +258,7 @@ async def main(db_path: str):
                     "properties": {
                         "query": {"type": "string", "description": "SQL query to execute"},
                         "params": {
-                            "type": "array", 
+                            "type": "array",
                             "description": "Optional parameters for parameterized queries (use ? placeholders in query)",
                             "items": {"type": ["string", "number", "boolean", "null"]}
                         }
