@@ -126,9 +126,9 @@ class SqliteDatabase:
         logger.debug("Generated basic memo format")
         return memo
 
-    def _execute_query(self, query: str, params: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    def _execute_query(self, query: str, params: list[Any] | dict[str, Any] | None = None) -> list[dict[str, Any]]:
         """Execute a SQL query and return results as a list of dictionaries"""
-        logger.debug(f"Executing query: {query}")
+        logger.debug(f"Executing query: {query} with params: {params}")
         try:
             with closing(sqlite3.connect(self.db_path)) as conn:
                 conn.row_factory = sqlite3.Row
@@ -239,6 +239,11 @@ async def main(db_path: str):
                     "type": "object",
                     "properties": {
                         "query": {"type": "string", "description": "SELECT SQL query to execute"},
+                        "params": {
+                            "type": "array", 
+                            "description": "Optional parameters for parameterized queries (use ? placeholders in query)",
+                            "items": {"type": ["string", "number", "boolean", "null"]}
+                        }
                     },
                     "required": ["query"],
                 },
@@ -250,6 +255,11 @@ async def main(db_path: str):
                     "type": "object",
                     "properties": {
                         "query": {"type": "string", "description": "SQL query to execute"},
+                        "params": {
+                            "type": "array", 
+                            "description": "Optional parameters for parameterized queries (use ? placeholders in query)",
+                            "items": {"type": ["string", "number", "boolean", "null"]}
+                        }
                     },
                     "required": ["query"],
                 },
@@ -335,13 +345,15 @@ async def main(db_path: str):
             if name == "read_query":
                 if not arguments["query"].strip().upper().startswith("SELECT"):
                     raise ValueError("Only SELECT queries are allowed for read_query")
-                results = db._execute_query(arguments["query"])
+                params = arguments.get("params", None)
+                results = db._execute_query(arguments["query"], params)
                 return [types.TextContent(type="text", text=str(results))]
 
             elif name == "write_query":
                 if arguments["query"].strip().upper().startswith("SELECT"):
                     raise ValueError("SELECT queries are not allowed for write_query")
-                results = db._execute_query(arguments["query"])
+                params = arguments.get("params", None)
+                results = db._execute_query(arguments["query"], params)
                 return [types.TextContent(type="text", text=str(results))]
 
             elif name == "create_table":
