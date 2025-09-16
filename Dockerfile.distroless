@@ -10,9 +10,9 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy source code and install the package
+# Copy source code and project files
 COPY src/ ./src/
-COPY pyproject.toml ./
+COPY pyproject.toml README.md ./
 RUN pip install --no-cache-dir -e .
 
 # Final stage - distroless image (minimal attack surface)
