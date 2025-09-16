@@ -6,6 +6,22 @@
 
 The SQLite MCP Server provides advanced database interaction and business intelligence capabilities through SQLite featuring Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
 
+## Key Features
+
+- **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements (~15% space savings)
+- **Transaction Safety**: All write operations automatically wrapped in transactions with proper rollback on errors
+- **Foreign Key Enforcement**: Automatic enforcement of foreign key constraints across all connections
+- **Advanced SQL Support**: Complex queries including window functions, subqueries, and advanced filtering
+- **Business Intelligence**: Integrated memo resource for capturing business insights during analysis
+- **Enhanced Error Handling**: Detailed diagnostics for JSON-related errors with specific suggestions for fixing issues
+- **Multi-Level Caching**: Hierarchical caching for optimal performance
+- **Pattern Recognition**: Automatic optimization of frequently executed queries
+- **JSON Validation**: Prevents invalid JSON from being stored in the database
+- **Comprehensive Schema Tools**: Enhanced tools for exploring and documenting database structure
+- **Database Administration Tools**: Complete suite of maintenance tools including VACUUM, ANALYZE, integrity checks, performance statistics, and index usage analysis
+- **Full-Text Search (FTS5)**: Comprehensive FTS5 implementation with table creation, index management, and enhanced search with BM25 ranking and snippets
+- **Advanced SQLite Engine**: Upgraded to SQLite 3.45.x with significant performance enhancements
+
 ## Attribution
 
 This project is based on the original SQLite MCP Server from the [Model Context Protocol Servers](https://github.com/modelcontextprotocol/servers/tree/2025.4.24/src/sqlite) repository. We extend our sincere gratitude to the original developers and the Model Context Protocol team for creating the foundational server that made this enhanced version possible.
@@ -24,22 +40,6 @@ This enhanced version builds upon their excellent foundation with additional fea
 - Extended error handling and diagnostics
 - Production-ready Docker containerization
 - Comprehensive testing and validation
-
-## Key Features
-
-- **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements (~15% space savings)
-- **Transaction Safety**: All write operations automatically wrapped in transactions with proper rollback on errors
-- **Foreign Key Enforcement**: Automatic enforcement of foreign key constraints across all connections
-- **Advanced SQL Support**: Complex queries including window functions, subqueries, and advanced filtering
-- **Business Intelligence**: Integrated memo resource for capturing business insights during analysis
-- **Enhanced Error Handling**: Detailed diagnostics for JSON-related errors with specific suggestions for fixing issues
-- **Multi-Level Caching**: Hierarchical caching for optimal performance
-- **Pattern Recognition**: Automatic optimization of frequently executed queries
-- **JSON Validation**: Prevents invalid JSON from being stored in the database
-- **Comprehensive Schema Tools**: Enhanced tools for exploring and documenting database structure
-- **Database Administration Tools**: Complete suite of maintenance tools including VACUUM, ANALYZE, integrity checks, performance statistics, and index usage analysis
-- **Full-Text Search (FTS5)**: Comprehensive FTS5 implementation with table creation, index management, and enhanced search with BM25 ranking and snippets
-- **Advanced SQLite Engine**: Upgraded to SQLite 3.45.x with significant performance enhancements
 
 ## Using Full-Text Search
 
