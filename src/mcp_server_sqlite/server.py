@@ -870,6 +870,7 @@ async def main(db_path: str):
                 server_version="1.2.0",
                 capabilities=server.get_capabilities(
                     notification_options=NotificationOptions(),
+                    experimental_capabilities={},
                 ),
             ),
         )
