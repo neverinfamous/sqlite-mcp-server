@@ -10,7 +10,7 @@ from pathlib import Path
 # Add the src directory to the path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from mcp_server_sqlite.server import SqliteDatabase
+from mcp_server_sqlite.server import EnhancedSqliteDatabase
 from mcp_server_sqlite.db_integration import DatabaseIntegration
 
 def test_json_operations():
@@ -23,7 +23,7 @@ def test_json_operations():
     
     try:
         # Initialize database
-        db = SqliteDatabase(db_path)
+        db = EnhancedSqliteDatabase(db_path)
         db = DatabaseIntegration.enhance_database(db)
         
         # Create test table

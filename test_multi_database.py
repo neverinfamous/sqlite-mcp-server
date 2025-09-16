@@ -9,7 +9,7 @@ from pathlib import Path
 # Add the src directory to the path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
-from mcp_server_sqlite.server import SqliteDatabase
+from mcp_server_sqlite.server import EnhancedEnhancedSqliteDatabase
 from mcp_server_sqlite.db_integration import DatabaseIntegration
 
 def test_multi_database():
@@ -34,7 +34,7 @@ def test_multi_database():
         
         for name, path in [("db1", db1_path), ("db2", db2_path), ("db3", db3_path)]:
             print(f"  Creating {name} at {path}")
-            db = SqliteDatabase(path)
+            db = EnhancedSqliteDatabase(path)
             db = DatabaseIntegration.enhance_database(db)
             databases[name] = db
             
