@@ -61,7 +61,6 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
-      - "ci/cd"
 
   # Docker dependencies
   - package-ecosystem: "docker"
