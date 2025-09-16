@@ -19,8 +19,10 @@ from .json_logger import JsonLogger
 from .schema_updater import SchemaUpdater
 from .diagnostics import DiagnosticsService
 
-# Logging is configured by the launcher - no need to configure here
+# Load configuration from environment first
+DEBUG_MODE = os.environ.get('SQLITE_DEBUG', 'false').lower() in ('true', '1', 'yes')
 
+# Logging is configured by the launcher - no need to configure here
 logger = logging.getLogger('mcp_sqlite_server')
 
 # Reduce logging noise in production
@@ -28,9 +30,6 @@ if not DEBUG_MODE:
     logger.setLevel(logging.WARNING)
 
 logger.info("Starting Enhanced MCP SQLite Server with JSONB support")
-
-# Load configuration from environment
-DEBUG_MODE = os.environ.get('SQLITE_DEBUG', 'false').lower() in ('true', '1', 'yes')
 LOG_DIR = os.environ.get('SQLITE_LOG_DIR', './logs')
 JSONB_ENABLED = os.environ.get('SQLITE_JSONB_ENABLED', 'true').lower() in ('true', '1', 'yes')
 

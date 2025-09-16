@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated September 16, 2025 9:30 PM EST - Version 1.2.0*
+*Last Updated September 16, 2025 6:15 PM EST - v1.2.1*
 
 ## Overview
 
@@ -28,7 +28,6 @@ This enhanced version builds upon their excellent foundation with additional fea
 - **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements (~15% space savings)
 - **Transaction Safety**: All write operations automatically wrapped in transactions with proper rollback on errors
 - **Foreign Key Enforcement**: Automatic enforcement of foreign key constraints across all connections
-- **Database Administration Tools**: Comprehensive database maintenance with VACUUM, ANALYZE, integrity checks, and performance statistics
 - **Advanced SQL Support**: Complex queries including window functions, subqueries, and advanced filtering
 - **Business Intelligence**: Integrated memo resource for capturing business insights during analysis
 - **Enhanced Error Handling**: Detailed diagnostics for JSON-related errors with specific suggestions for fixing issues
@@ -36,6 +35,7 @@ This enhanced version builds upon their excellent foundation with additional fea
 - **Pattern Recognition**: Automatic optimization of frequently executed queries
 - **JSON Validation**: Prevents invalid JSON from being stored in the database
 - **Comprehensive Schema Tools**: Enhanced tools for exploring and documenting database structure
+- **Database Administration Tools**: Complete suite of maintenance tools including VACUUM, ANALYZE, integrity checks, performance statistics, and index usage analysis
 - **Advanced SQLite Engine**: Upgraded to SQLite 3.45.x with significant performance enhancements
 
 ## Using Full-Text Search
@@ -167,33 +167,6 @@ The server exposes dynamic resources:
   append_insight({
     "insight": "Item C has the highest value at 300, which is 50% above the average of all items."
   })
-  ```
-
-#### Database Administration Tools
-
-- **`vacuum_database`**: Optimize database by reclaiming unused space and defragmenting
-  ```javascript
-  vacuum_database()
-  ```
-
-- **`analyze_database`**: Update database statistics for query optimization
-  ```javascript
-  analyze_database()
-  ```
-
-- **`integrity_check`**: Check database integrity and report any corruption
-  ```javascript
-  integrity_check()
-  ```
-
-- **`database_stats`**: Get database performance and usage statistics
-  ```javascript
-  database_stats()
-  ```
-
-- **`index_usage_stats`**: Get index usage statistics for query optimization
-  ```javascript
-  index_usage_stats()
   ```
 
 #### Diagnostic Tools
@@ -529,8 +502,7 @@ The server automatically detects project structure and creates appropriate datab
 - ✅ **Advanced Features**: Memo/insights functionality, maintenance logging, and integrity monitoring active
 - ✅ **Parameter Binding**: Enhanced support for parameterized queries with ? placeholders
 - ✅ **Multi-Database Support**: Flexible database path configuration for any SQLite file
-- ✅ **Database Administration**: VACUUM, ANALYZE, integrity checks, performance stats, and index usage analysis working
-- ✅ **Maintenance Systems**: Comprehensive database optimization and monitoring confirmed working
+- ✅ **Maintenance Systems**: Basic integrity checks and database optimization confirmed working
 
 ### Known Minor Issues (Non-Critical)
 - **JSON Formatting**: Standard JSON formatting resolves any escaping issues
@@ -561,22 +533,15 @@ The server automatically detects project structure and creates appropriate datab
 - **Current Status**: Server supports FTS5 queries if tables exist, but no tools to create/manage FTS5 tables
 - **Impact**: High for search-heavy applications
 
-#### **3. Database Administration Tools - HIGH PRIORITY**
-- **Missing**: 
-  - `VACUUM` and `ANALYZE` operations
-  - Database integrity checks (`PRAGMA integrity_check`)
-  - Performance statistics (`PRAGMA stats`)
-  - Index usage analysis
-
-  #### **4. Virtual Table Management - MEDIUM PRIORITY**
+#### **3. Virtual Table Management - MEDIUM PRIORITY**
 - **Missing**: Tools to create/manage virtual tables beyond FTS5
 - **Examples**: CSV virtual tables, memory virtual tables
 
-#### **5. R-Tree Index Support - LOW PRIORITY**
+#### **4. R-Tree Index Support - LOW PRIORITY**
 - **Missing**: Spatial indexing for geometric data
 - **Current**: No specialized tools for R-Tree operations
 
-#### **6. Advanced PRAGMA Operations - LOW PRIORITY**
+#### **5. Advanced PRAGMA Operations - LOW PRIORITY**
 - **Missing**: Comprehensive PRAGMA management tools
 - **Current**: Can execute PRAGMA via queries, but no specialized tools
 
