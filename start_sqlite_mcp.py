@@ -57,10 +57,15 @@ def get_default_db_path():
     return str(project_root / "database.db")
 
 if __name__ == "__main__":
+    # Configure logging with reduced noise
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
+    
+    # Reduce noise from MCP framework
+    logging.getLogger('mcp.server.lowlevel.server').setLevel(logging.WARNING)
+    logging.getLogger('mcp').setLevel(logging.WARNING)
     
     logger = logging.getLogger('sqlite_mcp_launcher')
     

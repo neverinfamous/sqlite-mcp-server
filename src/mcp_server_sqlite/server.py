@@ -22,6 +22,11 @@ from .diagnostics import DiagnosticsService
 # Logging is configured by the launcher - no need to configure here
 
 logger = logging.getLogger('mcp_sqlite_server')
+
+# Reduce logging noise in production
+if not DEBUG_MODE:
+    logger.setLevel(logging.WARNING)
+
 logger.info("Starting Enhanced MCP SQLite Server with JSONB support")
 
 # Load configuration from environment
