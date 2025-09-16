@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated September 16, 2025 2:15 PM EST *
+*Last Updated September 16, 2025 2:39 PM EST *
 
 ## Overview
 
@@ -44,19 +44,19 @@ The SQLite MCP Server provides powerful full-text search capabilities through it
 ### Search Examples
 
 ```javascript
-// Basic full-text search across memory journal entries
+// Basic full-text search (requires FTS5 virtual table)
 read_query({
-  "query": "SELECT id, entry_type, content FROM memory_journal_fts WHERE memory_journal_fts MATCH 'integration' LIMIT 10"
+  "query": "SELECT id, title, content FROM documents_fts WHERE documents_fts MATCH 'integration' LIMIT 10"
 })
 
 // Search with ranking by relevance
 read_query({
-  "query": "SELECT id, entry_type, content, rank FROM memory_journal_fts WHERE memory_journal_fts MATCH 'database design' ORDER BY rank LIMIT 5"
+  "query": "SELECT id, title, content, rank FROM documents_fts WHERE documents_fts MATCH 'database design' ORDER BY rank LIMIT 5"
 })
 
 // Phrase search with exact matching
 read_query({
-  "query": "SELECT id, entry_type FROM memory_journal_fts WHERE memory_journal_fts MATCH '\"lite integration\"'"
+  "query": "SELECT id, title FROM documents_fts WHERE documents_fts MATCH '\"exact phrase\"'"
 })
 ```
 
@@ -82,12 +82,12 @@ For programmatic access, use the SQLite FTS5 interface with snippet highlighting
 ```sql
 -- Search with result highlighting
 SELECT 
-  id, entry_type, 
-  snippet(memory_journal_fts, 0, '<em>', '</em>', '...', 15) AS snippet
+  id, title, 
+  snippet(documents_fts, 0, '<em>', '</em>', '...', 15) AS snippet
 FROM 
-  memory_journal_fts
+  documents_fts
 WHERE 
-  memory_journal_fts MATCH 'search term'
+  documents_fts MATCH 'search term'
 ORDER BY 
   rank
 LIMIT 10;
@@ -250,13 +250,13 @@ The server now automatically enables foreign key constraints for all database co
 
 2. For each relevant table, use `describe_table` to verify exact schema
    ```javascript
-   describe_table({"table_name": "memory_journal"})
+   describe_table({"table_name": "users"})
    ```
 
 3. Based on verified schema, construct appropriate queries using exact column names
    ```javascript
    read_query({
-     "query": "SELECT id, entry_type, content FROM memory_journal WHERE entry_type = 'identity_statement' ORDER BY timestamp DESC LIMIT 5"
+     "query": "SELECT id, name, email FROM users WHERE status = 'active' ORDER BY created_at DESC LIMIT 5"
    })
    ```
 
@@ -286,26 +286,26 @@ The server now automatically enables foreign key constraints for all database co
 ```javascript
 // Insert JSON record with parameter binding (recommended)
 write_query({
-  "query": "INSERT INTO memory_journal (entry_type, content, metadata) VALUES (?, ?, ?)",
-  "params": ["test_entry", "Test content", "{\"key\": \"value\", \"array\": [1, 2, 3]}"]
+  "query": "INSERT INTO products (name, details, metadata) VALUES (?, ?, ?)",
+  "params": ["Product A", "High-quality item", "{\"category\": \"electronics\", \"tags\": [\"new\", \"popular\"]}"]
 })
 
 // Extract value from JSON
 read_query({
-  "query": "SELECT json_extract(metadata, '$.array[1]') FROM memory_journal WHERE entry_type = ?",
-  "params": ["test_entry"]
+  "query": "SELECT json_extract(metadata, '$.tags[0]') FROM products WHERE name = ?",
+  "params": ["Product A"]
 })
 
 // Update nested JSON value with parameters
 write_query({
-  "query": "UPDATE memory_journal SET metadata = json_set(metadata, '$.key', ?) WHERE id = ?",
-  "params": ["new_value", 123]
+  "query": "UPDATE products SET metadata = json_set(metadata, '$.category', ?) WHERE id = ?",
+  "params": ["updated_category", 123]
 })
 
 // Filter by JSON value with parameters
 read_query({
-  "query": "SELECT id, content FROM memory_journal WHERE json_extract(metadata, '$.key') = ?",
-  "params": ["value"]
+  "query": "SELECT id, name FROM products WHERE json_extract(metadata, '$.category') = ?",
+  "params": ["electronics"]
 })
 ```
 
@@ -328,30 +328,30 @@ list_tables()
 
 // Query data from SQLite
 read_query({
-  "query": "SELECT * FROM repositories LIMIT 5"
+  "query": "SELECT * FROM users LIMIT 5"
 })
 
 // Query with parameters (recommended for dynamic queries)
 read_query({
-  "query": "SELECT * FROM repositories WHERE status = ? LIMIT ?",
+  "query": "SELECT * FROM users WHERE status = ? LIMIT ?",
   "params": ["active", 5]
 })
 
 // Update data in SQLite with parameter binding (recommended)
 write_query({
-  "query": "UPDATE memory_journal SET metadata = ? WHERE id = ?",
+  "query": "UPDATE products SET metadata = ? WHERE id = ?",
   "params": ["{\"key\": \"value\"}", 123]
 })
 
 // Insert with multiple parameters
 write_query({
-  "query": "INSERT INTO repositories (name, url, status) VALUES (?, ?, ?)",
-  "params": ["my-repo", "https://github.com/user/repo", "active"]
+  "query": "INSERT INTO users (name, email, status) VALUES (?, ?, ?)",
+  "params": ["John Doe", "john@example.com", "active"]
 })
 
 // Get table structure in SQLite
 describe_table({
-  "table_name": "repositories"
+  "table_name": "users"
 })
 ```
 
@@ -428,88 +428,28 @@ If you encounter JSON-related errors:
 
 ### Additional Troubleshooting Areas
 
-1. **Schema documentation issues**:
-   - Check file paths in configuration
-   - Ensure proper permissions to write files
-   - Verify SQLite database is accessible
+1. **Database connectivity issues**:
+   - Check file paths and permissions
+   - Ensure SQLite database file is accessible
+   - Verify database file is not corrupted
 
-2. **Thread verification issues**:
-   - Check database integrity first
-   - Repair orphaned threads with appropriate tools
-   - Review thread_map table for inconsistencies
+2. **Performance issues**:
+   - Check database size and indexes
+   - Consider running VACUUM for optimization
+   - Review query complexity
 
-3. **GitHub API rate limiting**:
-   - Use authenticated requests consistently
-   - Consider caching GitHub responses
+3. **JSON data issues**:
+   - Validate JSON strings before insertion
+   - Use parameter binding for complex JSON data
+   - Check for proper escaping in JSON strings
 
-4. **Token expiration**:
-   - Update the GitHub token in the configuration
-   - Verify token permissions include repo access
+## Database Maintenance
 
-5. **False positives for unregistered repositories**:
-   - Update exclusion patterns in configuration
-   - Manually mark repositories to exclude
+The SQLite MCP Server includes basic database maintenance capabilities:
 
-### Log Files
-
-Check these log files for troubleshooting:
-
-- Database maintenance logs
-- Thread initialization logs
-- Repository verification logs
-- Schema extraction logs
-- Documentation generation logs
-
-## Maintenance and Repair Capabilities
-
-### Database Maintenance and Verification
-
-The SQLite MCP Server includes comprehensive database maintenance capabilities:
-
-- **Integrity Checks**: Validates database structure, foreign keys, and data consistency
-- **Schema Tracking**: Monitors and documents database schema evolution over time 
-- **Repository Verification**: Ensures consistency between database records and both local and GitHub repositories
-- **Thread Management**: Verifies thread continuity and maintains thread relationships
-- **Repository Relationship Analysis**: Monitors relationships between repositories
-- **Notification System**: Alerts about issues with appropriate severity levels
-
-#### Database Integrity Checks
-
-- **Structural Integrity**: Verifies database structure against expected schema
-- **Foreign Key Constraints**: Ensures all foreign key relationships are valid
-- **Index Validation**: Checks that all indexes are properly maintained
-- **Orphaned Records**: Identifies and resolves orphaned records
-- **Database Optimization**: Performs VACUUM and other optimization tasks
-- **Performance Analysis**: Analyzes query performance and suggests optimizations
-
-#### Repository Registry Verification
-
-- **Local Repository Checks**: Verifies repository local paths exist and are valid Git repositories
-- **GitHub Integration**: Validates GitHub repository status using the GitHub API
-- **Unregistered Repository Detection**: Identifies local Git repositories not yet registered in the database
-
-### Automated Repair Capabilities
-
-The system can automatically repair common issues:
-
-| Issue Type | Repair Strategy |
-|------------|-----------------|
-| **Database Integrity Issues** |
-| Foreign key violations | Update references to valid values or NULL |
-| Orphaned records | Remove or update to maintain referential integrity |
-| Corrupted JSON fields | Reformat or reset to valid JSON |
-| **Repository Issues** |
-| Missing local path | Re-clone from GitHub if URL exists, otherwise mark as deleted |
-| Not Git repository | Re-clone from GitHub to restore Git directory |
-| GitHub repository missing | Mark repository as deleted in database |
-| Unregistered repository | Add repository to the registry with detected information |
-| **Thread Map Issues** |
-| Orphaned threads | Connect to appropriate parent or mark as root thread |
-| Duplicate thread entries | Remove duplicates, keeping the most complete entry |
-| Invalid references | Repair references to valid repository IDs |
-| **Schema Issues** |
-| Schema extraction failures | Reset extraction state and retry with different options |
-| Git hook configuration | Repair or reinstall Git hooks |
+- **Integrity Checks**: Basic SQLite PRAGMA integrity_check support
+- **JSON Validation**: Automatic validation of JSON data during INSERT/UPDATE operations
+- **Transaction Safety**: Automatic rollback on errors to prevent data corruption
 
 ## Database Configuration
 
@@ -639,65 +579,6 @@ All JSON columns have been migrated to the JSONB binary storage format, providin
 
 The migration to JSONB is transparent to users - simply continue using standard JSON operations as shown in the examples.
 
-## Schema Documentation System
-
-The SQLite MCP Server includes a comprehensive documentation system for database structure:
-
-### Generated Documentation Files
-
-The documentation system maintains three primary types of documentation:
-
-1. **Schema Documentation**:
-   - Complete SQL schema with create statements
-   - Detailed table descriptions and column information
-   - Foreign key relationship diagrams
-
-2. **ER Diagrams**:
-   - Entity-relationship diagrams in Mermaid format
-   - Visual representation of database structure
-
-3. **Database Statistics**:
-   - Overall database metrics and table statistics
-   - Row counts and growth trends
-
-## Notification System
-
-The SQLite MCP Server includes a notification system for alerting about database issues:
-
-### Notification Types
-
-- `database_integrity_issue`: Database integrity check failures
-- `thread_map_inconsistency`: Thread map inconsistencies
-- `json_validation_error`: JSON validation failures
-- `repository_missing`: Repository path not found
-- `repository_not_git`: Path exists but is not a Git repository
-- `repository_github_mismatch`: GitHub repository not found
-- `repository_unregistered`: Git repository exists but is not registered
-
-### Severity Levels
-
-- `critical`: Requires immediate attention
-- `high`: Should be addressed soon
-- `info`: Informational, no immediate action required
-
-### Managing Notifications
-
-View active notifications:
-```sql
-SELECT * FROM mike_notifications WHERE seen = 0 ORDER BY severity, created_at DESC;
-```
-
-Mark notifications as seen:
-```sql
-UPDATE mike_notifications SET seen = 1, seen_at = datetime('now') 
-WHERE notification_type = 'type_name';
-```
-
-Clear all notifications for a repository:
-```sql
-UPDATE mike_notifications SET seen = 1, seen_at = datetime('now') 
-WHERE content LIKE '%repository-name%';
-```
 
 ## Contributing
 
