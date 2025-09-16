@@ -6,16 +6,14 @@ WORKDIR /app
 # Install uv for faster dependency resolution
 RUN pip install --no-cache-dir uv
 
-# Copy requirements and install dependencies
+# Copy requirements and source code
 COPY requirements.txt requirements-dev.txt pyproject.toml uv.lock ./
+COPY src/ ./src/
+
+# Create virtual environment and install dependencies
 RUN uv venv /app/.venv && \
     source /app/.venv/bin/activate && \
-    uv sync --frozen --no-dev --no-editable
-
-# Copy source code and install the package
-COPY src/ ./src/
-RUN source /app/.venv/bin/activate && \
-    uv pip install --no-cache-dir -e .
+    uv sync --frozen --no-dev
 
 # Final stage - distroless image (minimal attack surface)
 FROM gcr.io/distroless/python3-debian12:latest
