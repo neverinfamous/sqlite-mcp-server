@@ -4,7 +4,11 @@ version = "1.0.0"
 description = "A SQLite MCP server with JSONB support and advanced database operations"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["mcp>=1.14.0"]
+dependencies = [
+    "mcp>=1.14.0",
+    "h11>=0.16.0",  # Security fix for CVE-2025-43859, GHSA-vqfr-h8mv-ghfj
+    "starlette>=0.47.2",  # Security fix for CVE-2025-54121
+]
 authors = [
     {name = "Chris Adamic", email = "writenotenow@gmail.com"},
 ]
