@@ -907,7 +907,7 @@ async def main(db_path: str):
                         LIMIT ?
                     """
                     
-                    results = db._execute_query(search_sql, {"query": query, "limit": limit})
+                    results = db._execute_query(search_sql, [query, limit])
                     
                     result_msg = f"Found {len(results)} results for query: '{query}'"
                     logger.info(result_msg)
