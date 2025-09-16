@@ -13,15 +13,19 @@ RUN apk add --no-cache \
     && apk upgrade \
     && rm -rf /var/cache/apk/*
 
-# Install uv for faster dependency resolution
-RUN pip install --no-cache-dir uv
+# Copy requirements first for better caching
+COPY requirements.txt ./
 
-# Copy project files
-COPY requirements.txt requirements-dev.txt pyproject.toml uv.lock ./
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy source code
 COPY src/ ./src/
+COPY pyproject.toml ./
 
-# Install dependencies using uv
-RUN uv sync --frozen --no-dev
+# Install the package
+RUN pip install --no-cache-dir -e .
 
 # Create non-root user for security
 RUN addgroup -g 1000 app && \
@@ -36,5 +40,5 @@ USER app
 # Expose port (if needed for HTTP mode)
 EXPOSE 8000
 
-# Use uv to run the application
-ENTRYPOINT ["uv", "run", "mcp-server-sqlite"]
+# Use the installed entrypoint
+ENTRYPOINT ["mcp-server-sqlite"]

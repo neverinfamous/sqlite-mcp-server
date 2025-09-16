@@ -3,27 +3,32 @@ FROM python:3.13-slim AS builder
 
 WORKDIR /app
 
-# Install uv for faster dependency resolution
-RUN pip install --no-cache-dir uv
+# Copy requirements first for better caching
+COPY requirements.txt ./
 
-# Copy project files
-COPY requirements.txt requirements-dev.txt pyproject.toml uv.lock ./
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Copy source code and install the package
 COPY src/ ./src/
-
-# Install dependencies and the package
-RUN uv sync --frozen --no-dev
+COPY pyproject.toml ./
+RUN pip install --no-cache-dir -e .
 
 # Final stage - distroless image (minimal attack surface)
 FROM gcr.io/distroless/python3-debian12:latest
 
 WORKDIR /app
 
-# Copy the entire uv environment from builder
-COPY --from=builder /app /app
+# Copy Python installation from builder
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=builder /usr/local/bin/mcp-server-sqlite /usr/local/bin/mcp-server-sqlite
 
-# Set environment variables
-ENV PATH="/app/.venv/bin:$PATH"
-ENV PYTHONPATH="/app/src"
+# Copy source code
+COPY --from=builder /app/src /app/src
+
+# Set Python path
+ENV PYTHONPATH="/usr/local/lib/python3.13/site-packages:/app/src"
 
 # Use non-root user (distroless default)
 USER nonroot:nonroot
@@ -31,5 +36,5 @@ USER nonroot:nonroot
 # Expose port (if needed for HTTP mode)
 EXPOSE 8000
 
-# Use uv to run the application
-ENTRYPOINT ["/app/.venv/bin/uv", "run", "mcp-server-sqlite"]
+# Use the installed entrypoint
+ENTRYPOINT ["/usr/local/bin/mcp-server-sqlite"]
