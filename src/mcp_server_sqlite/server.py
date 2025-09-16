@@ -656,6 +656,46 @@ async def main(db_path: str):
                     "properties": {},
                 },
             ),
+            # Full-Text Search (FTS5) Tools
+            types.Tool(
+                name="create_fts_table",
+                description="Create a FTS5 virtual table for full-text search",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {"type": "string", "description": "Name for the FTS5 table"},
+                        "columns": {"type": "array", "items": {"type": "string"}, "description": "List of columns to include in FTS5 index"},
+                        "content_table": {"type": "string", "description": "Optional: source table to populate from"},
+                        "tokenizer": {"type": "string", "description": "Optional: tokenizer to use (unicode61, porter, ascii)", "default": "unicode61"}
+                    },
+                    "required": ["table_name", "columns"],
+                },
+            ),
+            types.Tool(
+                name="rebuild_fts_index",
+                description="Rebuild FTS5 index for optimal performance",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {"type": "string", "description": "Name of the FTS5 table to rebuild"},
+                    },
+                    "required": ["table_name"],
+                },
+            ),
+            types.Tool(
+                name="fts_search",
+                description="Perform enhanced full-text search with ranking and snippets",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {"type": "string", "description": "Name of the FTS5 table to search"},
+                        "query": {"type": "string", "description": "FTS5 search query"},
+                        "limit": {"type": "integer", "description": "Maximum number of results", "default": 10},
+                        "snippet_length": {"type": "integer", "description": "Length of text snippets", "default": 32}
+                    },
+                    "required": ["table_name", "query"],
+                },
+            ),
         ]
         
         # Add diagnostic tools if JSONB is supported
@@ -801,6 +841,86 @@ async def main(db_path: str):
                 """)
                 
                 return [types.TextContent(type="text", text=json.dumps(indexes, indent=2))]
+
+            # Handle FTS5 tools
+            elif name == "create_fts_table":
+                logger.info(f"Creating FTS5 table: {arguments.get('table_name')}")
+                table_name = arguments["table_name"]
+                columns = arguments["columns"]
+                content_table = arguments.get("content_table")
+                tokenizer = arguments.get("tokenizer", "unicode61")
+                
+                # Build FTS5 CREATE statement
+                columns_str = ", ".join(columns)
+                fts_sql = f"CREATE VIRTUAL TABLE {table_name} USING fts5({columns_str}, tokenize='{tokenizer}')"
+                
+                try:
+                    db._execute_query(fts_sql)
+                    result_msg = f"FTS5 table '{table_name}' created successfully with columns: {columns_str}"
+                    
+                    # If content table specified, populate the FTS5 table
+                    if content_table:
+                        populate_sql = f"INSERT INTO {table_name} SELECT {columns_str} FROM {content_table}"
+                        db._execute_query(populate_sql)
+                        result_msg += f" and populated from '{content_table}'"
+                    
+                    logger.info(result_msg)
+                    return [types.TextContent(type="text", text=result_msg)]
+                except Exception as e:
+                    error_msg = f"Failed to create FTS5 table: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "rebuild_fts_index":
+                logger.info(f"Rebuilding FTS5 index for table: {arguments.get('table_name')}")
+                table_name = arguments["table_name"]
+                
+                try:
+                    # Rebuild the FTS5 index
+                    rebuild_sql = f"INSERT INTO {table_name}({table_name}) VALUES('rebuild')"
+                    db._execute_query(rebuild_sql)
+                    
+                    result_msg = f"FTS5 index for '{table_name}' rebuilt successfully"
+                    logger.info(result_msg)
+                    return [types.TextContent(type="text", text=result_msg)]
+                except Exception as e:
+                    error_msg = f"Failed to rebuild FTS5 index: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "fts_search":
+                logger.info(f"Performing FTS5 search on table: {arguments.get('table_name')}")
+                table_name = arguments["table_name"]
+                query = arguments["query"]
+                limit = arguments.get("limit", 10)
+                snippet_length = arguments.get("snippet_length", 32)
+                
+                try:
+                    # Enhanced FTS5 search with ranking and snippets
+                    search_sql = f"""
+                        SELECT *, 
+                               bm25({table_name}) as rank,
+                               snippet({table_name}, -1, '<mark>', '</mark>', '...', {snippet_length}) as snippet
+                        FROM {table_name} 
+                        WHERE {table_name} MATCH ? 
+                        ORDER BY rank 
+                        LIMIT ?
+                    """
+                    
+                    results = db._execute_query(search_sql, {"query": query, "limit": limit})
+                    
+                    result_msg = f"Found {len(results)} results for query: '{query}'"
+                    logger.info(result_msg)
+                    
+                    return [types.TextContent(type="text", text=json.dumps({
+                        "query": query,
+                        "results_count": len(results),
+                        "results": results
+                    }, indent=2))]
+                except Exception as e:
+                    error_msg = f"FTS5 search failed: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
 
             # Handle regular query tools
             if not arguments:
