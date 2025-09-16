@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated September 16, 2025 6:15 PM EST - v1.2.1*
+*Last Updated September 16, 2025 7:30 PM EST - v1.3.0*
 
 ## Overview
 
@@ -19,6 +19,7 @@ This enhanced version builds upon their excellent foundation with additional fea
 - Advanced transaction safety mechanisms  
 - Comprehensive parameter binding
 - Multi-database configuration support
+- Database Administration Tools
 - Extended error handling and diagnostics
 - Production-ready Docker containerization
 - Comprehensive testing and validation
@@ -36,28 +37,54 @@ This enhanced version builds upon their excellent foundation with additional fea
 - **JSON Validation**: Prevents invalid JSON from being stored in the database
 - **Comprehensive Schema Tools**: Enhanced tools for exploring and documenting database structure
 - **Database Administration Tools**: Complete suite of maintenance tools including VACUUM, ANALYZE, integrity checks, performance statistics, and index usage analysis
+- **Full-Text Search (FTS5)**: Comprehensive FTS5 implementation with table creation, index management, and enhanced search with BM25 ranking and snippets
 - **Advanced SQLite Engine**: Upgraded to SQLite 3.45.x with significant performance enhancements
 
 ## Using Full-Text Search
 
-The SQLite MCP Server provides powerful full-text search capabilities through its integrated FTS5 extension. This allows for efficient and accurate searching across all database content.
+The SQLite MCP Server provides comprehensive full-text search capabilities through its integrated FTS5 extension with dedicated management tools.
 
-### Search Examples
+### FTS5 Management Tools
+
+**Create FTS5 Tables:**
+```javascript
+create_fts_table({
+  "table_name": "documents_fts",
+  "columns": ["title", "content", "category"],
+  "content_table": "documents",  // Optional: populate from existing table
+  "tokenizer": "unicode61"       // Optional: unicode61, porter, ascii
+})
+```
+
+**Enhanced Search with Ranking:**
+```javascript
+fts_search({
+  "table_name": "documents_fts",
+  "query": "database optimization",
+  "limit": 10,
+  "snippet_length": 50
+})
+// Returns: BM25 ranking, highlighted snippets, structured results
+```
+
+**Rebuild Indexes for Performance:**
+```javascript
+rebuild_fts_index({
+  "table_name": "documents_fts"
+})
+```
+
+### Manual Search Examples
 
 ```javascript
-// Basic full-text search (requires FTS5 virtual table)
+// Basic full-text search
 read_query({
-  "query": "SELECT id, title, content FROM documents_fts WHERE documents_fts MATCH 'integration' LIMIT 10"
-})
-
-// Search with ranking by relevance
-read_query({
-  "query": "SELECT id, title, content, rank FROM documents_fts WHERE documents_fts MATCH 'database design' ORDER BY rank LIMIT 5"
+  "query": "SELECT * FROM documents_fts WHERE documents_fts MATCH 'integration' LIMIT 10"
 })
 
 // Phrase search with exact matching
 read_query({
-  "query": "SELECT id, title FROM documents_fts WHERE documents_fts MATCH '\"exact phrase\"'"
+  "query": "SELECT * FROM documents_fts WHERE documents_fts MATCH '\"exact phrase\"'"
 })
 ```
 
@@ -522,38 +549,6 @@ The server automatically detects project structure and creates appropriate datab
 
 **For most users**: You only need Python requirements. The JavaScript utilities are optional helpers for advanced use cases.
 
-## Planned Future Enhancements
-
-#### **1. Backup/Restore Operations - HIGH  PRIORITY**
-- **Missing**: SQLite backup API integration
-- **Current**: No built-in backup/restore tools
-
-#### **2. Full-Text Search (FTS5) - HIGH PRIORITY**
-- **Missing**: FTS5 virtual table creation and management
-- **Current Status**: Server supports FTS5 queries if tables exist, but no tools to create/manage FTS5 tables
-- **Impact**: High for search-heavy applications
-
-#### **3. Virtual Table Management - MEDIUM PRIORITY**
-- **Missing**: Tools to create/manage virtual tables beyond FTS5
-- **Examples**: CSV virtual tables, memory virtual tables
-
-#### **4. R-Tree Index Support - LOW PRIORITY**
-- **Missing**: Spatial indexing for geometric data
-- **Current**: No specialized tools for R-Tree operations
-
-#### **5. Advanced PRAGMA Operations - LOW PRIORITY**
-- **Missing**: Comprehensive PRAGMA management tools
-- **Current**: Can execute PRAGMA via queries, but no specialized tools
-
-## Resources
-
-- [SQLite Documentation](https://www.sqlite.org/docs.html)
-- [SQLite JSON1 Extension](https://www.sqlite.org/json1.html)
-- [SQLite JSONB Support](https://www.sqlite.org/draft/releaselog/3_45_0.html)
-- [better-sqlite3 Documentation](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md)
-- [MCP Protocol Specification](https://mcp-protocol.org/specification)
-- [SQL Window Functions Tutorial](https://www.sqlitetutorial.net/sqlite-window-functions/)
-
 ## JSON Validation and JSONB Support
 
 ### JSON Validation System
@@ -586,6 +581,24 @@ All JSON columns have been migrated to the JSONB binary storage format, providin
 
 The migration to JSONB is transparent to users - simply continue using standard JSON operations as shown in the examples.
 
+## Planned Future Enhancements
+
+#### **1. Backup/Restore Operations - HIGH PRIORITY**
+- **Missing**: SQLite backup API integration
+- **Current**: No built-in backup/restore tools
+
+#### **2. Virtual Table Management - MEDIUM PRIORITY**
+- **Missing**: Tools to create/manage virtual tables beyond FTS5
+- **Examples**: CSV virtual tables, memory virtual tables
+
+#### **3. R-Tree Index Support - LOW PRIORITY**
+- **Missing**: Spatial indexing for geometric data
+- **Current**: No specialized tools for R-Tree operations
+
+#### **4. Advanced PRAGMA Operations - LOW PRIORITY**
+- **Missing**: Comprehensive PRAGMA management tools
+- **Current**: Can execute PRAGMA via queries, but no specialized tools
+
 ## Contributing
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to get started.
@@ -601,6 +614,15 @@ If you discover a security vulnerability, please follow our [Security Policy](SE
 - 📝 [Open an issue](https://github.com/neverinfamous/mcp_server_sqlite/issues) for bug reports or feature requests
 - 💝 [Sponsor this project](https://github.com/sponsors/neverinfamous) to support development
 - 🌐 Visit [adamic.tech](https://adamic.tech) for more projects
+
+## Resources
+
+- [SQLite Documentation](https://www.sqlite.org/docs.html)
+- [SQLite JSON1 Extension](https://www.sqlite.org/json1.html)
+- [SQLite JSONB Support](https://www.sqlite.org/draft/releaselog/3_45_0.html)
+- [better-sqlite3 Documentation](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md)
+- [MCP Protocol Specification](https://mcp-protocol.org/specification)
+- [SQL Window Functions Tutorial](https://www.sqlitetutorial.net/sqlite-window-functions/)
 
 ## License
 
