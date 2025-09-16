@@ -867,13 +867,9 @@ async def main(db_path: str):
             write_stream,
             InitializationOptions(
                 server_name="sqlite-custom",
-                server_version="0.2.0",
+                server_version="1.2.0",
                 capabilities=server.get_capabilities(
                     notification_options=NotificationOptions(),
-                    experimental_capabilities={
-                        "json_diagnostics": True,
-                        "jsonb_support": db.version_info['has_jsonb_support']
-                    },
                 ),
             ),
         )
