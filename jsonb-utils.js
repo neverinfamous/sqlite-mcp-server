@@ -117,4 +117,28 @@ function createJsonValidationTriggers(db, tableName, columnName) {
       CREATE TRIGGER IF NOT EXISTS ${updateTriggerName}
       BEFORE UPDATE OF ${columnName} ON ${tableName}
       FOR EACH ROW
-      WHEN NEW.${columnName} IS NOT NULL AND NOT json_valid(NEW.${columnName
+      WHEN NEW.${columnName} IS NOT NULL AND NOT json_valid(NEW.${columnName})
+      BEGIN
+        SELECT RAISE(ABORT, 'Invalid JSON in ${columnName}');
+      END;
+    `).run();
+    results.created.push(updateTriggerName);
+    
+    return {
+      success: true,
+      results
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+      results
+    };
+  }
+}
+
+module.exports = {
+  checkJsonbSupport,
+  validateJson,
+  createJsonValidationTriggers
+};

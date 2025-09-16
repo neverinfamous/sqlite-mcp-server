@@ -32,7 +32,10 @@ function safeWriteQuery(db, query, params = []) {
     try {
       db.prepare('ROLLBACK').run();
     } catch (rollbackError) {
-      console.error('Error during rollback:', rollbackError);
+      // Log rollback errors only if in development or debug mode
+      if (process.env.NODE_ENV === 'development' || process.env.DEBUG) {
+        console.error('Error during rollback:', rollbackError);
+      }
     }
     
     // Rethrow the original error
