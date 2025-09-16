@@ -4,7 +4,7 @@
 
 ## Overview
 
-The SQLite MCP Server provides advanced database interaction and business intelligence capabilities through SQLite featuring enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
+The SQLite MCP Server provides advanced database interaction and business intelligence capabilities through SQLite featuring Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
 
 ## Attribution
 
@@ -19,6 +19,7 @@ This enhanced version builds upon their excellent foundation with additional fea
 - Advanced transaction safety mechanisms  
 - Comprehensive parameter binding
 - Multi-database configuration support
+- Full-Text Search (FTS5)
 - Database Administration Tools
 - Extended error handling and diagnostics
 - Production-ready Docker containerization
