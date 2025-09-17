@@ -3186,13 +3186,23 @@ async def main(db_path: str = "sqlite_mcp.db"):
                                 text=error_msg
                             )]
                         
-                        # Initialize spatial metadata
-                        db._execute_query("SELECT InitSpatialMetaData(1)")
+                        # Try to initialize spatial metadata (optional for some SpatiaLite versions)
+                        try:
+                            db._execute_query("SELECT InitSpatialMetaData(1)")
+                        except:
+                            pass  # Some versions don't require this
                         
                         # Get version info
-                        result = db._execute_query("SELECT spatialite_version(), proj4_version(), geos_version()")
-                        if result and len(result) > 0:
-                            versions = result[0]
+                        try:
+                            result = db._execute_query("SELECT spatialite_version(), proj4_version(), geos_version()")
+                            if result and len(result) > 0:
+                                versions = result[0]
+                            else:
+                                # Try just spatialite version
+                                result = db._execute_query("SELECT spatialite_version()")
+                                versions = {"spatialite_version()": result[0].get("spatialite_version()", "Unknown") if result else "Unknown"}
+                        except:
+                            versions = {"spatialite_version()": "Unknown"}
                         
                         return [types.TextContent(
                             type="text",
