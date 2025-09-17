@@ -2348,9 +2348,7 @@ Variability:
                     
                     if result and len(result) > 0:
                         stats = result[0]
-                        correlation = stats.get('correlation', 0.0)
-                        if correlation is None:
-                            correlation = 0.0
+                        correlation = stats['correlation'] if 'correlation' in stats.keys() and stats['correlation'] is not None else 0.0
                         
                         # Interpret correlation strength
                         if abs(correlation) >= 0.9:
@@ -2368,7 +2366,7 @@ Variability:
                         
                         output = f"""Correlation Analysis between {column_x} and {column_y}:
 
-Sample Size: {stats['count']:,}
+Sample Size: {stats['n']:,}
 Mean {column_x}: {stats['mean_x']:.4f}
 Mean {column_y}: {stats['mean_y']:.4f}
 
@@ -2484,11 +2482,12 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                         """
                         
                         iqr_result = db._execute_query(iqr_query)
-                        if iqr_result:
+                        if iqr_result and len(iqr_result) > 0:
+                            row = iqr_result[0]
                             outliers_found.append(f"IQR Method (multiplier={iqr_multiplier}):")
-                            outliers_found.append(f"  Lower bound: {iqr_result[0]['lower_bound']:.4f}")
-                            outliers_found.append(f"  Upper bound: {iqr_result[0]['upper_bound']:.4f}")
-                            outliers_found.append(f"  Outliers found: {iqr_result[0]['iqr_outliers']}")
+                            outliers_found.append(f"  Lower bound: {row['lower_bound']:.4f}")
+                            outliers_found.append(f"  Upper bound: {row['upper_bound']:.4f}")
+                            outliers_found.append(f"  Outliers found: {row['iqr_outliers']}")
                     
                     if method in ["zscore", "both"]:
                         # Z-score method
@@ -2515,10 +2514,11 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                         
                         zscore_result = db._execute_query(zscore_query)
                         if zscore_result and len(zscore_result) > 0:
+                            row = zscore_result[0]
                             outliers_found.append(f"\nZ-Score Method (threshold={zscore_threshold}):")
-                            outliers_found.append(f"  Lower bound: {zscore_result[0]['lower_bound']:.4f}")
-                            outliers_found.append(f"  Upper bound: {zscore_result[0]['upper_bound']:.4f}")
-                            outliers_found.append(f"  Outliers found: {zscore_result[0]['zscore_outliers']}")
+                            outliers_found.append(f"  Lower bound: {row['lower_bound']:.4f}")
+                            outliers_found.append(f"  Upper bound: {row['upper_bound']:.4f}")
+                            outliers_found.append(f"  Outliers found: {row['zscore_outliers']}")
                         else:
                             outliers_found.append(f"\nZ-Score Method (threshold={zscore_threshold}):")
                             outliers_found.append(f"  Outliers found: 0")
@@ -2629,9 +2629,9 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                     
                     result = db._execute_query(dist_query)
                     
-                    if result:
+                    if result and len(result) > 0:
                         stats = result[0]
-                        frequencies = stats['frequencies'].split(',') if stats['frequencies'] else []
+                        frequencies = stats['frequencies'].split(',') if stats['frequencies'] and stats['frequencies'] is not None else []
                         
                         output = f"""Distribution Analysis for {table_name}.{column_name}:
 
@@ -2704,7 +2704,7 @@ Bin Width: {stats['bin_width']:.4f}
                     
                     result = db._execute_query(regression_query)
                     
-                    if result:
+                    if result and len(result) > 0:
                         reg = result[0]
                         r_squared = reg['r_value'] ** 2 if reg['r_value'] is not None else 0
                         
@@ -2770,7 +2770,7 @@ For every 1-unit increase in {x_column}, {y_column} {'increases' if reg['slope']
                         
                         result = db._execute_query(test_query)
                         
-                        if result:
+                        if result and len(result) > 0:
                             test_result = result[0]
                             
                             # Critical t-value approximation (for common cases)
