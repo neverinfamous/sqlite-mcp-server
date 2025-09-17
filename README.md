@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated September 17, 2025 6:15 AM EST - v2.2.0*
+*Last Updated September 17, 2025 7:34 AM EST - v2.2.0*
 
 ## Overview
 
@@ -8,7 +8,7 @@ The SQLite MCP Server provides advanced database interaction and business intell
 
 ## Key Features
 
-- **Advanced Text Processing**: Comprehensive text analysis toolkit with PCRE regex extraction/replacement, fuzzy matching with Levenshtein distance, phonetic matching (Soundex/Metaphone), text similarity analysis (Cosine/Jaccard), normalization operations, and pattern validation
+- **Advanced Text Processing**: Comprehensive text analysis toolkit with 8 specialized tools: PCRE regex extraction/replacement, fuzzy matching with Levenshtein distance, phonetic matching (Soundex/Metaphone), text similarity analysis (Cosine/Jaccard), normalization operations, pattern validation, advanced multi-method search, and comprehensive text validation
 - **Statistical Analysis Library**: Comprehensive statistical functions for data analysis including descriptive statistics, percentile analysis, and time series analysis
 - **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements (~15% space savings)
 - **Transaction Safety**: All write operations automatically wrapped in transactions with proper rollback on errors
@@ -43,7 +43,7 @@ This project is based on the original SQLite MCP Server from the [Model Context 
 
 ## Advanced Text Processing
 
-The SQLite MCP Server v2.2.0 introduces a comprehensive text processing toolkit with 8 specialized functions for advanced text analysis, pattern matching, and data cleaning.
+The SQLite MCP Server v2.2.0 introduces a comprehensive text processing toolkit with 8 specialized functions for advanced text analysis, pattern matching, and data cleaning. This brings the total server capabilities to **67 tools** for complete database and text processing operations.
 
 ### Available Text Processing Functions
 
