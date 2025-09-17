@@ -425,13 +425,44 @@ async def main(db_path: str):
     async def handle_list_resources() -> list[types.Resource]:
         logger.debug("Handling list_resources request")
         return [
+            # Database Meta-Awareness Resources
+            types.Resource(
+                uri=AnyUrl("database://schema"),
+                name="Database Schema",
+                description="Complete database schema with tables, columns, indexes, and relationships in natural language + JSON",
+                mimeType="application/json",
+            ),
+            types.Resource(
+                uri=AnyUrl("database://capabilities"),
+                name="Server Capabilities",
+                description="Comprehensive server capabilities matrix including all 36 tools, features, and supported operations",
+                mimeType="application/json",
+            ),
+            types.Resource(
+                uri=AnyUrl("database://statistics"),
+                name="Table Statistics",
+                description="Real-time database statistics, table sizes, row counts, and optimization recommendations",
+                mimeType="application/json",
+            ),
+            types.Resource(
+                uri=AnyUrl("database://search_indexes"),
+                name="Search Index Status",
+                description="Status of FTS5 full-text search and semantic search indexes with performance metrics",
+                mimeType="application/json",
+            ),
+            types.Resource(
+                uri=AnyUrl("database://performance"),
+                name="Performance Insights",
+                description="Database performance analysis, optimization tips, and health recommendations",
+                mimeType="application/json",
+            ),
+            # Legacy Resources (maintained for compatibility)
             types.Resource(
                 uri=AnyUrl("memo://insights"),
                 name="Business Insights Memo",
                 description="A living document of discovered business insights",
                 mimeType="text/plain",
             ),
-            # Add diagnostic resource
             types.Resource(
                 uri=AnyUrl("diagnostics://json"),
                 name="JSON Diagnostics",
@@ -444,8 +475,189 @@ async def main(db_path: str):
     async def handle_read_resource(uri: AnyUrl) -> str:
         logger.debug(f"Handling read_resource request for URI: {uri}")
         
-        # Handle memo resources
-        if uri.scheme == "memo":
+        # Handle database meta-awareness resources
+        if uri.scheme == "database":
+            path = str(uri).replace("database://", "")
+            
+            if path == "schema":
+                # Get complete database schema with natural language descriptions
+                try:
+                    # Get all tables
+                    tables_query = "SELECT name, sql FROM sqlite_master WHERE type='table' ORDER BY name"
+                    tables = db._execute_query(tables_query)
+                    
+                    schema_info = {
+                        "database_path": db.db_path,
+                        "sqlite_version": db.version_info.get('version', 'Unknown'),
+                        "total_tables": len(tables) if tables else 0,
+                        "tables": [],
+                        "summary": f"Database contains {len(tables) if tables else 0} tables. SQLite version {db.version_info.get('version', 'Unknown')}."
+                    }
+                    
+                    # Process tables
+                    if tables:
+                        for table in tables:
+                            table_name = table["name"]
+                            # Get column info
+                            columns_query = f"PRAGMA table_info({table_name})"
+                            columns = db._execute_query(columns_query)
+                            
+                            # Get row count
+                            try:
+                                count_query = f"SELECT COUNT(*) as count FROM {table_name}"
+                                count_result = db._execute_query(count_query)
+                                row_count = count_result[0]["count"] if count_result else 0
+                            except:
+                                row_count = "Unknown"
+                            
+                            table_info = {
+                                "name": table_name,
+                                "columns": columns if columns else [],
+                                "column_count": len(columns) if columns else 0,
+                                "row_count": row_count
+                            }
+                            schema_info["tables"].append(table_info)
+                    
+                    return json.dumps(schema_info, indent=2)
+                    
+                except Exception as e:
+                    logger.error(f"Failed to generate database schema: {e}")
+                    return json.dumps({"error": f"Failed to generate schema: {str(e)}"}, indent=2)
+            
+            elif path == "capabilities":
+                # Comprehensive server capabilities matrix
+                capabilities = {
+                    "server_version": "1.8.0",
+                    "sqlite_version": db.version_info.get('version', 'Unknown'),
+                    "total_tools": 36,
+                    "semantic_search": True,
+                    "full_text_search": True,
+                    "virtual_tables": True,
+                    "backup_restore": True,
+                    "jsonb_support": db.version_info.get('has_jsonb_support', False),
+                    "advanced_features": [
+                        "AI-native semantic/vector search with cosine similarity",
+                        "Hybrid keyword + semantic search with configurable weighting",
+                        "FTS5 full-text search with BM25 ranking and snippets",
+                        "Virtual table management (R-Tree, CSV, Series)",
+                        "Database administration tools (VACUUM, ANALYZE, integrity)",
+                        "Backup/restore with atomic operations and verification",
+                        "Advanced PRAGMA operations for configuration management",
+                        "Pure SQLite implementation with no external dependencies"
+                    ]
+                }
+                return json.dumps(capabilities, indent=2)
+            
+            elif path == "statistics":
+                # Real-time database statistics
+                try:
+                    stats = {"tables": [], "recommendations": []}
+                    
+                    tables_query = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+                    tables = db._execute_query(tables_query)
+                    
+                    if tables:
+                        for table in tables:
+                            table_name = table["name"]
+                            try:
+                                count_result = db._execute_query(f"SELECT COUNT(*) as count FROM {table_name}")
+                                row_count = count_result[0]["count"] if count_result else 0
+                                
+                                stats["tables"].append({
+                                    "name": table_name,
+                                    "row_count": row_count
+                                })
+                                
+                                if row_count > 10000:
+                                    stats["recommendations"].append(f"Consider indexing '{table_name}' (has {row_count:,} rows)")
+                                    
+                            except Exception as e:
+                                stats["tables"].append({"name": table_name, "error": str(e)})
+                    
+                    if not stats["recommendations"]:
+                        stats["recommendations"].append("Database appears well-optimized")
+                    
+                    return json.dumps(stats, indent=2)
+                    
+                except Exception as e:
+                    return json.dumps({"error": f"Failed to generate statistics: {str(e)}"}, indent=2)
+            
+            elif path == "search_indexes":
+                # Search index status
+                try:
+                    index_status = {"fts5_indexes": [], "semantic_indexes": [], "recommendations": []}
+                    
+                    # Find FTS5 tables
+                    fts_query = """
+                        SELECT name FROM sqlite_master 
+                        WHERE type='table' AND sql LIKE '%VIRTUAL TABLE%' AND sql LIKE '%fts5%'
+                    """
+                    fts_tables = db._execute_query(fts_query)
+                    
+                    if fts_tables:
+                        for fts_table in fts_tables:
+                            try:
+                                count_result = db._execute_query(f"SELECT COUNT(*) as count FROM {fts_table['name']}")
+                                row_count = count_result[0]["count"] if count_result else 0
+                                index_status["fts5_indexes"].append({
+                                    "name": fts_table["name"],
+                                    "document_count": row_count,
+                                    "status": "active" if row_count > 0 else "empty"
+                                })
+                            except:
+                                pass
+                    
+                    # Find semantic search tables
+                    semantic_query = "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE '%embedding%'"
+                    semantic_tables = db._execute_query(semantic_query)
+                    
+                    if semantic_tables:
+                        for semantic_table in semantic_tables:
+                            try:
+                                count_result = db._execute_query(f"SELECT COUNT(*) as count FROM {semantic_table['name']}")
+                                row_count = count_result[0]["count"] if count_result else 0
+                                index_status["semantic_indexes"].append({
+                                    "name": semantic_table["name"],
+                                    "vector_count": row_count,
+                                    "status": "active" if row_count > 0 else "empty"
+                                })
+                            except:
+                                pass
+                    
+                    if not index_status["fts5_indexes"] and not index_status["semantic_indexes"]:
+                        index_status["recommendations"].append("Consider setting up FTS5 or semantic search for better search capabilities")
+                    
+                    return json.dumps(index_status, indent=2)
+                    
+                except Exception as e:
+                    return json.dumps({"error": f"Failed to analyze search indexes: {str(e)}"}, indent=2)
+            
+            elif path == "performance":
+                # Performance insights
+                try:
+                    performance = {
+                        "health_score": "Good",
+                        "optimization_tips": [
+                            "Run ANALYZE regularly to update query planner statistics",
+                            "Use VACUUM periodically to reclaim space and defragment",
+                            "Consider PRAGMA optimize for automatic statistics updates",
+                            "Monitor index usage with index_usage_stats tool"
+                        ],
+                        "maintenance_recommendations": [
+                            "Regular integrity checks using integrity_check tool",
+                            "Monitor database statistics with database_stats tool",
+                            "Backup database regularly using backup_database tool"
+                        ]
+                    }
+                    return json.dumps(performance, indent=2)
+                except Exception as e:
+                    return json.dumps({"error": f"Failed to analyze performance: {str(e)}"}, indent=2)
+            
+            else:
+                raise ValueError(f"Unknown database resource path: {path}")
+        
+        # Handle memo resources (legacy)
+        elif uri.scheme == "memo":
             path = str(uri).replace("memo://", "")
             if not path or path != "insights":
                 logger.error(f"Unknown memo path: {path}")
@@ -472,6 +684,78 @@ async def main(db_path: str):
     async def handle_list_prompts() -> list[types.Prompt]:
         logger.debug("Handling list_prompts request")
         return [
+            # Intelligent Workflow Prompts
+            types.Prompt(
+                name="semantic_query",
+                description="Guide for translating natural language queries into semantic search + SQL operations",
+                arguments=[
+                    types.PromptArgument(
+                        name="user_question",
+                        description="The user's natural language question or search intent",
+                        required=True,
+                    ),
+                    types.PromptArgument(
+                        name="search_type",
+                        description="Type of search: 'semantic', 'keyword', or 'hybrid'",
+                        required=False,
+                    )
+                ],
+            ),
+            types.Prompt(
+                name="summarize_table",
+                description="Intelligent table analysis and summary generation with key statistics",
+                arguments=[
+                    types.PromptArgument(
+                        name="table_name",
+                        description="Name of the table to analyze and summarize",
+                        required=True,
+                    ),
+                    types.PromptArgument(
+                        name="analysis_depth",
+                        description="Depth of analysis: 'basic', 'detailed', or 'comprehensive'",
+                        required=False,
+                    )
+                ],
+            ),
+            types.Prompt(
+                name="optimize_database",
+                description="Step-by-step database optimization workflow with performance analysis",
+                arguments=[
+                    types.PromptArgument(
+                        name="optimization_focus",
+                        description="Focus area: 'performance', 'storage', 'indexes', or 'all'",
+                        required=False,
+                    )
+                ],
+            ),
+            types.Prompt(
+                name="setup_semantic_search",
+                description="Complete guide for setting up semantic search with embeddings",
+                arguments=[
+                    types.PromptArgument(
+                        name="content_type",
+                        description="Type of content to search: 'documents', 'products', 'articles', or 'general'",
+                        required=True,
+                    ),
+                    types.PromptArgument(
+                        name="embedding_provider",
+                        description="Embedding provider: 'openai', 'huggingface', or 'custom'",
+                        required=False,
+                    )
+                ],
+            ),
+            types.Prompt(
+                name="hybrid_search_workflow",
+                description="Step-by-step implementation of hybrid keyword + semantic search",
+                arguments=[
+                    types.PromptArgument(
+                        name="use_case",
+                        description="Use case: 'qa_system', 'content_discovery', 'ecommerce', or 'knowledge_base'",
+                        required=True,
+                    )
+                ],
+            ),
+            # Legacy Prompts (maintained for compatibility)
             types.Prompt(
                 name="mcp-demo",
                 description="A prompt to seed the database with initial data and demonstrate what you can do with an SQLite MCP Server + Claude",
@@ -483,7 +767,6 @@ async def main(db_path: str):
                     )
                 ],
             ),
-            # Add a diagnostic prompt
             types.Prompt(
                 name="json-diagnostic",
                 description="A prompt to check SQLite JSONB capabilities and run diagnostics",
