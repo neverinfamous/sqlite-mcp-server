@@ -3139,7 +3139,12 @@ async def main(db_path: str = "sqlite_mcp.db"):
                     # Try to load SpatiaLite extension
                     try:
                         # Common SpatiaLite extension names/paths
+                        import os
+                        script_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+                        local_spatialite = os.path.join(script_dir, "mod_spatialite-5.1.0-win-amd64", "mod_spatialite.dll")
+                        
                         spatialite_paths = [
+                            local_spatialite,  # Local installation first
                             "mod_spatialite",
                             "mod_spatialite.dll", 
                             "mod_spatialite.so",
