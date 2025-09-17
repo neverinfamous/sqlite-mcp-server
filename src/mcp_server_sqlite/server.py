@@ -3028,7 +3028,7 @@ async def main(db_path: str = "sqlite_mcp.db"):
                             "most_common_type": most_common_type[0],
                             "suggested_sqlite_type": sqlite_type,
                             "average_depth": sum(info["depths"]) / len(info["depths"]) if info["depths"] else 0,
-                            "sample_values": list(set(info["examples"]))[:5]
+                            "sample_values": [str(x) for x in list(set(str(ex) for ex in info["examples"]))[:5]]
                         }
                     
                     analysis_result["schema_analysis"] = schema_analysis
