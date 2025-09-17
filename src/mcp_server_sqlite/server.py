@@ -783,6 +783,135 @@ async def main(db_path: str):
                     "properties": {},
                 },
             ),
+            
+            # Virtual Table Management Tools
+            types.Tool(
+                name="create_rtree_table",
+                description="Create an R-Tree virtual table for spatial indexing",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name for the R-Tree table"
+                        },
+                        "dimensions": {
+                            "type": "integer",
+                            "description": "Number of dimensions (2 for 2D, 3 for 3D, etc.)",
+                            "default": 2
+                        },
+                        "coordinate_type": {
+                            "type": "string",
+                            "description": "Coordinate type: 'float' or 'int'",
+                            "default": "float"
+                        }
+                    },
+                    "required": ["table_name"]
+                }
+            ),
+            
+            types.Tool(
+                name="create_csv_table",
+                description="Create a virtual table to access CSV files",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name for the CSV virtual table"
+                        },
+                        "csv_file_path": {
+                            "type": "string",
+                            "description": "Path to the CSV file"
+                        },
+                        "has_header": {
+                            "type": "boolean",
+                            "description": "Whether CSV has header row",
+                            "default": true
+                        },
+                        "delimiter": {
+                            "type": "string",
+                            "description": "CSV delimiter character",
+                            "default": ","
+                        }
+                    },
+                    "required": ["table_name", "csv_file_path"]
+                }
+            ),
+            
+            types.Tool(
+                name="create_series_table",
+                description="Create a generate_series virtual table for sequences",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name for the series virtual table"
+                        },
+                        "start_value": {
+                            "type": "integer",
+                            "description": "Starting value of the series",
+                            "default": 1
+                        },
+                        "end_value": {
+                            "type": "integer",
+                            "description": "Ending value of the series",
+                            "default": 100
+                        },
+                        "step": {
+                            "type": "integer",
+                            "description": "Step increment",
+                            "default": 1
+                        }
+                    },
+                    "required": ["table_name"]
+                }
+            ),
+            
+            types.Tool(
+                name="list_virtual_tables",
+                description="List all virtual tables in the database",
+                inputSchema={
+                    "type": "object",
+                    "properties": {},
+                }
+            ),
+            
+            types.Tool(
+                name="drop_virtual_table",
+                description="Drop a virtual table",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name of the virtual table to drop"
+                        },
+                        "confirm": {
+                            "type": "boolean",
+                            "description": "Confirmation flag (required to prevent accidental drops)",
+                            "default": false
+                        }
+                    },
+                    "required": ["table_name", "confirm"]
+                }
+            ),
+            
+            types.Tool(
+                name="virtual_table_info",
+                description="Get detailed information about a virtual table",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name of the virtual table to inspect"
+                        }
+                    },
+                    "required": ["table_name"]
+                }
+            ),
         ]
         
         # Add diagnostic tools if JSONB is supported
@@ -1274,6 +1403,324 @@ async def main(db_path: str):
                     
                 except Exception as e:
                     error_msg = f"PRAGMA compile_options failed: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            # Handle virtual table management tools
+            elif name == "create_rtree_table":
+                if not arguments or "table_name" not in arguments:
+                    raise ValueError("Missing table_name argument")
+                
+                table_name = arguments["table_name"]
+                dimensions = arguments.get("dimensions", 2)
+                coordinate_type = arguments.get("coordinate_type", "float")
+                
+                logger.info(f"Creating R-Tree virtual table: {table_name}")
+                
+                try:
+                    # Build coordinate column definitions based on dimensions
+                    if coordinate_type == "int":
+                        coord_cols = []
+                        for i in range(dimensions):
+                            coord_cols.extend([f"min{i}", f"max{i}"])
+                    else:
+                        coord_cols = []
+                        for i in range(dimensions):
+                            coord_cols.extend([f"min{i}", f"max{i}"])
+                    
+                    # Create R-Tree virtual table
+                    col_def = ", ".join(coord_cols)
+                    create_sql = f"CREATE VIRTUAL TABLE {table_name} USING rtree(id, {col_def})"
+                    
+                    db._execute_query(create_sql)
+                    
+                    result_info = {
+                        "table_name": table_name,
+                        "type": "rtree",
+                        "dimensions": dimensions,
+                        "coordinate_type": coordinate_type,
+                        "columns": ["id"] + coord_cols,
+                        "status": "created"
+                    }
+                    
+                    logger.info(f"R-Tree table '{table_name}' created successfully")
+                    return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"Failed to create R-Tree table: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "create_csv_table":
+                if not arguments or "table_name" not in arguments or "csv_file_path" not in arguments:
+                    raise ValueError("Missing table_name or csv_file_path argument")
+                
+                table_name = arguments["table_name"]
+                csv_file_path = arguments["csv_file_path"]
+                has_header = arguments.get("has_header", True)
+                delimiter = arguments.get("delimiter", ",")
+                
+                logger.info(f"Creating CSV virtual table: {table_name} for file: {csv_file_path}")
+                
+                try:
+                    # Check if file exists
+                    import os
+                    if not os.path.exists(csv_file_path):
+                        raise ValueError(f"CSV file not found: {csv_file_path}")
+                    
+                    # Create CSV virtual table
+                    create_sql = f"""CREATE VIRTUAL TABLE {table_name} USING csv(
+                        filename='{csv_file_path}',
+                        header={str(has_header).lower()},
+                        delimiter='{delimiter}'
+                    )"""
+                    
+                    # Note: CSV extension may not be available in all SQLite builds
+                    # We'll try to create it and provide helpful error if not supported
+                    try:
+                        db._execute_query(create_sql)
+                        status = "created"
+                    except Exception as csv_error:
+                        if "no such module" in str(csv_error).lower():
+                            # Try alternative approach using import
+                            create_sql = f"CREATE TEMP TABLE {table_name} AS SELECT * FROM csv('{csv_file_path}')"
+                            db._execute_query(create_sql)
+                            status = "created_as_temp_table"
+                        else:
+                            raise csv_error
+                    
+                    result_info = {
+                        "table_name": table_name,
+                        "type": "csv",
+                        "csv_file_path": csv_file_path,
+                        "has_header": has_header,
+                        "delimiter": delimiter,
+                        "status": status
+                    }
+                    
+                    logger.info(f"CSV table '{table_name}' created successfully")
+                    return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"Failed to create CSV table: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "create_series_table":
+                if not arguments or "table_name" not in arguments:
+                    raise ValueError("Missing table_name argument")
+                
+                table_name = arguments["table_name"]
+                start_value = arguments.get("start_value", 1)
+                end_value = arguments.get("end_value", 100)
+                step = arguments.get("step", 1)
+                
+                logger.info(f"Creating generate_series virtual table: {table_name}")
+                
+                try:
+                    # Create generate_series virtual table
+                    create_sql = f"""CREATE VIRTUAL TABLE {table_name} USING generate_series(
+                        start={start_value},
+                        stop={end_value},
+                        step={step}
+                    )"""
+                    
+                    # Try to create the table
+                    try:
+                        db._execute_query(create_sql)
+                        status = "created"
+                    except Exception as series_error:
+                        if "no such module" in str(series_error).lower():
+                            # Create a regular table with series data as fallback
+                            create_sql = f"""CREATE TABLE {table_name} AS 
+                                WITH RECURSIVE series(value) AS (
+                                    SELECT {start_value}
+                                    UNION ALL
+                                    SELECT value + {step} FROM series
+                                    WHERE value + {step} <= {end_value}
+                                )
+                                SELECT value FROM series"""
+                            db._execute_query(create_sql)
+                            status = "created_as_regular_table"
+                        else:
+                            raise series_error
+                    
+                    result_info = {
+                        "table_name": table_name,
+                        "type": "generate_series",
+                        "start_value": start_value,
+                        "end_value": end_value,
+                        "step": step,
+                        "status": status
+                    }
+                    
+                    logger.info(f"Series table '{table_name}' created successfully")
+                    return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"Failed to create series table: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "list_virtual_tables":
+                logger.info("Listing virtual tables")
+                
+                try:
+                    # Query for virtual tables
+                    virtual_tables_query = """
+                        SELECT name, sql 
+                        FROM sqlite_master 
+                        WHERE type = 'table' 
+                        AND sql LIKE '%VIRTUAL TABLE%'
+                        ORDER BY name
+                    """
+                    
+                    results = db._execute_query(virtual_tables_query)
+                    
+                    virtual_tables = []
+                    if results:
+                        for row in results:
+                            table_info = {
+                                "name": row["name"],
+                                "sql": row["sql"],
+                                "type": "virtual"
+                            }
+                            
+                            # Try to determine virtual table type
+                            sql_lower = row["sql"].lower()
+                            if "using rtree" in sql_lower:
+                                table_info["virtual_type"] = "rtree"
+                            elif "using fts" in sql_lower:
+                                table_info["virtual_type"] = "fts"
+                            elif "using csv" in sql_lower:
+                                table_info["virtual_type"] = "csv"
+                            elif "using generate_series" in sql_lower:
+                                table_info["virtual_type"] = "generate_series"
+                            else:
+                                table_info["virtual_type"] = "unknown"
+                            
+                            virtual_tables.append(table_info)
+                    
+                    result_info = {
+                        "virtual_tables": virtual_tables,
+                        "count": len(virtual_tables)
+                    }
+                    
+                    logger.info(f"Found {len(virtual_tables)} virtual tables")
+                    return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"Failed to list virtual tables: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "drop_virtual_table":
+                if not arguments or "table_name" not in arguments:
+                    raise ValueError("Missing table_name argument")
+                
+                table_name = arguments["table_name"]
+                confirm = arguments.get("confirm", False)
+                
+                if not confirm:
+                    return [types.TextContent(type="text", text="Error: confirm=true required to drop virtual table")]
+                
+                logger.info(f"Dropping virtual table: {table_name}")
+                
+                try:
+                    # Verify it's a virtual table first
+                    check_query = """
+                        SELECT sql FROM sqlite_master 
+                        WHERE type = 'table' AND name = ? AND sql LIKE '%VIRTUAL TABLE%'
+                    """
+                    
+                    check_results = db._execute_query(check_query, [table_name])
+                    
+                    if not check_results:
+                        return [types.TextContent(type="text", text=f"Error: '{table_name}' is not a virtual table or doesn't exist")]
+                    
+                    # Drop the virtual table
+                    drop_sql = f"DROP TABLE {table_name}"
+                    db._execute_query(drop_sql)
+                    
+                    result_info = {
+                        "table_name": table_name,
+                        "status": "dropped",
+                        "type": "virtual"
+                    }
+                    
+                    logger.info(f"Virtual table '{table_name}' dropped successfully")
+                    return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"Failed to drop virtual table: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "virtual_table_info":
+                if not arguments or "table_name" not in arguments:
+                    raise ValueError("Missing table_name argument")
+                
+                table_name = arguments["table_name"]
+                
+                logger.info(f"Getting virtual table info: {table_name}")
+                
+                try:
+                    # Get basic table info
+                    table_query = """
+                        SELECT name, sql 
+                        FROM sqlite_master 
+                        WHERE type = 'table' AND name = ? AND sql LIKE '%VIRTUAL TABLE%'
+                    """
+                    
+                    table_results = db._execute_query(table_query, [table_name])
+                    
+                    if not table_results:
+                        return [types.TextContent(type="text", text=f"Error: '{table_name}' is not a virtual table or doesn't exist")]
+                    
+                    table_info = table_results[0]
+                    
+                    # Get column information
+                    pragma_results = db._execute_query(f"PRAGMA table_info({table_name})")
+                    
+                    columns = []
+                    if pragma_results:
+                        for row in pragma_results:
+                            columns.append({
+                                "cid": row.get("cid"),
+                                "name": row.get("name"),
+                                "type": row.get("type"),
+                                "notnull": bool(row.get("notnull")),
+                                "dflt_value": row.get("dflt_value"),
+                                "pk": bool(row.get("pk"))
+                            })
+                    
+                    # Determine virtual table type
+                    sql_lower = table_info["sql"].lower()
+                    if "using rtree" in sql_lower:
+                        virtual_type = "rtree"
+                    elif "using fts" in sql_lower:
+                        virtual_type = "fts"
+                    elif "using csv" in sql_lower:
+                        virtual_type = "csv"
+                    elif "using generate_series" in sql_lower:
+                        virtual_type = "generate_series"
+                    else:
+                        virtual_type = "unknown"
+                    
+                    result_info = {
+                        "table_name": table_name,
+                        "type": "virtual",
+                        "virtual_type": virtual_type,
+                        "sql": table_info["sql"],
+                        "columns": columns,
+                        "column_count": len(columns)
+                    }
+                    
+                    logger.info(f"Retrieved info for virtual table '{table_name}'")
+                    return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"Failed to get virtual table info: {str(e)}"
                     logger.error(error_msg)
                     return [types.TextContent(type="text", text=error_msg)]
 

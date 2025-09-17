@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated September 16, 2025 9:15 PM EST - v1.5.0*
+*Last Updated September 16, 2025 8:40 PM EST - v1.5.0*
 
 ## Overview
 
@@ -22,7 +22,7 @@ The SQLite MCP Server provides advanced database interaction and business intell
 - **Full-Text Search (FTS5)**: Comprehensive FTS5 implementation with table creation, index management, and enhanced search with BM25 ranking and snippets
 - **Backup/Restore Operations**: Enterprise-grade backup and restore capabilities with SQLite backup API, integrity verification, and safety confirmations
 - **Advanced PRAGMA Operations**: Comprehensive SQLite configuration management, performance optimization, and database introspection tools
-- **Advanced SQLite Engine**: Upgraded to SQLite 3.45.x with significant performance enhancements
+- **Advanced SQLite Engine**: Upgraded to SQLite 3.50.4 with significant performance enhancements
 
 ## Attribution
 
@@ -31,19 +31,6 @@ This project is based on the original SQLite MCP Server from the [Model Context 
 **Original Authors**: Model Context Protocol Team  
 **Original Repository**: https://github.com/modelcontextprotocol/servers  
 **License**: MIT License
-
-This enhanced version builds upon their excellent foundation with additional features including:
-- Enhanced JSONB binary storage support
-- Advanced transaction safety mechanisms  
-- Comprehensive parameter binding
-- Multi-database configuration support
-- Full-Text Search (FTS5)
-- Backup/Restore Operations
-- Advanced PRAGMA Operations
-- Database Administration Tools
-- Extended error handling and diagnostics
-- Production-ready Docker containerization
-- Comprehensive testing and validation
 
 ## Using Full-Text Search
 
@@ -697,15 +684,6 @@ If you discover a security vulnerability, please follow our [Security Policy](SE
 
 - 📝 [Open an issue](https://github.com/neverinfamous/mcp_server_sqlite/issues) for bug reports or feature requests
 - 🌐 Visit memory-journal-mcp (https://github.com/neverinfamous/memory-journal-mcp)
-
-## Resources
-
-- [SQLite Documentation](https://www.sqlite.org/docs.html)
-- [SQLite JSON1 Extension](https://www.sqlite.org/json1.html)
-- [SQLite JSONB Support](https://www.sqlite.org/draft/releaselog/3_45_0.html)
-- [better-sqlite3 Documentation](https://github.com/JoshuaWise/better-sqlite3/blob/master/docs/api.md)
-- [MCP Protocol Specification](https://mcp-protocol.org/specification)
-- [SQL Window Functions Tutorial](https://www.sqlitetutorial.net/sqlite-window-functions/)
 
 ## License
 
