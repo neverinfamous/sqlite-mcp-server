@@ -1210,6 +1210,17 @@ spatial_query({
 # Extract mod_spatialite.dll to your system PATH
 ```
 
+**Note**: For data insertion, if `GeomFromText()` in INSERT statements encounters issues, use this workaround:
+```javascript
+// 1. Get binary geometry data
+read_query({"query": "SELECT HEX(GeomFromText('POINT(x y)', 4326)) as hex_geom"})
+
+// 2. Insert using binary format  
+write_query({"query": "INSERT INTO table (geom) VALUES (X'hex_value')"})
+```
+
+> **✅ Windows Compatibility:** SpatiaLite v2.0.0 successfully provides full geospatial functionality on Windows! All spatial analysis, geometry operations, and spatial indexing work perfectly. The only minor limitation is `GeomFromText()` within INSERT statements, which has the simple workaround shown above.
+
 **macOS (Homebrew):**
 ```bash
 brew install spatialite-tools
