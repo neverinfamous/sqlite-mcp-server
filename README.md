@@ -1,10 +1,10 @@
 # SQLite MCP Server
 
-*Last Updated September 17, 2025 9:15 PM EST - v1.6.0*
+*Last Updated September 17, 2025 10:30 PM EST - v1.7.0*
 
 ## Overview
 
-The SQLite MCP Server provides advanced database interaction and business intelligence capabilities through SQLite featuring Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
+The SQLite MCP Server provides advanced database interaction and business intelligence capabilities through SQLite featuring Semantic/Vector Search, Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
 
 ## Key Features
 
@@ -23,6 +23,7 @@ The SQLite MCP Server provides advanced database interaction and business intell
 - **Backup/Restore Operations**: Enterprise-grade backup and restore capabilities with SQLite backup API, integrity verification, and safety confirmations
 - **Advanced PRAGMA Operations**: Comprehensive SQLite configuration management, performance optimization, and database introspection tools
 - **Virtual Table Management**: Complete virtual table lifecycle management for R-Tree spatial indexing, CSV file access, and sequence generation
+- **Semantic/Vector Search**: AI-native semantic search with embedding storage, cosine similarity, and hybrid keyword+semantic ranking
 - **Advanced SQLite Engine**: Upgraded to SQLite 3.50.4 with significant performance enhancements
 
 ## Attribution
@@ -816,13 +817,217 @@ drop_virtual_table(
 - **Series Tables**: Memory-efficient sequence generation
 - **Comprehensive Management**: Centralized virtual table lifecycle control
 
+## Semantic/Vector Search
+
+The SQLite MCP Server provides comprehensive semantic search capabilities, enabling AI-native applications with embedding storage, similarity search, and hybrid keyword+semantic ranking. This makes it perfect for recommendation systems, question-answering, and content discovery.
+
+### Semantic Search Tools
+
+#### **create_embeddings_table** - Optimized Embedding Storage
+Create tables specifically designed for storing high-dimensional embedding vectors with associated metadata.
+
+```python
+# Create embeddings table for OpenAI embeddings (1536 dimensions)
+create_embeddings_table(
+    table_name="document_embeddings",
+    embedding_dim=1536,
+    metadata_columns=["category", "source", "author"]
+)
+
+# Create embeddings table for smaller models (384 dimensions)
+create_embeddings_table(
+    table_name="sentence_embeddings", 
+    embedding_dim=384,
+    metadata_columns=["topic", "language"]
+)
+```
+
+**Features:**
+- Configurable embedding dimensions (384, 768, 1536, custom)
+- JSON-based vector storage for maximum SQLite compatibility
+- Automatic indexing for dimension-based queries
+- Flexible metadata columns for filtering and context
+- Timestamp tracking (created_at, updated_at)
+
+#### **store_embedding** - Vector Storage with Metadata
+Store embedding vectors alongside their original content and contextual metadata.
+
+```python
+# Store document embedding with metadata
+store_embedding(
+    table_name="document_embeddings",
+    embedding=[0.1, -0.3, 0.8, ...],  # 1536-dimensional vector
+    content="Comprehensive guide to machine learning algorithms",
+    metadata={
+        "category": "AI/ML",
+        "source": "research_paper",
+        "author": "Dr. Smith"
+    }
+)
+```
+
+**Features:**
+- Automatic embedding dimension validation
+- Flexible metadata storage as key-value pairs
+- Content length tracking and validation
+- Comprehensive error handling for invalid vectors
+
+#### **semantic_search** - Cosine Similarity Search
+Perform semantic similarity searches using cosine similarity with configurable thresholds and limits.
+
+```python
+# Semantic search for similar content
+semantic_search(
+    table_name="document_embeddings",
+    query_embedding=[0.2, -0.1, 0.9, ...],  # Query vector
+    limit=10,
+    similarity_threshold=0.7
+)
+```
+
+**Features:**
+- Cosine similarity calculations with optimized performance
+- Configurable similarity thresholds for quality control
+- Ranked results by similarity score
+- Dimension matching validation
+- Detailed search statistics and metadata
+
+#### **hybrid_search** - Keyword + Semantic Fusion
+Combine FTS5 keyword search with semantic similarity for the best of both worlds.
+
+```python
+# Hybrid search combining keyword precision with semantic understanding
+hybrid_search(
+    embeddings_table="document_embeddings",
+    fts_table="documents_fts",
+    query_text="machine learning algorithms",
+    query_embedding=[0.15, -0.25, 0.75, ...],
+    keyword_weight=0.3,    # 30% keyword importance
+    semantic_weight=0.7,   # 70% semantic importance
+    limit=15
+)
+```
+
+**Features:**
+- Configurable weighting between keyword and semantic scores
+- BM25 + cosine similarity hybrid ranking
+- Automatic score normalization and combination
+- Comprehensive search statistics and breakdown
+- Perfect for question-answering and content discovery
+
+#### **calculate_similarity** - Direct Vector Comparison
+Calculate cosine similarity between any two embedding vectors with detailed mathematical breakdown.
+
+```python
+# Direct similarity calculation
+calculate_similarity(
+    vector1=[1.0, 0.5, -0.3, 0.8],
+    vector2=[0.9, 0.6, -0.2, 0.7]
+)
+```
+
+**Features:**
+- Precise cosine similarity calculations
+- Detailed mathematical breakdown (dot product, magnitudes)
+- Dimension validation and error handling
+- Perfect for embedding quality analysis and debugging
+
+#### **batch_similarity_search** - Multiple Vector Queries
+Perform similarity searches with multiple query vectors in a single efficient operation.
+
+```python
+# Batch search for multiple queries
+batch_similarity_search(
+    table_name="document_embeddings",
+    query_embeddings=[
+        [0.1, 0.5, -0.2, 0.8],  # Query 1
+        [0.3, -0.1, 0.6, 0.4],  # Query 2
+        [0.7, 0.2, -0.4, 0.1]   # Query 3
+    ],
+    limit=5
+)
+```
+
+**Features:**
+- Efficient batch processing of multiple queries
+- Individual result sets for each query vector
+- Comprehensive error handling per query
+- Perfect for recommendation systems and clustering
+
+### Semantic Search Use Cases
+
+**AI-Native Applications:**
+- Question-answering systems with semantic understanding
+- Content recommendation based on similarity
+- Document clustering and categorization
+- Semantic duplicate detection
+
+**Hybrid Search Applications:**
+- Enterprise search combining exact keywords with meaning
+- E-commerce product discovery with natural language
+- Knowledge base search with contextual understanding
+- Research paper discovery and citation analysis
+
+**Embedding Integration:**
+- OpenAI embeddings (text-embedding-3-small/large)
+- Hugging Face sentence transformers
+- Custom model embeddings
+- Multi-modal embeddings (text, image, audio)
+
+### Performance and Scalability
+
+- **Pure SQLite Implementation**: No external dependencies or binary extensions
+- **JSON Storage**: Maximum compatibility across all SQLite deployments
+- **Optimized Queries**: Dimension-based indexing for faster searches
+- **Batch Operations**: Efficient multiple vector processing
+- **Memory Efficient**: Streaming similarity calculations for large datasets
+
+### Integration Examples
+
+**With OpenAI API:**
+```python
+# 1. Generate embeddings using OpenAI
+embeddings = openai.embeddings.create(
+    model="text-embedding-3-small",
+    input="Your content here"
+)
+
+# 2. Store in SQLite MCP Server
+store_embedding(
+    table_name="openai_embeddings",
+    embedding=embeddings.data[0].embedding,
+    content="Your content here"
+)
+
+# 3. Semantic search
+results = semantic_search(
+    table_name="openai_embeddings", 
+    query_embedding=query_vector
+)
+```
+
+**With Hugging Face:**
+```python
+# 1. Generate embeddings locally
+from sentence_transformers import SentenceTransformer
+model = SentenceTransformer('all-MiniLM-L6-v2')
+embedding = model.encode("Your content").tolist()
+
+# 2. Store and search using SQLite MCP Server
+store_embedding(table_name="hf_embeddings", embedding=embedding, content="Your content")
+```
+
 ## Planned Future Enhancements
 
-#### **1. Enhanced CSV Virtual Tables - LOW PRIORITY**
+#### **1. Vector Index Optimization - MEDIUM PRIORITY**
+- **Planned**: Approximate Nearest Neighbor (ANN) indexing for large-scale vector search
+- **Examples**: HNSW or IVF indexing for sub-linear search performance
+
+#### **2. Enhanced CSV Virtual Tables - LOW PRIORITY**
 - **Planned**: Advanced CSV parsing with data type inference
 - **Examples**: Automatic schema detection, column type conversion
 
-#### **2. JSON Virtual Tables - LOW PRIORITY**
+#### **3. JSON Virtual Tables - LOW PRIORITY**
 - **Planned**: Virtual tables for JSON file collections
 - **Examples**: JSON Lines (JSONL) file processing
 
