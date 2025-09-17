@@ -3126,12 +3126,12 @@ async def main(db_path: str = "sqlite_mcp.db"):
                     # Check if SpatiaLite is already loaded
                     if not force_reload:
                         try:
-                            cursor = db.execute("SELECT spatialite_version()")
-                            version = cursor.fetchone()
-                            if version:
+                            result = db._execute_query("SELECT spatialite_version()")
+                            if result and len(result) > 0:
+                                version = result[0].get("spatialite_version()")
                                 return [types.TextContent(
                                     type="text",
-                                    text=f"SpatiaLite already loaded. Version: {version[0]}"
+                                    text=f"SpatiaLite already loaded. Version: {version}"
                                 )]
                         except:
                             pass  # Not loaded, continue with loading
@@ -3165,15 +3165,16 @@ async def main(db_path: str = "sqlite_mcp.db"):
                             )]
                         
                         # Initialize spatial metadata
-                        db.execute("SELECT InitSpatialMetaData(1)")
+                        db._execute_query("SELECT InitSpatialMetaData(1)")
                         
                         # Get version info
-                        cursor = db.execute("SELECT spatialite_version(), proj4_version(), geos_version()")
-                        versions = cursor.fetchone()
+                        result = db._execute_query("SELECT spatialite_version(), proj4_version(), geos_version()")
+                        if result and len(result) > 0:
+                            versions = result[0]
                         
                         return [types.TextContent(
                             type="text",
-                            text=f"SpatiaLite loaded successfully!\n\nVersions:\n- SpatiaLite: {versions[0]}\n- PROJ4: {versions[1]}\n- GEOS: {versions[2]}"
+                            text=f"SpatiaLite loaded successfully!\n\nVersions:\n- SpatiaLite: {versions.get('spatialite_version()', 'Unknown')}\n- PROJ4: {versions.get('proj4_version()', 'Unknown')}\n- GEOS: {versions.get('geos_version()', 'Unknown')}"
                         )]
                         
                     except Exception as e:
@@ -3204,13 +3205,13 @@ async def main(db_path: str = "sqlite_mcp.db"):
                         columns_sql.append(f'"{col["name"]}" {col["type"]}')
                     
                     create_sql = f'CREATE TABLE "{table_name}" ({", ".join(columns_sql)})'
-                    db.execute(create_sql)
+                    db._execute_query(create_sql)
                     
                     # Add geometry column using SpatiaLite
                     add_geom_sql = f"""
                         SELECT AddGeometryColumn('{table_name}', '{geometry_column}', {srid}, '{geometry_type}', 'XY')
                     """
-                    db.execute(add_geom_sql)
+                    db._execute_query(add_geom_sql)
                     
                     return [types.TextContent(
                         type="text",
@@ -3232,12 +3233,12 @@ async def main(db_path: str = "sqlite_mcp.db"):
                     if action == "create":
                         # Create spatial index
                         index_sql = f"SELECT CreateSpatialIndex('{table_name}', '{geometry_column}')"
-                        db.execute(index_sql)
+                        db._execute_query(index_sql)
                         message = f"Spatial index created on {table_name}.{geometry_column}"
                     else:
                         # Drop spatial index
                         index_sql = f"SELECT DisableSpatialIndex('{table_name}', '{geometry_column}')"
-                        db.execute(index_sql)
+                        db._execute_query(index_sql)
                         message = f"Spatial index dropped on {table_name}.{geometry_column}"
                     
                     return [types.TextContent(
@@ -3259,7 +3260,7 @@ async def main(db_path: str = "sqlite_mcp.db"):
                     if explain:
                         # Show query plan
                         explain_query = f"EXPLAIN QUERY PLAN {query}"
-                        cursor = db.execute(explain_query)
+                        result = db._execute_query(explain_query)
                         plan_results = cursor.fetchall()
                         
                         plan_text = "Query Execution Plan:\n"
@@ -3270,7 +3271,7 @@ async def main(db_path: str = "sqlite_mcp.db"):
                         plan_text = ""
                     
                     # Execute the spatial query
-                    cursor = db.execute(query)
+                    result = db._execute_query(query)
                     results = cursor.fetchall()
                     
                     if not results:
@@ -3333,7 +3334,7 @@ async def main(db_path: str = "sqlite_mcp.db"):
                             text=f"Invalid operation '{operation}' or missing required geometry2 parameter"
                         )]
                     
-                    cursor = db.execute(sql)
+                    result = db._execute_query(sql)
                     result = cursor.fetchone()
                     
                     if result:
@@ -3366,12 +3367,12 @@ async def main(db_path: str = "sqlite_mcp.db"):
                         SELECT ImportSHP('{shapefile_path}', '{table_name}', '{encoding}', {srid})
                     """
                     
-                    cursor = db.execute(import_sql)
+                    result = db._execute_query(import_sql)
                     result = cursor.fetchone()
                     
                     if result and result[0] == 1:
                         # Check how many rows were imported
-                        count_cursor = db.execute(f"SELECT COUNT(*) FROM {table_name}")
+                        count_result = db._execute_query(f"SELECT COUNT(*) FROM {table_name}")
                         count = count_cursor.fetchone()[0]
                         
                         return [types.TextContent(
@@ -3441,7 +3442,7 @@ async def main(db_path: str = "sqlite_mcp.db"):
                             text=f"Invalid analysis type '{analysis_type}' or missing required target_table parameter"
                         )]
                     
-                    cursor = db.execute(sql)
+                    result = db._execute_query(sql)
                     results = cursor.fetchall()
                     
                     if not results:
