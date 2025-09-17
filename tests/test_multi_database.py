@@ -7,9 +7,9 @@ import sys
 from pathlib import Path
 
 # Add the src directory to the path
-sys.path.insert(0, str(Path(__file__).parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from mcp_server_sqlite.server import EnhancedEnhancedSqliteDatabase
+from mcp_server_sqlite.server import EnhancedSqliteDatabase
 from mcp_server_sqlite.db_integration import DatabaseIntegration
 
 def test_multi_database():
