@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated September 17, 2025 10:03 AM EST - v2.2.0*
+*Last Updated September 17, 2025 4:49 PM EST - v2.2.0*
 
 ## Overview
 
@@ -1082,26 +1082,6 @@ drop_virtual_table(
 - Detailed status reporting
 - Error handling for non-existent tables
 
-### Virtual Table Use Cases
-
-**Spatial Data Management:**
-- Geographic information systems (GIS)
-- Location-based services
-- Geometric calculations and range queries
-- Spatial indexing for performance optimization
-
-**CSV Data Integration:**
-- Direct access to external data files
-- ETL processes without data importing
-- Real-time file monitoring and analysis
-- Legacy system integration
-
-**Sequence Generation:**
-- Test data creation
-- Report numbering and pagination
-- Date/time series generation
-- Mathematical sequence analysis
-
 ### Performance Benefits
 
 - **R-Tree Tables**: O(log n) spatial queries vs O(n) table scans
@@ -1245,26 +1225,6 @@ batch_similarity_search(
 - Individual result sets for each query vector
 - Comprehensive error handling per query
 - Perfect for recommendation systems and clustering
-
-### Semantic Search Use Cases
-
-**AI-Native Applications:**
-- Question-answering systems with semantic understanding
-- Content recommendation based on similarity
-- Document clustering and categorization
-- Semantic duplicate detection
-
-**Hybrid Search Applications:**
-- Enterprise search combining exact keywords with meaning
-- E-commerce product discovery with natural language
-- Knowledge base search with contextual understanding
-- Research paper discovery and citation analysis
-
-**Embedding Integration:**
-- OpenAI embeddings (text-embedding-3-small/large)
-- Hugging Face sentence transformers
-- Custom model embeddings
-- Multi-modal embeddings (text, image, audio)
 
 ### Performance and Scalability
 
@@ -1434,7 +1394,7 @@ read_query({"query": "SELECT HEX(GeomFromText('POINT(x y)', 4326)) as hex_geom"}
 write_query({"query": "INSERT INTO table (geom) VALUES (X'hex_value')"})
 ```
 
-> **✅ Windows Compatibility:** SpatiaLite v2.0.0 successfully provides full geospatial functionality on Windows! All spatial analysis, geometry operations, and spatial indexing work perfectly. The only minor limitation is `GeomFromText()` within INSERT statements, which has the simple workaround shown above.
+> **Windows Compatibility Issue:** SpatiaLite v2.0.0 successfully provides full geospatial functionality on Windows. All spatial analysis, geometry operations, and spatial indexing work perfectly. The only minor limitation is `GeomFromText()` within INSERT statements, which has the simple workaround shown above.
 
 **macOS (Homebrew):**
 ```bash
