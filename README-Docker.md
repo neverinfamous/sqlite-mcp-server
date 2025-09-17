@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated September 17, 2025 4:40 AM EST - v2.1.0*
+*Last Updated September 17, 2025 5:45 AM EST - v2.1.0*
 
 *Lightweight, containerized SQLite database server with AI-native features and statistical analysis*
 
@@ -62,6 +62,7 @@ docker run -i --rm \
 
 ## Key Features
 
+- **Statistical Analysis Library**: Comprehensive statistical functions for data analysis including descriptive statistics, percentile analysis, and time series analysis
 - **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements (~15% space savings)
 - **Transaction Safety**: All write operations automatically wrapped in transactions with proper rollback on errors
 - **Foreign Key Enforcement**: Automatic enforcement of foreign key constraints across all connections
@@ -84,6 +85,38 @@ docker run -i --rm \
 - **Intelligent MCP Resources**: Dynamic database meta-awareness with real-time schema, capabilities, statistics, search indexes, and performance insights
 - **Guided MCP Prompts**: Intelligent workflow automation with semantic query translation, table summarization, database optimization, and hybrid search recipes
 - **Advanced SQLite Engine**: Upgraded to SQLite 3.50.4 with significant performance enhancements
+
+### Statistical Analysis Workflow
+
+1. **Explore Data Distribution**: Use `descriptive_statistics` to understand central tendency and variability
+2. **Identify Quartiles**: Apply `percentile_analysis` to find data distribution boundaries  
+3. **Analyze Trends**: Employ `moving_averages` for time series pattern recognition
+4. **Generate Insights**: Combine statistical results with business context using `append_insight`
+
+### Example Analysis Session
+
+```javascript
+// 1. Get overview of sales performance
+descriptive_statistics({
+  table_name: "monthly_sales",
+  column_name: "revenue"
+})
+
+// 2. Understand distribution 
+percentile_analysis({
+  table_name: "monthly_sales", 
+  column_name: "revenue",
+  percentiles: [10, 25, 50, 75, 90]
+})
+
+// 3. Analyze trends over time
+moving_averages({
+  table_name: "monthly_sales",
+  value_column: "revenue",
+  time_column: "month", 
+  window_sizes: [3, 6, 12]
+})
+```
 
 ## Container Options
 
