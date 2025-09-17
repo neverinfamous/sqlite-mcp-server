@@ -117,6 +117,9 @@ Start your first message fully in character with something like "Oh, Hey there! 
 class EnhancedSqliteDatabase:
     """Enhanced SQLite database with JSONB support and improved error handling"""
     
+    # Class variable to store SpatiaLite extension path
+    _spatialite_path = None
+    
     def __init__(self, db_path: str):
         """
         Initialize the database connection.
@@ -266,6 +269,26 @@ class EnhancedSqliteDatabase:
         logger.debug("Generated basic memo format")
         return memo
 
+    def _load_spatialite_if_needed(self, conn, query: str):
+        """Load SpatiaLite extension if the query contains spatial functions"""
+        spatial_functions = [
+            'spatialite_version', 'AddGeometryColumn', 'GeomFromText', 'ST_Distance', 
+            'ST_Buffer', 'ST_Area', 'ST_Length', 'ST_Intersects', 'ST_Within',
+            'CreateSpatialIndex', 'InitSpatialMetaData'
+        ]
+        
+        # Check if query contains spatial functions
+        query_upper = query.upper()
+        needs_spatialite = any(func.upper() in query_upper for func in spatial_functions)
+        
+        if needs_spatialite and self._spatialite_path:
+            try:
+                conn.enable_load_extension(True)
+                conn.load_extension(self._spatialite_path)
+                conn.enable_load_extension(False)
+            except:
+                pass  # Extension might already be loaded
+    
     def _execute_query(self, query: str, params: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """
         Execute a SQL query with enhanced error handling and JSONB support.
@@ -291,6 +314,9 @@ class EnhancedSqliteDatabase:
         try:
             with closing(sqlite3.connect(self.db_path)) as conn:
                 conn.row_factory = sqlite3.Row
+                
+                # Load SpatiaLite if needed for this query
+                self._load_spatialite_if_needed(conn, query)
                 
                 # Special handling for memory_journal metadata with JSONB
                 if JSONB_ENABLED and self.version_info['has_jsonb_support']:
@@ -3160,6 +3186,7 @@ async def main(db_path: str = "sqlite_mcp.db"):
                         
                         loaded = False
                         last_error = None
+                        loaded_path = None
                         for path in spatialite_paths:
                             try:
                                 # Create direct connection for extension loading
@@ -3170,6 +3197,9 @@ async def main(db_path: str = "sqlite_mcp.db"):
                                     conn.load_extension(path)
                                     conn.enable_load_extension(False)
                                     loaded = True
+                                    loaded_path = path
+                                    # Store the working path for other tools
+                                    EnhancedSqliteDatabase._spatialite_path = path
                                     break
                             except Exception as e:
                                 last_error = str(e)
