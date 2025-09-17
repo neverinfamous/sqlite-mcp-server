@@ -2187,7 +2187,7 @@ async def main(db_path: str = "sqlite_mcp.db"):
                         "replacement": {"type": "string", "description": "Replacement text"},
                         "flags": {"type": "string", "description": "Regex flags (i=ignorecase, m=multiline, s=dotall)", "default": ""},
                         "max_replacements": {"type": "integer", "description": "Maximum replacements per row (0=all)", "default": 0},
-                        "preview_only": {"type": "boolean", "description": "Preview changes without executing", "default": true},
+                        "preview_only": {"type": "boolean", "description": "Preview changes without executing", "default": True},
                         "where_clause": {"type": "string", "description": "Optional WHERE clause to filter data", "default": ""}
                     },
                     "required": ["table_name", "column_name", "pattern", "replacement"]
@@ -2260,7 +2260,7 @@ async def main(db_path: str = "sqlite_mcp.db"):
                             "description": "List of normalization operations",
                             "default": ["lowercase", "trim", "normalize_unicode"]
                         },
-                        "preview_only": {"type": "boolean", "description": "Preview changes without executing", "default": true},
+                        "preview_only": {"type": "boolean", "description": "Preview changes without executing", "default": True},
                         "limit": {"type": "integer", "description": "Maximum number of rows to process", "default": 50},
                         "where_clause": {"type": "string", "description": "Optional WHERE clause to filter data", "default": ""}
                     },
@@ -5665,7 +5665,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
             
             where_sql = f" WHERE {where_clause}" if where_clause else ""
             
-            with DatabaseIntegration() as db:
+            # Use the global db instance
                 query = f"""
                 SELECT {column_name}, rowid
                 FROM {table_name}{where_sql}
@@ -5748,7 +5748,7 @@ Found {len(matches)} matches:
             
             where_sql = f" WHERE {where_clause}" if where_clause else ""
             
-            with DatabaseIntegration() as db:
+            # Use the global db instance
                 query = f"""
                 SELECT {column_name}, rowid
                 FROM {table_name}{where_sql}
@@ -5835,7 +5835,7 @@ Found {len(replacements)} rows with changes:
         try:
             where_sql = f" WHERE {where_clause}" if where_clause else ""
             
-            with DatabaseIntegration() as db:
+            # Use the global db instance
                 query = f"""
                 SELECT {column_name}, rowid
                 FROM {table_name}{where_sql}
@@ -5969,7 +5969,7 @@ Found {len(matches)} matches:
         try:
             where_sql = f" WHERE {where_clause}" if where_clause else ""
             
-            with DatabaseIntegration() as db:
+            # Use the global db instance
                 query = f"""
                 SELECT {column_name}, rowid
                 FROM {table_name}{where_sql}
@@ -6098,7 +6098,7 @@ Found {len(matches)} matches:
         try:
             where_sql = f" WHERE {where_clause}" if where_clause else ""
             
-            with DatabaseIntegration() as db:
+            # Use the global db instance
                 if compare_column:
                     query = f"""
                     SELECT {column_name}, {compare_column}, rowid
@@ -6230,7 +6230,7 @@ Similarity Results (sorted by score):
         try:
             where_sql = f" WHERE {where_clause}" if where_clause else ""
             
-            with DatabaseIntegration() as db:
+            # Use the global db instance
                 query = f"""
                 SELECT {column_name}, rowid
                 FROM {table_name}{where_sql}
@@ -6309,7 +6309,7 @@ Found {len(normalizations)} rows requiring normalization:
         try:
             where_sql = f" WHERE {where_clause}" if where_clause else ""
             
-            with DatabaseIntegration() as db:
+            # Use the global db instance
                 query = f"""
                 SELECT {column_name}, rowid
                 FROM {table_name}{where_sql}
@@ -6471,7 +6471,7 @@ Found {len(all_matches)} matches:
             
             where_sql = f" WHERE {where_clause}" if where_clause else ""
             
-            with DatabaseIntegration() as db:
+            # Use the global db instance
                 query = f"""
                 SELECT {column_name}, rowid
                 FROM {table_name}{where_sql}
