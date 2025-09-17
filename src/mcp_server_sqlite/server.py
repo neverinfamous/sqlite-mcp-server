@@ -912,6 +912,184 @@ async def main(db_path: str):
                     "required": ["table_name"]
                 }
             ),
+            
+            # Semantic Search Tools
+            types.Tool(
+                name="create_embeddings_table",
+                description="Create a table optimized for storing embeddings with metadata",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name for the embeddings table"
+                        },
+                        "embedding_dim": {
+                            "type": "integer",
+                            "description": "Dimension of the embedding vectors",
+                            "default": 1536
+                        },
+                        "metadata_columns": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Additional metadata columns to include",
+                            "default": []
+                        }
+                    },
+                    "required": ["table_name"]
+                }
+            ),
+            
+            types.Tool(
+                name="store_embedding",
+                description="Store an embedding vector with associated metadata",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name of the embeddings table"
+                        },
+                        "embedding": {
+                            "type": "array",
+                            "items": {"type": "number"},
+                            "description": "The embedding vector as array of numbers"
+                        },
+                        "content": {
+                            "type": "string",
+                            "description": "Original content that was embedded"
+                        },
+                        "metadata": {
+                            "type": "object",
+                            "description": "Additional metadata as key-value pairs",
+                            "default": {}
+                        }
+                    },
+                    "required": ["table_name", "embedding", "content"]
+                }
+            ),
+            
+            types.Tool(
+                name="semantic_search",
+                description="Perform semantic similarity search using cosine similarity",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name of the embeddings table to search"
+                        },
+                        "query_embedding": {
+                            "type": "array",
+                            "items": {"type": "number"},
+                            "description": "Query embedding vector for similarity search"
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": "Maximum number of results to return",
+                            "default": 10
+                        },
+                        "similarity_threshold": {
+                            "type": "number",
+                            "description": "Minimum similarity score (0.0-1.0)",
+                            "default": 0.0
+                        }
+                    },
+                    "required": ["table_name", "query_embedding"]
+                }
+            ),
+            
+            types.Tool(
+                name="hybrid_search",
+                description="Combine FTS5 keyword search with semantic similarity",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "embeddings_table": {
+                            "type": "string",
+                            "description": "Name of the embeddings table"
+                        },
+                        "fts_table": {
+                            "type": "string",
+                            "description": "Name of the FTS5 table"
+                        },
+                        "query_text": {
+                            "type": "string",
+                            "description": "Text query for FTS5 keyword search"
+                        },
+                        "query_embedding": {
+                            "type": "array",
+                            "items": {"type": "number"},
+                            "description": "Query embedding for semantic search"
+                        },
+                        "keyword_weight": {
+                            "type": "number",
+                            "description": "Weight for keyword score (0.0-1.0)",
+                            "default": 0.5
+                        },
+                        "semantic_weight": {
+                            "type": "number",
+                            "description": "Weight for semantic score (0.0-1.0)",
+                            "default": 0.5
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": "Maximum number of results",
+                            "default": 10
+                        }
+                    },
+                    "required": ["embeddings_table", "fts_table", "query_text", "query_embedding"]
+                }
+            ),
+            
+            types.Tool(
+                name="calculate_similarity",
+                description="Calculate cosine similarity between two embedding vectors",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "vector1": {
+                            "type": "array",
+                            "items": {"type": "number"},
+                            "description": "First embedding vector"
+                        },
+                        "vector2": {
+                            "type": "array",
+                            "items": {"type": "number"},
+                            "description": "Second embedding vector"
+                        }
+                    },
+                    "required": ["vector1", "vector2"]
+                }
+            ),
+            
+            types.Tool(
+                name="batch_similarity_search",
+                description="Perform similarity search with multiple query vectors",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name of the embeddings table"
+                        },
+                        "query_embeddings": {
+                            "type": "array",
+                            "items": {
+                                "type": "array",
+                                "items": {"type": "number"}
+                            },
+                            "description": "Array of query embedding vectors"
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": "Maximum results per query",
+                            "default": 10
+                        }
+                    },
+                    "required": ["table_name", "query_embeddings"]
+                }
+            ),
         ]
         
         # Add diagnostic tools if JSONB is supported
@@ -1721,6 +1899,406 @@ async def main(db_path: str):
                     
                 except Exception as e:
                     error_msg = f"Failed to get virtual table info: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            # Handle semantic search tools
+            elif name == "create_embeddings_table":
+                if not arguments or "table_name" not in arguments:
+                    raise ValueError("Missing table_name argument")
+                
+                table_name = arguments["table_name"]
+                embedding_dim = arguments.get("embedding_dim", 1536)
+                metadata_columns = arguments.get("metadata_columns", [])
+                
+                logger.info(f"Creating embeddings table: {table_name}")
+                
+                try:
+                    # Create table schema with embedding storage
+                    metadata_cols = ""
+                    if metadata_columns:
+                        metadata_cols = ", " + ", ".join([f"{col} TEXT" for col in metadata_columns])
+                    
+                    create_sql = f"""
+                    CREATE TABLE {table_name} (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        content TEXT NOT NULL,
+                        embedding TEXT NOT NULL,
+                        embedding_dim INTEGER NOT NULL,
+                        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP{metadata_cols}
+                    )
+                    """
+                    
+                    db._execute_query(create_sql)
+                    
+                    # Create index for faster searches
+                    index_sql = f"CREATE INDEX idx_{table_name}_embedding_dim ON {table_name}(embedding_dim)"
+                    db._execute_query(index_sql)
+                    
+                    result_info = {
+                        "table_name": table_name,
+                        "embedding_dim": embedding_dim,
+                        "metadata_columns": metadata_columns,
+                        "status": "created",
+                        "storage_format": "JSON text (SQLite compatible)"
+                    }
+                    
+                    logger.info(f"Embeddings table '{table_name}' created successfully")
+                    return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"Failed to create embeddings table: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "store_embedding":
+                if not arguments or not all(key in arguments for key in ["table_name", "embedding", "content"]):
+                    raise ValueError("Missing required arguments: table_name, embedding, content")
+                
+                table_name = arguments["table_name"]
+                embedding = arguments["embedding"]
+                content = arguments["content"]
+                metadata = arguments.get("metadata", {})
+                
+                logger.info(f"Storing embedding in table: {table_name}")
+                
+                try:
+                    # Validate embedding is a list of numbers
+                    if not isinstance(embedding, list) or not all(isinstance(x, (int, float)) for x in embedding):
+                        raise ValueError("Embedding must be an array of numbers")
+                    
+                    embedding_dim = len(embedding)
+                    embedding_json = json.dumps(embedding)
+                    
+                    # Build insert query with metadata
+                    columns = ["content", "embedding", "embedding_dim"]
+                    values = [content, embedding_json, embedding_dim]
+                    placeholders = ["?", "?", "?"]
+                    
+                    for key, value in metadata.items():
+                        columns.append(key)
+                        values.append(str(value))
+                        placeholders.append("?")
+                    
+                    insert_sql = f"""
+                    INSERT INTO {table_name} ({", ".join(columns)})
+                    VALUES ({", ".join(placeholders)})
+                    """
+                    
+                    db._execute_query(insert_sql, values)
+                    
+                    result_info = {
+                        "table_name": table_name,
+                        "content_length": len(content),
+                        "embedding_dim": embedding_dim,
+                        "metadata_keys": list(metadata.keys()),
+                        "status": "stored"
+                    }
+                    
+                    logger.info(f"Embedding stored successfully in '{table_name}'")
+                    return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"Failed to store embedding: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "calculate_similarity":
+                if not arguments or not all(key in arguments for key in ["vector1", "vector2"]):
+                    raise ValueError("Missing required arguments: vector1, vector2")
+                
+                vector1 = arguments["vector1"]
+                vector2 = arguments["vector2"]
+                
+                try:
+                    # Validate vectors
+                    if not isinstance(vector1, list) or not isinstance(vector2, list):
+                        raise ValueError("Both vectors must be arrays of numbers")
+                    
+                    if len(vector1) != len(vector2):
+                        raise ValueError(f"Vector dimensions must match: {len(vector1)} vs {len(vector2)}")
+                    
+                    if not all(isinstance(x, (int, float)) for x in vector1 + vector2):
+                        raise ValueError("All vector elements must be numbers")
+                    
+                    # Calculate cosine similarity
+                    import math
+                    
+                    # Dot product
+                    dot_product = sum(a * b for a, b in zip(vector1, vector2))
+                    
+                    # Magnitudes
+                    magnitude1 = math.sqrt(sum(a * a for a in vector1))
+                    magnitude2 = math.sqrt(sum(b * b for b in vector2))
+                    
+                    # Avoid division by zero
+                    if magnitude1 == 0 or magnitude2 == 0:
+                        similarity = 0.0
+                    else:
+                        similarity = dot_product / (magnitude1 * magnitude2)
+                    
+                    result_info = {
+                        "cosine_similarity": similarity,
+                        "vector1_dim": len(vector1),
+                        "vector2_dim": len(vector2),
+                        "dot_product": dot_product,
+                        "magnitude1": magnitude1,
+                        "magnitude2": magnitude2
+                    }
+                    
+                    return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"Failed to calculate similarity: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "semantic_search":
+                if not arguments or not all(key in arguments for key in ["table_name", "query_embedding"]):
+                    raise ValueError("Missing required arguments: table_name, query_embedding")
+                
+                table_name = arguments["table_name"]
+                query_embedding = arguments["query_embedding"]
+                limit = arguments.get("limit", 10)
+                similarity_threshold = arguments.get("similarity_threshold", 0.0)
+                
+                logger.info(f"Performing semantic search in table: {table_name}")
+                
+                try:
+                    # Validate query embedding
+                    if not isinstance(query_embedding, list) or not all(isinstance(x, (int, float)) for x in query_embedding):
+                        raise ValueError("Query embedding must be an array of numbers")
+                    
+                    query_dim = len(query_embedding)
+                    
+                    # Get all embeddings from table
+                    select_sql = f"SELECT id, content, embedding, embedding_dim FROM {table_name} WHERE embedding_dim = ?"
+                    results = db._execute_query(select_sql, [query_dim])
+                    
+                    if not results:
+                        return [types.TextContent(type="text", text=json.dumps({
+                            "results": [],
+                            "message": f"No embeddings found with dimension {query_dim}"
+                        }, indent=2))]
+                    
+                    # Calculate similarities
+                    similarities = []
+                    import math
+                    
+                    # Pre-calculate query vector magnitude
+                    query_magnitude = math.sqrt(sum(x * x for x in query_embedding))
+                    
+                    for row in results:
+                        stored_embedding = json.loads(row["embedding"])
+                        
+                        # Calculate cosine similarity
+                        dot_product = sum(a * b for a, b in zip(query_embedding, stored_embedding))
+                        stored_magnitude = math.sqrt(sum(x * x for x in stored_embedding))
+                        
+                        if query_magnitude == 0 or stored_magnitude == 0:
+                            similarity = 0.0
+                        else:
+                            similarity = dot_product / (query_magnitude * stored_magnitude)
+                        
+                        if similarity >= similarity_threshold:
+                            similarities.append({
+                                "id": row["id"],
+                                "content": row["content"],
+                                "similarity": similarity,
+                                "embedding_dim": row["embedding_dim"]
+                            })
+                    
+                    # Sort by similarity (descending) and limit
+                    similarities.sort(key=lambda x: x["similarity"], reverse=True)
+                    top_results = similarities[:limit]
+                    
+                    result_info = {
+                        "results": top_results,
+                        "query_dim": query_dim,
+                        "total_candidates": len(results),
+                        "results_returned": len(top_results),
+                        "similarity_threshold": similarity_threshold
+                    }
+                    
+                    logger.info(f"Semantic search completed: {len(top_results)} results returned")
+                    return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"Failed to perform semantic search: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "hybrid_search":
+                if not arguments or not all(key in arguments for key in ["embeddings_table", "fts_table", "query_text", "query_embedding"]):
+                    raise ValueError("Missing required arguments: embeddings_table, fts_table, query_text, query_embedding")
+                
+                embeddings_table = arguments["embeddings_table"]
+                fts_table = arguments["fts_table"]
+                query_text = arguments["query_text"]
+                query_embedding = arguments["query_embedding"]
+                keyword_weight = arguments.get("keyword_weight", 0.5)
+                semantic_weight = arguments.get("semantic_weight", 0.5)
+                limit = arguments.get("limit", 10)
+                
+                logger.info(f"Performing hybrid search: FTS({fts_table}) + Semantic({embeddings_table})")
+                
+                try:
+                    # Normalize weights
+                    total_weight = keyword_weight + semantic_weight
+                    if total_weight > 0:
+                        keyword_weight = keyword_weight / total_weight
+                        semantic_weight = semantic_weight / total_weight
+                    
+                    # Get FTS5 results with BM25 scores
+                    fts_sql = f"""
+                    SELECT *, bm25({fts_table}) as bm25_score
+                    FROM {fts_table}
+                    WHERE {fts_table} MATCH ?
+                    ORDER BY bm25_score
+                    LIMIT ?
+                    """
+                    
+                    fts_results = db._execute_query(fts_sql, [query_text, limit * 2])  # Get more for hybrid ranking
+                    
+                    # Get semantic search results
+                    query_dim = len(query_embedding)
+                    semantic_sql = f"SELECT id, content, embedding FROM {embeddings_table} WHERE embedding_dim = ?"
+                    semantic_results = db._execute_query(semantic_sql, [query_dim])
+                    
+                    # Calculate semantic similarities
+                    import math
+                    query_magnitude = math.sqrt(sum(x * x for x in query_embedding))
+                    
+                    semantic_scores = {}
+                    for row in semantic_results:
+                        stored_embedding = json.loads(row["embedding"])
+                        dot_product = sum(a * b for a, b in zip(query_embedding, stored_embedding))
+                        stored_magnitude = math.sqrt(sum(x * x for x in stored_embedding))
+                        
+                        if query_magnitude > 0 and stored_magnitude > 0:
+                            similarity = dot_product / (query_magnitude * stored_magnitude)
+                            semantic_scores[row["content"]] = similarity
+                    
+                    # Combine scores
+                    hybrid_results = []
+                    for fts_row in fts_results:
+                        content = fts_row.get("content", "")
+                        
+                        # Normalize BM25 score (higher is better, but negative)
+                        bm25_normalized = max(0, 1 + fts_row.get("bm25_score", 0) / 10)  # Simple normalization
+                        
+                        semantic_score = semantic_scores.get(content, 0.0)
+                        
+                        # Calculate hybrid score
+                        hybrid_score = (keyword_weight * bm25_normalized) + (semantic_weight * semantic_score)
+                        
+                        hybrid_results.append({
+                            "content": content,
+                            "hybrid_score": hybrid_score,
+                            "keyword_score": bm25_normalized,
+                            "semantic_score": semantic_score,
+                            "bm25_raw": fts_row.get("bm25_score", 0),
+                            **{k: v for k, v in fts_row.items() if k not in ["content", "bm25_score"]}
+                        })
+                    
+                    # Sort by hybrid score and limit
+                    hybrid_results.sort(key=lambda x: x["hybrid_score"], reverse=True)
+                    top_results = hybrid_results[:limit]
+                    
+                    result_info = {
+                        "results": top_results,
+                        "search_params": {
+                            "query_text": query_text,
+                            "keyword_weight": keyword_weight,
+                            "semantic_weight": semantic_weight,
+                            "embedding_dim": query_dim
+                        },
+                        "stats": {
+                            "fts_candidates": len(fts_results),
+                            "semantic_candidates": len(semantic_results),
+                            "final_results": len(top_results)
+                        }
+                    }
+                    
+                    logger.info(f"Hybrid search completed: {len(top_results)} results returned")
+                    return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"Failed to perform hybrid search: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "batch_similarity_search":
+                if not arguments or not all(key in arguments for key in ["table_name", "query_embeddings"]):
+                    raise ValueError("Missing required arguments: table_name, query_embeddings")
+                
+                table_name = arguments["table_name"]
+                query_embeddings = arguments["query_embeddings"]
+                limit = arguments.get("limit", 10)
+                
+                logger.info(f"Performing batch similarity search in table: {table_name}")
+                
+                try:
+                    # Validate query embeddings
+                    if not isinstance(query_embeddings, list) or not query_embeddings:
+                        raise ValueError("Query embeddings must be a non-empty array of vectors")
+                    
+                    batch_results = []
+                    
+                    for i, query_embedding in enumerate(query_embeddings):
+                        if not isinstance(query_embedding, list) or not all(isinstance(x, (int, float)) for x in query_embedding):
+                            batch_results.append({
+                                "query_index": i,
+                                "error": "Invalid embedding format",
+                                "results": []
+                            })
+                            continue
+                        
+                        # Perform individual semantic search
+                        query_dim = len(query_embedding)
+                        select_sql = f"SELECT id, content, embedding FROM {table_name} WHERE embedding_dim = ?"
+                        results = db._execute_query(select_sql, [query_dim])
+                        
+                        similarities = []
+                        import math
+                        
+                        query_magnitude = math.sqrt(sum(x * x for x in query_embedding))
+                        
+                        for row in results:
+                            stored_embedding = json.loads(row["embedding"])
+                            dot_product = sum(a * b for a, b in zip(query_embedding, stored_embedding))
+                            stored_magnitude = math.sqrt(sum(x * x for x in stored_embedding))
+                            
+                            if query_magnitude > 0 and stored_magnitude > 0:
+                                similarity = dot_product / (query_magnitude * stored_magnitude)
+                                similarities.append({
+                                    "id": row["id"],
+                                    "content": row["content"],
+                                    "similarity": similarity
+                                })
+                        
+                        similarities.sort(key=lambda x: x["similarity"], reverse=True)
+                        top_results = similarities[:limit]
+                        
+                        batch_results.append({
+                            "query_index": i,
+                            "query_dim": query_dim,
+                            "results": top_results,
+                            "total_candidates": len(results)
+                        })
+                    
+                    result_info = {
+                        "batch_results": batch_results,
+                        "total_queries": len(query_embeddings),
+                        "limit_per_query": limit
+                    }
+                    
+                    logger.info(f"Batch similarity search completed: {len(query_embeddings)} queries processed")
+                    return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"Failed to perform batch similarity search: {str(e)}"
                     logger.error(error_msg)
                     return [types.TextContent(type="text", text=error_msg)]
 
