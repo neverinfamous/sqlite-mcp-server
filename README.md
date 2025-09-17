@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated September 16, 2025 8:45 PM EST - v1.4.0*
+*Last Updated September 16, 2025 7:54 PM EST - v1.4.0*
 
 ## Overview
 
@@ -630,13 +630,13 @@ The migration to JSONB is transparent to users - simply continue using standard 
 - **Missing**: Tools to create/manage virtual tables beyond FTS5
 - **Examples**: CSV virtual tables, memory virtual tables
 
-#### **2. R-Tree Index Support - LOW PRIORITY**
-- **Missing**: Spatial indexing for geometric data
-- **Current**: No specialized tools for R-Tree operations
-
-#### **3. Advanced PRAGMA Operations - LOW PRIORITY**
+#### **2. Advanced PRAGMA Operations - MEDIUM PRIORITY**
 - **Missing**: Comprehensive PRAGMA management tools
 - **Current**: Can execute PRAGMA via queries, but no specialized tools
+
+#### **3. R-Tree Index Support - LOW PRIORITY**
+- **Missing**: Spatial indexing for geometric data
+- **Current**: No specialized tools for R-Tree operations
 
 ## Contributing
 
