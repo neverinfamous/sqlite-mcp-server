@@ -2345,10 +2345,10 @@ async def main(db_path: str = "sqlite_mcp.db"):
         else:
             return basic_tools
 
-    @server.call_tool()
-    async def handle_call_tool(
-        self, name: str, arguments: dict[str, Any] | None
-    ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
+@server.call_tool()
+async def handle_call_tool(
+    name: str, arguments: dict[str, Any] | None
+) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
         """Handle tool execution requests"""
         try:
             # Handle basic tools
@@ -5586,21 +5586,21 @@ The sample mean is {'significantly different from' if significant else 'not sign
 
             # Text Processing Functions
             elif name == "regex_extract":
-                return await self._handle_regex_extract(arguments)
+                return await db._handle_regex_extract(arguments)
             elif name == "regex_replace":
-                return await self._handle_regex_replace(arguments)
+                return await db._handle_regex_replace(arguments)
             elif name == "fuzzy_match":
-                return await self._handle_fuzzy_match(arguments)
+                return await db._handle_fuzzy_match(arguments)
             elif name == "phonetic_match":
-                return await self._handle_phonetic_match(arguments)
+                return await db._handle_phonetic_match(arguments)
             elif name == "text_similarity":
-                return await self._handle_text_similarity(arguments)
+                return await db._handle_text_similarity(arguments)
             elif name == "text_normalize":
-                return await self._handle_text_normalize(arguments)
+                return await db._handle_text_normalize(arguments)
             elif name == "advanced_search":
-                return await self._handle_advanced_search(arguments)
+                return await db._handle_advanced_search(arguments)
             elif name == "text_validation":
-                return await self._handle_text_validation(arguments)
+                return await db._handle_text_validation(arguments)
 
             else:
                 raise ValueError(f"Unknown tool: {name}")
