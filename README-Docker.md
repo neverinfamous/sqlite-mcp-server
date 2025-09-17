@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated September 17, 2025 11:55 PM EST - v1.9.0*
+*Last Updated September 17, 2025 12:39 AM EST - v1.9.2*
 
 *Lightweight, containerized SQLite database server with AI-native features*
 
@@ -62,12 +62,26 @@ docker run -i --rm \
 
 ## Key Features
 
-- **40 Tools**: Complete SQLite operations + advanced vector optimization
-- **7 Intelligent Resources**: Real-time database meta-awareness
-- **7 Guided Prompts**: Workflow automation for complex operations
-- **Vector Index Optimization**: ANN search with k-means clustering for 100x performance
-- **AI-Native**: Semantic search, vector storage, hybrid search
-- **Enterprise Ready**: Backup/restore, integrity checks, optimization
+- **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements (~15% space savings)
+- **Transaction Safety**: All write operations automatically wrapped in transactions with proper rollback on errors
+- **Foreign Key Enforcement**: Automatic enforcement of foreign key constraints across all connections
+- **Advanced SQL Support**: Complex queries including window functions, subqueries, and advanced filtering
+- **Business Intelligence**: Integrated memo resource for capturing business insights during analysis
+- **Enhanced Error Handling**: Detailed diagnostics for JSON-related errors with specific suggestions for fixing issues
+- **Multi-Level Caching**: Hierarchical caching for optimal performance
+- **Pattern Recognition**: Automatic optimization of frequently executed queries
+- **JSON Validation**: Prevents invalid JSON from being stored in the database
+- **Comprehensive Schema Tools**: Enhanced tools for exploring and documenting database structure
+- **Database Administration Tools**: Complete suite of maintenance tools including VACUUM, ANALYZE, integrity checks, performance statistics, and index usage analysis
+- **Full-Text Search (FTS5)**: Comprehensive FTS5 implementation with table creation, index management, and enhanced search with BM25 ranking and snippets
+- **Backup/Restore Operations**: Enterprise-grade backup and restore capabilities with SQLite backup API, integrity verification, and safety confirmations
+- **Advanced PRAGMA Operations**: Comprehensive SQLite configuration management, performance optimization, and database introspection tools
+- **Virtual Table Management**: Complete virtual table lifecycle management for R-Tree spatial indexing, CSV file access, and sequence generation
+- **Semantic/Vector Search**: AI-native semantic search with embedding storage, cosine similarity, and hybrid keyword+semantic ranking
+- **Vector Index Optimization**: Approximate Nearest Neighbor (ANN) search with k-means clustering and spatial indexing for sub-linear O(log n) performance
+- **Intelligent MCP Resources**: Dynamic database meta-awareness with real-time schema, capabilities, statistics, search indexes, and performance insights
+- **Guided MCP Prompts**: Intelligent workflow automation with semantic query translation, table summarization, database optimization, and hybrid search recipes
+- **Advanced SQLite Engine**: Upgraded to SQLite 3.50.4 with significant performance enhancements
 
 ## Container Options
 

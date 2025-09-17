@@ -528,9 +528,9 @@ async def main(db_path: str = "sqlite_mcp.db"):
             elif path == "capabilities":
                 # Comprehensive server capabilities matrix
                 capabilities = {
-                    "server_version": "1.9.0",
+                    "server_version": "1.9.3",
                     "sqlite_version": db.version_info.get('version', 'Unknown'),
-                    "total_tools": 40,
+                    "total_tools": 44,
                     "semantic_search": True,
                     "full_text_search": True,
                     "virtual_tables": True,
@@ -1194,6 +1194,143 @@ async def main(db_path: str = "sqlite_mcp.db"):
                         }
                     },
                     "required": ["table_name"]
+                }
+            ),
+            
+            # Enhanced Virtual Tables (v1.9.3)
+            types.Tool(
+                name="create_enhanced_csv_table",
+                description="Create enhanced CSV virtual table with automatic data type inference",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name for the enhanced CSV virtual table"
+                        },
+                        "csv_file_path": {
+                            "type": "string",
+                            "description": "Path to the CSV file"
+                        },
+                        "delimiter": {
+                            "type": "string",
+                            "description": "CSV delimiter character",
+                            "default": ","
+                        },
+                        "has_header": {
+                            "type": "boolean",
+                            "description": "Whether CSV has header row",
+                            "default": True
+                        },
+                        "sample_rows": {
+                            "type": "integer",
+                            "description": "Number of rows to sample for type inference",
+                            "default": 100
+                        },
+                        "null_values": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "Values to treat as NULL",
+                            "default": ["", "NULL", "null", "None", "N/A", "n/a"]
+                        }
+                    },
+                    "required": ["table_name", "csv_file_path"]
+                }
+            ),
+            
+            types.Tool(
+                name="create_json_collection_table",
+                description="Create virtual table for JSON file collections (JSONL, JSON arrays)",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name for the JSON collection virtual table"
+                        },
+                        "json_file_path": {
+                            "type": "string",
+                            "description": "Path to JSON file (JSONL or JSON array)"
+                        },
+                        "format_type": {
+                            "type": "string",
+                            "enum": ["jsonl", "json_array", "auto"],
+                            "description": "JSON format: jsonl (line-delimited), json_array, or auto-detect",
+                            "default": "auto"
+                        },
+                        "flatten_nested": {
+                            "type": "boolean",
+                            "description": "Flatten nested objects into columns with dot notation",
+                            "default": True
+                        },
+                        "max_depth": {
+                            "type": "integer",
+                            "description": "Maximum nesting depth to flatten",
+                            "default": 3
+                        },
+                        "sample_records": {
+                            "type": "integer",
+                            "description": "Number of records to sample for schema inference",
+                            "default": 100
+                        }
+                    },
+                    "required": ["table_name", "json_file_path"]
+                }
+            ),
+            
+            types.Tool(
+                name="analyze_csv_schema",
+                description="Analyze CSV file and infer data types without creating table",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "csv_file_path": {
+                            "type": "string",
+                            "description": "Path to the CSV file to analyze"
+                        },
+                        "delimiter": {
+                            "type": "string",
+                            "description": "CSV delimiter character",
+                            "default": ","
+                        },
+                        "has_header": {
+                            "type": "boolean",
+                            "description": "Whether CSV has header row",
+                            "default": True
+                        },
+                        "sample_rows": {
+                            "type": "integer",
+                            "description": "Number of rows to sample for analysis",
+                            "default": 1000
+                        }
+                    },
+                    "required": ["csv_file_path"]
+                }
+            ),
+            
+            types.Tool(
+                name="analyze_json_schema",
+                description="Analyze JSON file collection and infer schema without creating table",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "json_file_path": {
+                            "type": "string",
+                            "description": "Path to JSON file to analyze"
+                        },
+                        "format_type": {
+                            "type": "string",
+                            "enum": ["jsonl", "json_array", "auto"],
+                            "description": "JSON format type",
+                            "default": "auto"
+                        },
+                        "sample_records": {
+                            "type": "integer",
+                            "description": "Number of records to sample for analysis",
+                            "default": 1000
+                        }
+                    },
+                    "required": ["json_file_path"]
                 }
             ),
             
@@ -2293,6 +2430,609 @@ async def main(db_path: str = "sqlite_mcp.db"):
                     logger.error(error_msg)
                     return [types.TextContent(type="text", text=error_msg)]
 
+            # Enhanced Virtual Tables (v1.9.3)
+            elif name == "create_enhanced_csv_table":
+                if not arguments or "table_name" not in arguments or "csv_file_path" not in arguments:
+                    raise ValueError("Missing table_name or csv_file_path argument")
+                
+                table_name = arguments["table_name"]
+                csv_file_path = arguments["csv_file_path"]
+                delimiter = arguments.get("delimiter", ",")
+                has_header = arguments.get("has_header", True)
+                sample_rows = arguments.get("sample_rows", 100)
+                null_values = arguments.get("null_values", ["", "NULL", "null", "None", "N/A", "n/a"])
+                
+                logger.info(f"Creating enhanced CSV table: {table_name} from {csv_file_path}")
+                
+                try:
+                    import csv
+                    import os
+                    from collections import Counter, defaultdict
+                    import re
+                    
+                    # Check if file exists
+                    if not os.path.exists(csv_file_path):
+                        return [types.TextContent(type="text", text=f"Error: CSV file '{csv_file_path}' not found")]
+                    
+                    # Analyze CSV structure and infer types
+                    with open(csv_file_path, 'r', encoding='utf-8') as f:
+                        reader = csv.reader(f, delimiter=delimiter)
+                        
+                        # Get headers
+                        if has_header:
+                            headers = next(reader)
+                        else:
+                            # Peek at first row to count columns
+                            first_row = next(reader)
+                            headers = [f"column_{i+1}" for i in range(len(first_row))]
+                            f.seek(0)  # Reset file pointer
+                            if has_header:
+                                next(reader)  # Skip header row again
+                        
+                        # Sample data for type inference
+                        sample_data = []
+                        for i, row in enumerate(reader):
+                            if i >= sample_rows:
+                                break
+                            sample_data.append(row)
+                    
+                    # Infer column types
+                    column_types = {}
+                    for col_idx, header in enumerate(headers):
+                        col_data = [row[col_idx] if col_idx < len(row) else "" for row in sample_data]
+                        # Filter out null values for type inference
+                        non_null_data = [val for val in col_data if val not in null_values]
+                        
+                        if not non_null_data:
+                            column_types[header] = "TEXT"
+                            continue
+                        
+                        # Type inference logic
+                        int_count = 0
+                        float_count = 0
+                        date_count = 0
+                        bool_count = 0
+                        
+                        for val in non_null_data:
+                            val = val.strip()
+                            
+                            # Check for boolean
+                            if val.lower() in ['true', 'false', 'yes', 'no', '1', '0', 't', 'f', 'y', 'n']:
+                                bool_count += 1
+                            # Check for integer
+                            elif re.match(r'^-?\d+$', val):
+                                int_count += 1
+                            # Check for float
+                            elif re.match(r'^-?\d*\.\d+$', val):
+                                float_count += 1
+                            # Check for date patterns
+                            elif re.match(r'^\d{4}-\d{2}-\d{2}', val) or re.match(r'^\d{2}/\d{2}/\d{4}', val):
+                                date_count += 1
+                        
+                        total_non_null = len(non_null_data)
+                        
+                        # Determine type based on majority
+                        if int_count / total_non_null > 0.8:
+                            column_types[header] = "INTEGER"
+                        elif (int_count + float_count) / total_non_null > 0.8:
+                            column_types[header] = "REAL"
+                        elif bool_count / total_non_null > 0.8:
+                            column_types[header] = "INTEGER"  # Store booleans as integers
+                        elif date_count / total_non_null > 0.5:
+                            column_types[header] = "TEXT"  # SQLite doesn't have DATE type
+                        else:
+                            column_types[header] = "TEXT"
+                    
+                    # Create the enhanced CSV table with proper types
+                    columns_def = []
+                    for header in headers:
+                        # Clean column name for SQL
+                        clean_header = re.sub(r'[^a-zA-Z0-9_]', '_', header)
+                        col_type = column_types.get(header, "TEXT")
+                        columns_def.append(f'"{clean_header}" {col_type}')
+                    
+                    # Create the table with inferred schema
+                    create_sql = f"""
+                        CREATE TABLE "{table_name}" (
+                            {', '.join(columns_def)}
+                        )
+                    """
+                    
+                    db._execute_query(create_sql)
+                    
+                    # Load data with type conversion
+                    with open(csv_file_path, 'r', encoding='utf-8') as f:
+                        reader = csv.reader(f, delimiter=delimiter)
+                        
+                        if has_header:
+                            next(reader)  # Skip header
+                        
+                        # Prepare insert statement
+                        placeholders = ', '.join(['?' for _ in headers])
+                        insert_sql = f'INSERT INTO "{table_name}" VALUES ({placeholders})'
+                        
+                        # Insert data with type conversion
+                        rows_inserted = 0
+                        for row in reader:
+                            # Pad row if necessary
+                            while len(row) < len(headers):
+                                row.append("")
+                            
+                            # Convert values based on inferred types
+                            converted_row = []
+                            for i, (val, header) in enumerate(zip(row[:len(headers)], headers)):
+                                if val in null_values:
+                                    converted_row.append(None)
+                                else:
+                                    col_type = column_types[header]
+                                    if col_type == "INTEGER":
+                                        try:
+                                            converted_row.append(int(val) if val.strip() else None)
+                                        except ValueError:
+                                            converted_row.append(None)
+                                    elif col_type == "REAL":
+                                        try:
+                                            converted_row.append(float(val) if val.strip() else None)
+                                        except ValueError:
+                                            converted_row.append(None)
+                                    else:
+                                        converted_row.append(val)
+                            
+                            db._execute_query(insert_sql, converted_row)
+                            rows_inserted += 1
+                    
+                    # Generate summary
+                    result_info = {
+                        "table_name": table_name,
+                        "csv_file": csv_file_path,
+                        "rows_loaded": rows_inserted,
+                        "columns": len(headers),
+                        "inferred_schema": {header: column_types[header] for header in headers},
+                        "sample_rows_analyzed": min(sample_rows, len(sample_data)),
+                        "null_values_treated": null_values
+                    }
+                    
+                    logger.info(f"Enhanced CSV table '{table_name}' created successfully with {rows_inserted} rows")
+                    return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"Failed to create enhanced CSV table: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "create_json_collection_table":
+                if not arguments or "table_name" not in arguments or "json_file_path" not in arguments:
+                    raise ValueError("Missing table_name or json_file_path argument")
+                
+                table_name = arguments["table_name"]
+                json_file_path = arguments["json_file_path"]
+                format_type = arguments.get("format_type", "auto")
+                flatten_nested = arguments.get("flatten_nested", True)
+                max_depth = arguments.get("max_depth", 3)
+                sample_records = arguments.get("sample_records", 100)
+                
+                logger.info(f"Creating JSON collection table: {table_name} from {json_file_path}")
+                
+                try:
+                    import json
+                    import os
+                    from collections import defaultdict
+                    
+                    # Check if file exists
+                    if not os.path.exists(json_file_path):
+                        return [types.TextContent(type="text", text=f"Error: JSON file '{json_file_path}' not found")]
+                    
+                    # Auto-detect format if needed
+                    if format_type == "auto":
+                        with open(json_file_path, 'r', encoding='utf-8') as f:
+                            first_line = f.readline().strip()
+                            if first_line.startswith('['):
+                                format_type = "json_array"
+                            else:
+                                format_type = "jsonl"
+                    
+                    # Load sample data for schema inference
+                    sample_data = []
+                    
+                    with open(json_file_path, 'r', encoding='utf-8') as f:
+                        if format_type == "json_array":
+                            data = json.load(f)
+                            sample_data = data[:sample_records] if isinstance(data, list) else [data]
+                        else:  # jsonl
+                            for i, line in enumerate(f):
+                                if i >= sample_records:
+                                    break
+                                if line.strip():
+                                    sample_data.append(json.loads(line))
+                    
+                    # Flatten nested objects and infer schema
+                    def flatten_dict(d, parent_key='', sep='.', depth=0):
+                        items = []
+                        if depth >= max_depth:
+                            # Convert to JSON string if max depth reached
+                            items.append((parent_key, json.dumps(d) if isinstance(d, (dict, list)) else str(d)))
+                            return items
+                        
+                        if isinstance(d, dict):
+                            for k, v in d.items():
+                                new_key = f"{parent_key}{sep}{k}" if parent_key else k
+                                if isinstance(v, dict) and flatten_nested:
+                                    items.extend(flatten_dict(v, new_key, sep, depth + 1))
+                                elif isinstance(v, list) and flatten_nested and len(v) > 0 and isinstance(v[0], dict):
+                                    # Handle arrays of objects by taking first object structure
+                                    items.extend(flatten_dict(v[0], f"{new_key}[0]", sep, depth + 1))
+                                    # Also store array length
+                                    items.append((f"{new_key}_length", len(v)))
+                                else:
+                                    items.append((new_key, v))
+                        else:
+                            items.append((parent_key, d))
+                        return items
+                    
+                    # Collect all possible columns from sample data
+                    all_columns = set()
+                    column_types = defaultdict(lambda: defaultdict(int))
+                    
+                    for record in sample_data:
+                        flattened = dict(flatten_dict(record) if flatten_nested else record.items())
+                        all_columns.update(flattened.keys())
+                        
+                        # Infer types for each column
+                        for key, value in flattened.items():
+                            if value is None:
+                                column_types[key]['null'] += 1
+                            elif isinstance(value, bool):
+                                column_types[key]['boolean'] += 1
+                            elif isinstance(value, int):
+                                column_types[key]['integer'] += 1
+                            elif isinstance(value, float):
+                                column_types[key]['real'] += 1
+                            elif isinstance(value, str):
+                                column_types[key]['text'] += 1
+                            else:
+                                column_types[key]['text'] += 1  # Default for complex types
+                    
+                    # Determine final column types
+                    final_schema = {}
+                    for col in all_columns:
+                        type_counts = column_types[col]
+                        total = sum(type_counts.values())
+                        
+                        if type_counts['integer'] / total > 0.8:
+                            final_schema[col] = 'INTEGER'
+                        elif (type_counts['integer'] + type_counts['real']) / total > 0.8:
+                            final_schema[col] = 'REAL'
+                        elif type_counts['boolean'] / total > 0.8:
+                            final_schema[col] = 'INTEGER'
+                        else:
+                            final_schema[col] = 'TEXT'
+                    
+                    # Create table with inferred schema
+                    columns_def = []
+                    for col in sorted(all_columns):
+                        # Clean column name for SQL
+                        clean_col = re.sub(r'[^a-zA-Z0-9_]', '_', col)
+                        col_type = final_schema[col]
+                        columns_def.append(f'"{clean_col}" {col_type}')
+                    
+                    create_sql = f"""
+                        CREATE TABLE "{table_name}" (
+                            {', '.join(columns_def)}
+                        )
+                    """
+                    
+                    db._execute_query(create_sql)
+                    
+                    # Load all data
+                    rows_inserted = 0
+                    column_list = sorted(all_columns)
+                    placeholders = ', '.join(['?' for _ in column_list])
+                    insert_sql = f'INSERT INTO "{table_name}" VALUES ({placeholders})'
+                    
+                    with open(json_file_path, 'r', encoding='utf-8') as f:
+                        if format_type == "json_array":
+                            data = json.load(f)
+                            records = data if isinstance(data, list) else [data]
+                        else:  # jsonl
+                            records = [json.loads(line) for line in f if line.strip()]
+                    
+                    for record in records:
+                        flattened = dict(flatten_dict(record) if flatten_nested else record.items())
+                        
+                        # Create row with all columns in order
+                        row_data = []
+                        for col in column_list:
+                            value = flattened.get(col)
+                            if value is None:
+                                row_data.append(None)
+                            else:
+                                col_type = final_schema[col]
+                                if col_type == 'INTEGER':
+                                    try:
+                                        row_data.append(int(value) if not isinstance(value, bool) else (1 if value else 0))
+                                    except (ValueError, TypeError):
+                                        row_data.append(None)
+                                elif col_type == 'REAL':
+                                    try:
+                                        row_data.append(float(value))
+                                    except (ValueError, TypeError):
+                                        row_data.append(None)
+                                else:
+                                    row_data.append(str(value) if value is not None else None)
+                        
+                        db._execute_query(insert_sql, row_data)
+                        rows_inserted += 1
+                    
+                    # Generate summary
+                    result_info = {
+                        "table_name": table_name,
+                        "json_file": json_file_path,
+                        "format_detected": format_type,
+                        "rows_loaded": rows_inserted,
+                        "columns": len(column_list),
+                        "inferred_schema": final_schema,
+                        "flattened": flatten_nested,
+                        "max_depth": max_depth,
+                        "sample_records_analyzed": min(sample_records, len(sample_data))
+                    }
+                    
+                    logger.info(f"JSON collection table '{table_name}' created successfully with {rows_inserted} rows")
+                    return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"Failed to create JSON collection table: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "analyze_csv_schema":
+                if not arguments or "csv_file_path" not in arguments:
+                    raise ValueError("Missing csv_file_path argument")
+                
+                csv_file_path = arguments["csv_file_path"]
+                delimiter = arguments.get("delimiter", ",")
+                has_header = arguments.get("has_header", True)
+                sample_rows = arguments.get("sample_rows", 1000)
+                
+                logger.info(f"Analyzing CSV schema: {csv_file_path}")
+                
+                try:
+                    import csv
+                    import os
+                    from collections import Counter
+                    import re
+                    
+                    if not os.path.exists(csv_file_path):
+                        return [types.TextContent(type="text", text=f"Error: CSV file '{csv_file_path}' not found")]
+                    
+                    analysis_result = {
+                        "file_path": csv_file_path,
+                        "file_size": os.path.getsize(csv_file_path),
+                        "delimiter": delimiter,
+                        "has_header": has_header
+                    }
+                    
+                    with open(csv_file_path, 'r', encoding='utf-8') as f:
+                        reader = csv.reader(f, delimiter=delimiter)
+                        
+                        # Get headers and count total rows
+                        if has_header:
+                            headers = next(reader)
+                        else:
+                            first_row = next(reader)
+                            headers = [f"column_{i+1}" for i in range(len(first_row))]
+                            f.seek(0)
+                        
+                        # Count total rows
+                        total_rows = sum(1 for _ in reader)
+                        f.seek(0)
+                        if has_header:
+                            next(reader)  # Skip header again
+                        
+                        # Sample data for analysis
+                        sample_data = []
+                        for i, row in enumerate(reader):
+                            if i >= sample_rows:
+                                break
+                            sample_data.append(row)
+                    
+                    analysis_result.update({
+                        "total_rows": total_rows,
+                        "columns": len(headers),
+                        "sample_rows_analyzed": len(sample_data),
+                        "column_analysis": {}
+                    })
+                    
+                    # Analyze each column
+                    for col_idx, header in enumerate(headers):
+                        col_data = [row[col_idx] if col_idx < len(row) else "" for row in sample_data]
+                        
+                        # Basic statistics
+                        non_empty = [val for val in col_data if val.strip()]
+                        empty_count = len(col_data) - len(non_empty)
+                        
+                        # Type analysis
+                        int_count = sum(1 for val in non_empty if re.match(r'^-?\d+$', val.strip()))
+                        float_count = sum(1 for val in non_empty if re.match(r'^-?\d*\.\d+$', val.strip()))
+                        date_count = sum(1 for val in non_empty if re.match(r'^\d{4}-\d{2}-\d{2}', val.strip()) or re.match(r'^\d{2}/\d{2}/\d{4}', val.strip()))
+                        
+                        # Unique values
+                        unique_values = len(set(col_data))
+                        
+                        # Most common values
+                        value_counts = Counter(col_data)
+                        most_common = value_counts.most_common(5)
+                        
+                        # Inferred type
+                        if int_count / len(non_empty) > 0.8 if non_empty else False:
+                            inferred_type = "INTEGER"
+                        elif (int_count + float_count) / len(non_empty) > 0.8 if non_empty else False:
+                            inferred_type = "REAL"
+                        elif date_count / len(non_empty) > 0.5 if non_empty else False:
+                            inferred_type = "DATE (stored as TEXT)"
+                        else:
+                            inferred_type = "TEXT"
+                        
+                        analysis_result["column_analysis"][header] = {
+                            "index": col_idx,
+                            "total_values": len(col_data),
+                            "non_empty_values": len(non_empty),
+                            "empty_values": empty_count,
+                            "unique_values": unique_values,
+                            "inferred_type": inferred_type,
+                            "type_confidence": {
+                                "integer_matches": int_count,
+                                "float_matches": float_count,
+                                "date_matches": date_count
+                            },
+                            "most_common_values": most_common,
+                            "sample_values": col_data[:10]
+                        }
+                    
+                    logger.info(f"CSV schema analysis completed for '{csv_file_path}'")
+                    return [types.TextContent(type="text", text=json.dumps(analysis_result, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"Failed to analyze CSV schema: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "analyze_json_schema":
+                if not arguments or "json_file_path" not in arguments:
+                    raise ValueError("Missing json_file_path argument")
+                
+                json_file_path = arguments["json_file_path"]
+                format_type = arguments.get("format_type", "auto")
+                sample_records = arguments.get("sample_records", 1000)
+                
+                logger.info(f"Analyzing JSON schema: {json_file_path}")
+                
+                try:
+                    import json
+                    import os
+                    from collections import defaultdict, Counter
+                    
+                    if not os.path.exists(json_file_path):
+                        return [types.TextContent(type="text", text=f"Error: JSON file '{json_file_path}' not found")]
+                    
+                    analysis_result = {
+                        "file_path": json_file_path,
+                        "file_size": os.path.getsize(json_file_path)
+                    }
+                    
+                    # Auto-detect format if needed
+                    if format_type == "auto":
+                        with open(json_file_path, 'r', encoding='utf-8') as f:
+                            first_line = f.readline().strip()
+                            if first_line.startswith('['):
+                                format_type = "json_array"
+                            else:
+                                format_type = "jsonl"
+                    
+                    analysis_result["detected_format"] = format_type
+                    
+                    # Load and analyze data
+                    with open(json_file_path, 'r', encoding='utf-8') as f:
+                        if format_type == "json_array":
+                            data = json.load(f)
+                            if isinstance(data, list):
+                                total_records = len(data)
+                                sample_data = data[:sample_records]
+                            else:
+                                total_records = 1
+                                sample_data = [data]
+                        else:  # jsonl
+                            all_lines = [line for line in f if line.strip()]
+                            total_records = len(all_lines)
+                            sample_data = [json.loads(line) for line in all_lines[:sample_records]]
+                    
+                    analysis_result.update({
+                        "total_records": total_records,
+                        "sample_records_analyzed": len(sample_data)
+                    })
+                    
+                    # Analyze schema structure
+                    def analyze_structure(obj, path="", depth=0):
+                        schema_info = defaultdict(lambda: {"types": Counter(), "depths": [], "examples": []})
+                        
+                        if isinstance(obj, dict):
+                            for key, value in obj.items():
+                                current_path = f"{path}.{key}" if path else key
+                                schema_info[current_path]["depths"].append(depth)
+                                schema_info[current_path]["examples"].append(value)
+                                
+                                if value is None:
+                                    schema_info[current_path]["types"]["null"] += 1
+                                elif isinstance(value, bool):
+                                    schema_info[current_path]["types"]["boolean"] += 1
+                                elif isinstance(value, int):
+                                    schema_info[current_path]["types"]["integer"] += 1
+                                elif isinstance(value, float):
+                                    schema_info[current_path]["types"]["number"] += 1
+                                elif isinstance(value, str):
+                                    schema_info[current_path]["types"]["string"] += 1
+                                elif isinstance(value, list):
+                                    schema_info[current_path]["types"]["array"] += 1
+                                    if value and isinstance(value[0], dict):
+                                        # Analyze first item in array
+                                        nested = analyze_structure(value[0], f"{current_path}[0]", depth + 1)
+                                        for k, v in nested.items():
+                                            schema_info[k]["types"].update(v["types"])
+                                            schema_info[k]["depths"].extend(v["depths"])
+                                            schema_info[k]["examples"].extend(v["examples"])
+                                elif isinstance(value, dict):
+                                    schema_info[current_path]["types"]["object"] += 1
+                                    nested = analyze_structure(value, current_path, depth + 1)
+                                    for k, v in nested.items():
+                                        schema_info[k]["types"].update(v["types"])
+                                        schema_info[k]["depths"].extend(v["depths"])
+                                        schema_info[k]["examples"].extend(v["examples"])
+                        
+                        return schema_info
+                    
+                    # Aggregate schema from all sample records
+                    all_schema_info = defaultdict(lambda: {"types": Counter(), "depths": [], "examples": []})
+                    
+                    for record in sample_data:
+                        record_schema = analyze_structure(record)
+                        for path, info in record_schema.items():
+                            all_schema_info[path]["types"].update(info["types"])
+                            all_schema_info[path]["depths"].extend(info["depths"])
+                            all_schema_info[path]["examples"].extend(info["examples"])
+                    
+                    # Process schema information
+                    schema_analysis = {}
+                    for path, info in all_schema_info.items():
+                        most_common_type = info["types"].most_common(1)[0] if info["types"] else ("unknown", 0)
+                        
+                        # Determine SQLite type
+                        if most_common_type[0] in ["integer", "boolean"]:
+                            sqlite_type = "INTEGER"
+                        elif most_common_type[0] == "number":
+                            sqlite_type = "REAL"
+                        else:
+                            sqlite_type = "TEXT"
+                        
+                        schema_analysis[path] = {
+                            "occurrence_count": sum(info["types"].values()),
+                            "occurrence_percentage": sum(info["types"].values()) / len(sample_data) * 100,
+                            "type_distribution": dict(info["types"]),
+                            "most_common_type": most_common_type[0],
+                            "suggested_sqlite_type": sqlite_type,
+                            "average_depth": sum(info["depths"]) / len(info["depths"]) if info["depths"] else 0,
+                            "sample_values": list(set(info["examples"]))[:5]
+                        }
+                    
+                    analysis_result["schema_analysis"] = schema_analysis
+                    analysis_result["total_unique_fields"] = len(schema_analysis)
+                    
+                    logger.info(f"JSON schema analysis completed for '{json_file_path}'")
+                    return [types.TextContent(type="text", text=json.dumps(analysis_result, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"Failed to analyze JSON schema: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
             # Handle semantic search tools
             elif name == "create_embeddings_table":
                 if not arguments or "table_name" not in arguments:
@@ -3215,7 +3955,7 @@ async def main(db_path: str = "sqlite_mcp.db"):
             write_stream,
             InitializationOptions(
                 server_name="sqlite-custom",
-                server_version="1.2.0",
+                server_version="1.9.3",
                 capabilities=server.get_capabilities(
                     notification_options=NotificationOptions(),
                     experimental_capabilities={},

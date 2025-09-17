@@ -1,6 +1,6 @@
 [project]
 name = "mcp-server-sqlite"
-version = "1.9.0"
+version = "1.9.3"
 description = "A SQLite MCP server with JSONB support, database administration tools, and advanced database operations"
 readme = "README.md"
 requires-python = ">=3.10"
