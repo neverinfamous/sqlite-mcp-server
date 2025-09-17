@@ -1,8 +1,8 @@
 # SQLite MCP Server
 
-*Last Updated September 17, 2025 5:45 AM EST - v2.1.0*
+*Last Updated September 17, 2025 6:15 AM EST - v2.2.0*
 
-*Lightweight, containerized SQLite database server with AI-native features and statistical analysis*
+*Lightweight, containerized SQLite database server with AI-native features, advanced text processing, and statistical analysis*
 
 ## 🚀 Zero-Configuration Database
 **No database setup required!** The server automatically creates and manages persistent SQLite databases **because MCP operations need persistent storage**:
@@ -62,6 +62,7 @@ docker run -i --rm \
 
 ## Key Features
 
+- **Advanced Text Processing**: Comprehensive text analysis toolkit with PCRE regex extraction/replacement, fuzzy matching with Levenshtein distance, phonetic matching (Soundex/Metaphone), text similarity analysis (Cosine/Jaccard), normalization operations, and pattern validation
 - **Statistical Analysis Library**: Comprehensive statistical functions for data analysis including descriptive statistics, percentile analysis, and time series analysis
 - **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements (~15% space savings)
 - **Transaction Safety**: All write operations automatically wrapped in transactions with proper rollback on errors

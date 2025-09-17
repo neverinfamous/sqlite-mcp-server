@@ -1,13 +1,14 @@
 # SQLite MCP Server
 
-*Last Updated September 17, 2025 5:44 AM EST - v2.1.0*
+*Last Updated September 17, 2025 6:15 AM EST - v2.2.0*
 
 ## Overview
 
-The SQLite MCP Server provides advanced database interaction and business intelligence capabilities featuring **Statistical Analysis Library**, **SpatiaLite Geospatial Analytics**, Enhanced Virtual Tables with Smart Type Inference, Vector Index Optimization with ANN search, Intelligent MCP Resources and Prompts, Semantic/Vector Search, Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
+The SQLite MCP Server provides advanced database interaction and business intelligence capabilities featuring **Advanced Text Processing**, **Statistical Analysis Library**, **SpatiaLite Geospatial Analytics**, Enhanced Virtual Tables with Smart Type Inference, Vector Index Optimization with ANN search, Intelligent MCP Resources and Prompts, Semantic/Vector Search, Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
 
 ## Key Features
 
+- **Advanced Text Processing**: Comprehensive text analysis toolkit with PCRE regex extraction/replacement, fuzzy matching with Levenshtein distance, phonetic matching (Soundex/Metaphone), text similarity analysis (Cosine/Jaccard), normalization operations, and pattern validation
 - **Statistical Analysis Library**: Comprehensive statistical functions for data analysis including descriptive statistics, percentile analysis, and time series analysis
 - **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements (~15% space savings)
 - **Transaction Safety**: All write operations automatically wrapped in transactions with proper rollback on errors
@@ -40,9 +41,107 @@ This project is based on the original SQLite MCP Server from the [Model Context 
 **Original Repository**: https://github.com/modelcontextprotocol/servers  
 **License**: MIT License
 
+## Advanced Text Processing
+
+The SQLite MCP Server v2.2.0 introduces a comprehensive text processing toolkit with 8 specialized functions for advanced text analysis, pattern matching, and data cleaning.
+
+### Available Text Processing Functions
+
+**Pattern Extraction & Replacement:**
+```javascript
+// Extract email addresses using regex patterns
+{
+  "table_name": "users",
+  "column_name": "contact_info", 
+  "pattern": "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}",
+  "flags": "i",
+  "limit": 50
+}
+
+// Replace phone number formats
+{
+  "table_name": "contacts",
+  "column_name": "phone",
+  "pattern": "\\((\\d{3})\\)\\s*(\\d{3})-(\\d{4})",
+  "replacement": "$1-$2-$3",
+  "preview_only": true
+}
+```
+
+**Fuzzy & Phonetic Matching:**
+```javascript
+// Find similar names using fuzzy matching
+{
+  "table_name": "customers",
+  "column_name": "name",
+  "search_term": "John Smith",
+  "threshold": 0.8,
+  "limit": 20
+}
+
+// Phonetic matching for name variations
+{
+  "table_name": "people",
+  "column_name": "last_name", 
+  "search_term": "Johnson",
+  "algorithm": "soundex"
+}
+```
+
+**Text Similarity & Analysis:**
+```javascript
+// Calculate text similarity between columns
+{
+  "table_name": "products",
+  "column_name": "description",
+  "compare_column": "summary",
+  "method": "cosine",
+  "limit": 100
+}
+
+// Multi-method advanced search
+{
+  "table_name": "documents",
+  "column_name": "content",
+  "search_term": "machine learning",
+  "methods": ["exact", "fuzzy", "word", "phonetic"],
+  "fuzzy_threshold": 0.7
+}
+```
+
+**Text Normalization & Validation:**
+```javascript
+// Normalize text with multiple operations
+{
+  "table_name": "reviews",
+  "column_name": "comment",
+  "operations": ["lowercase", "trim", "remove_extra_spaces", "normalize_unicode"],
+  "preview_only": false
+}
+
+// Validate data patterns
+{
+  "table_name": "users",
+  "column_name": "email",
+  "validation_type": "email",
+  "limit": 1000
+}
+```
+
+### Text Processing Tools
+
+1. **`regex_extract`**: Extract text patterns using PCRE-style regular expressions with capture groups
+2. **`regex_replace`**: Replace text patterns with support for backreferences and preview mode
+3. **`fuzzy_match`**: Find similar text using Levenshtein distance and sequence matching
+4. **`phonetic_match`**: Match text phonetically using Soundex and Metaphone algorithms
+5. **`text_similarity`**: Calculate similarity between text columns using Cosine, Jaccard, or Levenshtein methods
+6. **`text_normalize`**: Apply multiple text normalization operations (case, Unicode, whitespace, etc.)
+7. **`advanced_search`**: Multi-method search combining exact, fuzzy, regex, word boundary, and phonetic matching
+8. **`text_validation`**: Validate text against common patterns (email, phone, URL, credit card, etc.)
+
 ## Statistical Analysis Library
 
-The SQLite MCP Server v2.1.0 introduces a comprehensive statistical analysis library with 8 specialized functions for data analysis and business intelligence.
+The SQLite MCP Server v2.2.0 includes a comprehensive statistical analysis library with 8 specialized functions for data analysis and business intelligence.
 
 ### Available Statistical Functions
 
