@@ -1,10 +1,10 @@
 # SQLite MCP Server
 
-*Last Updated September 17, 2025 10:30 PM EST - v1.7.0*
+*Last Updated September 17, 2025 11:45 PM EST - v1.8.0*
 
 ## Overview
 
-The SQLite MCP Server provides advanced database interaction and business intelligence capabilities through SQLite featuring Semantic/Vector Search, Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
+The SQLite MCP Server provides advanced database interaction and business intelligence capabilities through SQLite featuring Intelligent MCP Resources and Prompts, Semantic/Vector Search, Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
 
 ## Key Features
 
@@ -24,6 +24,8 @@ The SQLite MCP Server provides advanced database interaction and business intell
 - **Advanced PRAGMA Operations**: Comprehensive SQLite configuration management, performance optimization, and database introspection tools
 - **Virtual Table Management**: Complete virtual table lifecycle management for R-Tree spatial indexing, CSV file access, and sequence generation
 - **Semantic/Vector Search**: AI-native semantic search with embedding storage, cosine similarity, and hybrid keyword+semantic ranking
+- **Intelligent MCP Resources**: Dynamic database meta-awareness with real-time schema, capabilities, statistics, search indexes, and performance insights
+- **Guided MCP Prompts**: Intelligent workflow automation with semantic query translation, table summarization, database optimization, and hybrid search recipes
 - **Advanced SQLite Engine**: Upgraded to SQLite 3.50.4 with significant performance enhancements
 
 ## Attribution
@@ -1016,6 +1018,100 @@ embedding = model.encode("Your content").tolist()
 # 2. Store and search using SQLite MCP Server
 store_embedding(table_name="hf_embeddings", embedding=embedding, content="Your content")
 ```
+
+## Intelligent MCP Resources & Prompts
+
+The SQLite MCP Server provides intelligent meta-awareness and guided workflows through advanced MCP Resources and Prompts, transforming it from a simple database interface into a self-aware, intelligent assistant.
+
+### MCP Resources - Database Meta-Awareness
+
+MCP Resources provide dynamic "knowledge hooks" that give the AI model instant access to database metadata without requiring repeated queries.
+
+**Available Resources:**
+
+**`database://schema`** - Complete database schema with natural language descriptions
+```javascript
+// Automatically provides:
+// - All table names and structures
+// - Column types and constraints  
+// - Row counts and relationships
+// - Natural language schema summary
+```
+
+**`database://capabilities`** - Comprehensive server capabilities matrix
+```javascript
+// Provides real-time information about:
+// - Available tools (36 total)
+// - Feature support (FTS5, semantic search, virtual tables)
+// - Advanced features and limitations
+// - Server and SQLite versions
+```
+
+**`database://statistics`** - Real-time database statistics and health metrics
+```javascript
+// Dynamic statistics including:
+// - Database size and page information
+// - Table row counts and sizes
+// - Index usage and efficiency
+// - Performance recommendations
+```
+
+**`database://search_indexes`** - Search index status and capabilities
+```javascript
+// Comprehensive index information:
+// - FTS5 tables and configurations
+// - Semantic search embeddings status
+// - Virtual table listings
+// - Index optimization suggestions
+```
+
+**`database://performance`** - Performance analysis and optimization recommendations
+```javascript
+// Intelligent performance insights:
+// - Health score assessment
+// - Maintenance recommendations
+// - Optimization suggestions
+// - Best practices guidance
+```
+
+### MCP Prompts - Guided Workflows
+
+MCP Prompts provide intelligent workflow automation, acting as "recipes" that guide complex multi-step operations.
+
+**Available Prompts:**
+
+**`semantic_query`** - Natural language to semantic search translation
+- Guides the AI through converting natural language questions into proper semantic search operations
+- Handles embedding generation, similarity thresholds, and result interpretation
+- Provides fallback strategies for complex queries
+
+**`summarize_table`** - Intelligent table analysis with configurable depth
+- Automated table exploration with statistical analysis
+- Configurable analysis depth (quick, standard, deep)
+- Generates natural language summaries with key insights
+
+**`optimize_database`** - Step-by-step database optimization workflow  
+- Comprehensive optimization checklist
+- Automated VACUUM, ANALYZE, and integrity checking
+- Performance tuning recommendations
+
+**`setup_semantic_search`** - Complete semantic search implementation guide
+- End-to-end setup for embedding tables and indexes
+- Integration with external embedding services
+- Testing and validation procedures
+
+**`hybrid_search_workflow`** - Hybrid keyword + semantic search implementation
+- Combines FTS5 keyword search with semantic similarity
+- Configurable weighting between search methods
+- Result ranking and relevance tuning
+
+### Benefits of Resources & Prompts
+
+**Reduced Hallucination**: AI always has access to current database state through resources
+**Improved Workflows**: Complex operations are guided by proven prompt recipes  
+**Meta-Awareness**: Server becomes self-aware of its own capabilities and limitations
+**Consistency**: Standardized approaches to common database operations
+**Efficiency**: Eliminates repetitive queries for metadata and schema information
 
 ## Planned Future Enhancements
 
