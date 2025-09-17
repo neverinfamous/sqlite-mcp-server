@@ -5673,7 +5673,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
             LIMIT {limit}
             """
                 
-            result = db._execute_query(query)
+            result = self._execute_query(query)
                 
             if not result:
                 return [types.TextContent(type="text", text="No data found for regex extraction")]
@@ -5756,7 +5756,7 @@ Found {len(matches)} matches:
             LIMIT 100
             """
                 
-            result = db._execute_query(query)
+            result = self._execute_query(query)
                 
             if not result:
                 return [types.TextContent(type="text", text="No data found for regex replacement")]
@@ -5805,7 +5805,7 @@ Found {len(replacements)} rows with changes:
                     SET {column_name} = ? 
                     WHERE rowid = ?
                     """
-                    db._execute_query(update_query, (repl['new'], repl['rowid']))
+                    self._execute_query(update_query, (repl['new'], repl['rowid']))
                     
                 output += f"\n✅ Successfully updated {len(replacements)} rows"
                 
@@ -5843,7 +5843,7 @@ Found {len(replacements)} rows with changes:
             LIMIT {limit * 2}
             """
                 
-            result = db._execute_query(query)
+            result = self._execute_query(query)
                 
             if not result:
                 return [types.TextContent(type="text", text="No data found for fuzzy matching")]
@@ -5977,7 +5977,7 @@ Found {len(matches)} matches:
             LIMIT {limit * 2}
             """
                 
-            result = db._execute_query(query)
+            result = self._execute_query(query)
                 
             if not result:
                 return [types.TextContent(type="text", text="No data found for phonetic matching")]
@@ -6114,7 +6114,7 @@ Found {len(matches)} matches:
                 LIMIT {limit}
                 """
                 
-            result = db._execute_query(query)
+            result = self._execute_query(query)
                 
             if not result:
                 return [types.TextContent(type="text", text="No data found for similarity calculation")]
@@ -6238,7 +6238,7 @@ Similarity Results (sorted by score):
             LIMIT {limit}
             """
                 
-            result = db._execute_query(query)
+            result = self._execute_query(query)
                 
             if not result:
                 return [types.TextContent(type="text", text="No data found for text normalization")]
@@ -6317,7 +6317,7 @@ Found {len(normalizations)} rows requiring normalization:
             LIMIT {limit * 2}
             """
                 
-            result = db._execute_query(query)
+            result = self._execute_query(query)
                 
             if not result:
                 return [types.TextContent(type="text", text="No data found for advanced search")]
@@ -6479,7 +6479,7 @@ Found {len(all_matches)} matches:
             LIMIT {limit}
             """
                 
-            result = db._execute_query(query)
+            result = self._execute_query(query)
                 
             if not result:
                 return [types.TextContent(type="text", text="No data found for text validation")]
