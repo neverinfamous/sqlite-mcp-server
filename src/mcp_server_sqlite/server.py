@@ -283,13 +283,15 @@ class EnhancedSqliteDatabase:
         query_upper = query.upper()
         needs_spatialite = any(func.upper() in query_upper for func in spatial_functions)
         
-        if needs_spatialite and self._spatialite_path:
+        # Load SpatiaLite if path is available and query might need it
+        if self._spatialite_path and (needs_spatialite or 'geom' in query_upper or 'spatial' in query_upper):
             try:
                 conn.enable_load_extension(True)
                 conn.load_extension(self._spatialite_path)
                 conn.enable_load_extension(False)
-            except:
-                pass  # Extension might already be loaded
+            except Exception as e:
+                # Extension might already be loaded or there might be an issue
+                pass
     
     def _execute_query(self, query: str, params: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """
