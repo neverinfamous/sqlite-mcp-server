@@ -732,6 +732,57 @@ async def main(db_path: str):
                     "required": ["backup_path"],
                 },
             ),
+            # Advanced PRAGMA Operations
+            types.Tool(
+                name="pragma_settings",
+                description="Get or set SQLite PRAGMA settings for database configuration",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "pragma_name": {"type": "string", "description": "PRAGMA name (e.g., 'journal_mode', 'synchronous', 'cache_size')"},
+                        "value": {"type": "string", "description": "Optional: value to set (omit to get current value)"}
+                    },
+                    "required": ["pragma_name"],
+                },
+            ),
+            types.Tool(
+                name="pragma_optimize",
+                description="Run PRAGMA optimize to update database statistics and improve query performance",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "analysis_limit": {"type": "integer", "description": "Optional: limit analysis to N most used tables", "default": 1000}
+                    },
+                },
+            ),
+            types.Tool(
+                name="pragma_table_info",
+                description="Get detailed table schema information using PRAGMA table_info",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {"type": "string", "description": "Name of the table to analyze"},
+                        "include_foreign_keys": {"type": "boolean", "description": "Include foreign key information", "default": True}
+                    },
+                    "required": ["table_name"],
+                },
+            ),
+            types.Tool(
+                name="pragma_database_list",
+                description="List all attached databases with their file paths and schemas",
+                inputSchema={
+                    "type": "object",
+                    "properties": {},
+                },
+            ),
+            types.Tool(
+                name="pragma_compile_options",
+                description="Show SQLite compile-time options and capabilities",
+                inputSchema={
+                    "type": "object",
+                    "properties": {},
+                },
+            ),
         ]
         
         # Add diagnostic tools if JSONB is supported
@@ -1096,6 +1147,137 @@ async def main(db_path: str):
                     
                 except Exception as e:
                     error_msg = f"Backup verification failed: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            # Handle advanced PRAGMA operations
+            elif name == "pragma_settings":
+                logger.info(f"PRAGMA operation: {arguments.get('pragma_name')}")
+                pragma_name = arguments["pragma_name"]
+                value = arguments.get("value")
+                
+                try:
+                    if value is not None:
+                        # Set PRAGMA value
+                        pragma_sql = f"PRAGMA {pragma_name} = {value}"
+                        db._execute_query(pragma_sql)
+                        # Get the new value to confirm
+                        result = db._execute_query(f"PRAGMA {pragma_name}")
+                        result_msg = f"PRAGMA {pragma_name} set to: {value}"
+                        if result:
+                            actual_value = list(result[0].values())[0] if result[0] else value
+                            result_msg = f"PRAGMA {pragma_name} = {actual_value}"
+                    else:
+                        # Get PRAGMA value
+                        result = db._execute_query(f"PRAGMA {pragma_name}")
+                        if result:
+                            pragma_value = list(result[0].values())[0] if result[0] else "N/A"
+                            result_msg = f"PRAGMA {pragma_name} = {pragma_value}"
+                        else:
+                            result_msg = f"PRAGMA {pragma_name} returned no value"
+                    
+                    logger.info(result_msg)
+                    return [types.TextContent(type="text", text=result_msg)]
+                    
+                except Exception as e:
+                    error_msg = f"PRAGMA operation failed: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "pragma_optimize":
+                logger.info("Running PRAGMA optimize for query performance")
+                analysis_limit = arguments.get("analysis_limit", 1000)
+                
+                try:
+                    # Run PRAGMA optimize with optional analysis limit
+                    if analysis_limit != 1000:
+                        optimize_sql = f"PRAGMA optimize({analysis_limit})"
+                    else:
+                        optimize_sql = "PRAGMA optimize"
+                    
+                    db._execute_query(optimize_sql)
+                    result_msg = f"Database optimization completed (analysis_limit: {analysis_limit})"
+                    logger.info(result_msg)
+                    return [types.TextContent(type="text", text=result_msg)]
+                    
+                except Exception as e:
+                    error_msg = f"PRAGMA optimize failed: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "pragma_table_info":
+                logger.info(f"Getting table info for: {arguments.get('table_name')}")
+                table_name = arguments["table_name"]
+                include_foreign_keys = arguments.get("include_foreign_keys", True)
+                
+                try:
+                    # Get table info
+                    table_info = db._execute_query(f"PRAGMA table_info({table_name})")
+                    
+                    info_result = {
+                        "table_name": table_name,
+                        "columns": table_info if table_info else []
+                    }
+                    
+                    if include_foreign_keys:
+                        # Get foreign key info
+                        fk_info = db._execute_query(f"PRAGMA foreign_key_list({table_name})")
+                        info_result["foreign_keys"] = fk_info if fk_info else []
+                        
+                        # Get index info
+                        index_info = db._execute_query(f"PRAGMA index_list({table_name})")
+                        info_result["indexes"] = index_info if index_info else []
+                    
+                    logger.info(f"Retrieved table info for {table_name}")
+                    return [types.TextContent(type="text", text=json.dumps(info_result, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"PRAGMA table_info failed: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "pragma_database_list":
+                logger.info("Getting database list")
+                
+                try:
+                    # Get list of attached databases
+                    db_list = db._execute_query("PRAGMA database_list")
+                    
+                    result_info = {
+                        "attached_databases": db_list if db_list else [],
+                        "count": len(db_list) if db_list else 0
+                    }
+                    
+                    logger.info(f"Retrieved {result_info['count']} database(s)")
+                    return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"PRAGMA database_list failed: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "pragma_compile_options":
+                logger.info("Getting SQLite compile options")
+                
+                try:
+                    # Get compile options
+                    compile_options = db._execute_query("PRAGMA compile_options")
+                    
+                    options_list = []
+                    if compile_options:
+                        options_list = [list(row.values())[0] for row in compile_options]
+                    
+                    result_info = {
+                        "sqlite_version": db.version_info.get('sqlite_version', 'Unknown'),
+                        "compile_options": options_list,
+                        "options_count": len(options_list)
+                    }
+                    
+                    logger.info(f"Retrieved {len(options_list)} compile options")
+                    return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
+                    
+                except Exception as e:
+                    error_msg = f"PRAGMA compile_options failed: {str(e)}"
                     logger.error(error_msg)
                     return [types.TextContent(type="text", text=error_msg)]
 
