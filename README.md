@@ -572,6 +572,8 @@ The server automatically detects project structure and creates appropriate datab
 - ✅ **Advanced Features**: Memo/insights functionality, maintenance logging, and integrity monitoring active
 - ✅ **Parameter Binding**: Enhanced support for parameterized queries with ? placeholders
 - ✅ **Multi-Database Support**: Flexible database path configuration for any SQLite file
+- ✅ **Advanced FTS5 search**: All FTS5 capabilities confirmed working
+- ✅ **Database Administration Tools**: Analyze, integrity check, database_stats, index_usage_stats and vacuum confirmed working
 - ✅ **Maintenance Systems**: Basic integrity checks and database optimization confirmed working
 
 ### Known Minor Issues (Non-Critical)
@@ -651,8 +653,7 @@ If you discover a security vulnerability, please follow our [Security Policy](SE
 ## Support
 
 - 📝 [Open an issue](https://github.com/neverinfamous/mcp_server_sqlite/issues) for bug reports or feature requests
-- 💝 [Sponsor this project](https://github.com/sponsors/neverinfamous) to support development
-- 🌐 Visit [adamic.tech](https://adamic.tech) for more projects
+- 🌐 Visit memory-journal-mcp (https://github.com/neverinfamous/memory-journal-mcp)
 
 ## Resources
 
