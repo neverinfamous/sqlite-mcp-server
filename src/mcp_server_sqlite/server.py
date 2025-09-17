@@ -3141,7 +3141,13 @@ async def main(db_path: str = "sqlite_mcp.db"):
                         # Common SpatiaLite extension names/paths
                         import os
                         script_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-                        local_spatialite = os.path.join(script_dir, "mod_spatialite-5.1.0-win-amd64", "mod_spatialite.dll")
+                        local_spatialite_dir = os.path.join(script_dir, "mod_spatialite-5.1.0-win-amd64")
+                        local_spatialite = os.path.join(local_spatialite_dir, "mod_spatialite.dll")
+                        
+                        # Add local SpatiaLite directory to PATH for Windows DLL dependencies
+                        if os.path.exists(local_spatialite_dir):
+                            original_path = os.environ.get('PATH', '')
+                            os.environ['PATH'] = local_spatialite_dir + os.pathsep + original_path
                         
                         spatialite_paths = [
                             local_spatialite,  # Local installation first
@@ -3153,6 +3159,7 @@ async def main(db_path: str = "sqlite_mcp.db"):
                         ]
                         
                         loaded = False
+                        last_error = None
                         for path in spatialite_paths:
                             try:
                                 # Create direct connection for extension loading
@@ -3165,12 +3172,18 @@ async def main(db_path: str = "sqlite_mcp.db"):
                                     loaded = True
                                     break
                             except Exception as e:
+                                last_error = str(e)
                                 continue
                         
                         if not loaded:
+                            error_msg = f"Failed to load SpatiaLite extension. Please ensure SpatiaLite is installed on your system."
+                            if last_error:
+                                error_msg += f"\nLast error: {last_error}"
+                            if os.path.exists(local_spatialite):
+                                error_msg += f"\nLocal SpatiaLite found at: {local_spatialite}"
                             return [types.TextContent(
                                 type="text",
-                                text="Failed to load SpatiaLite extension. Please ensure SpatiaLite is installed on your system."
+                                text=error_msg
                             )]
                         
                         # Initialize spatial metadata
