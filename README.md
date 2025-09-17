@@ -1,10 +1,10 @@
 # SQLite MCP Server
 
-*Last Updated September 16, 2025 8:40 PM EST - v1.5.0*
+*Last Updated September 17, 2025 9:15 PM EST - v1.6.0*
 
 ## Overview
 
-The SQLite MCP Server provides advanced database interaction and business intelligence capabilities through SQLite featuring Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
+The SQLite MCP Server provides advanced database interaction and business intelligence capabilities through SQLite featuring Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
 
 ## Key Features
 
@@ -22,6 +22,7 @@ The SQLite MCP Server provides advanced database interaction and business intell
 - **Full-Text Search (FTS5)**: Comprehensive FTS5 implementation with table creation, index management, and enhanced search with BM25 ranking and snippets
 - **Backup/Restore Operations**: Enterprise-grade backup and restore capabilities with SQLite backup API, integrity verification, and safety confirmations
 - **Advanced PRAGMA Operations**: Comprehensive SQLite configuration management, performance optimization, and database introspection tools
+- **Virtual Table Management**: Complete virtual table lifecycle management for R-Tree spatial indexing, CSV file access, and sequence generation
 - **Advanced SQLite Engine**: Upgraded to SQLite 3.50.4 with significant performance enhancements
 
 ## Attribution
@@ -660,15 +661,170 @@ All JSON columns have been migrated to the JSONB binary storage format, providin
 
 The migration to JSONB is transparent to users - simply continue using standard JSON operations as shown in the examples.
 
+## Virtual Table Management
+
+The SQLite MCP Server provides comprehensive virtual table management capabilities, supporting multiple virtual table types for specialized data access patterns and performance optimization.
+
+### Virtual Table Management Tools
+
+#### **create_rtree_table** - R-Tree Spatial Indexing
+Create R-Tree virtual tables for efficient spatial queries and geometric data indexing.
+
+```python
+# Create a 2D spatial index for geographic data
+create_rtree_table(
+    table_name="locations_spatial",
+    dimensions=2,
+    coordinate_type="float"
+)
+
+# Create a 3D spatial index for volumetric data
+create_rtree_table(
+    table_name="objects_3d",
+    dimensions=3,
+    coordinate_type="float"
+)
+```
+
+**Features:**
+- Configurable dimensions (2D, 3D, multi-dimensional)
+- Float or integer coordinate types
+- Automatic column generation (id, min0, max0, min1, max1, etc.)
+- Optimized for range queries and spatial searches
+
+#### **create_csv_table** - CSV File Access
+Create virtual tables that directly access CSV files with configurable parsing options.
+
+```python
+# Create a virtual table for a CSV file with headers
+create_csv_table(
+    table_name="sales_data",
+    csv_file_path="/path/to/sales.csv",
+    has_header=True,
+    delimiter=","
+)
+
+# Create a virtual table for a TSV file without headers
+create_csv_table(
+    table_name="log_data",
+    csv_file_path="/path/to/logs.tsv",
+    has_header=False,
+    delimiter="\t"
+)
+```
+
+**Features:**
+- Direct CSV file access without importing
+- Configurable delimiters (comma, tab, pipe, etc.)
+- Header row detection and handling
+- Automatic fallback to temporary table if CSV extension unavailable
+
+#### **create_series_table** - Sequence Generation
+Create virtual tables that generate numeric sequences for testing, reporting, and data generation.
+
+```python
+# Create a simple number series
+create_series_table(
+    table_name="numbers_1_to_100",
+    start_value=1,
+    end_value=100,
+    step=1
+)
+
+# Create a series with custom step
+create_series_table(
+    table_name="even_numbers",
+    start_value=2,
+    end_value=1000,
+    step=2
+)
+```
+
+**Features:**
+- Configurable start, end, and step values
+- Automatic fallback to regular table with recursive CTE
+- Perfect for generating test data and sequences
+- Memory-efficient virtual table implementation
+
+#### **list_virtual_tables** - Virtual Table Discovery
+List all virtual tables in the database with detailed type information.
+
+```python
+list_virtual_tables()
+```
+
+**Returns:**
+- Virtual table names and SQL definitions
+- Automatic type detection (rtree, fts, csv, generate_series)
+- Complete virtual table inventory
+- Structured JSON output with metadata
+
+#### **virtual_table_info** - Schema Inspection
+Get detailed information about specific virtual tables including column schemas and configuration.
+
+```python
+virtual_table_info(table_name="locations_spatial")
+```
+
+**Features:**
+- Complete column information with types and constraints
+- Virtual table type identification
+- SQL definition display
+- Column count and metadata
+
+#### **drop_virtual_table** - Safe Removal
+Safely remove virtual tables with confirmation requirements to prevent accidental data loss.
+
+```python
+# Safe drop with confirmation
+drop_virtual_table(
+    table_name="old_spatial_index",
+    confirm=True
+)
+```
+
+**Safety Features:**
+- Mandatory confirmation flag to prevent accidents
+- Virtual table verification before deletion
+- Detailed status reporting
+- Error handling for non-existent tables
+
+### Virtual Table Use Cases
+
+**Spatial Data Management:**
+- Geographic information systems (GIS)
+- Location-based services
+- Geometric calculations and range queries
+- Spatial indexing for performance optimization
+
+**CSV Data Integration:**
+- Direct access to external data files
+- ETL processes without data importing
+- Real-time file monitoring and analysis
+- Legacy system integration
+
+**Sequence Generation:**
+- Test data creation
+- Report numbering and pagination
+- Date/time series generation
+- Mathematical sequence analysis
+
+### Performance Benefits
+
+- **R-Tree Tables**: O(log n) spatial queries vs O(n) table scans
+- **CSV Tables**: Direct file access without storage duplication
+- **Series Tables**: Memory-efficient sequence generation
+- **Comprehensive Management**: Centralized virtual table lifecycle control
+
 ## Planned Future Enhancements
 
-#### **1. Virtual Table Management - MEDIUM PRIORITY**
-- **Missing**: Tools to create/manage virtual tables beyond FTS5
-- **Examples**: CSV virtual tables, memory virtual tables
+#### **1. Enhanced CSV Virtual Tables - LOW PRIORITY**
+- **Planned**: Advanced CSV parsing with data type inference
+- **Examples**: Automatic schema detection, column type conversion
 
-#### **2. R-Tree Index Support - LOW PRIORITY**
-- **Missing**: Spatial indexing for geometric data
-- **Current**: No specialized tools for R-Tree operations
+#### **2. JSON Virtual Tables - LOW PRIORITY**
+- **Planned**: Virtual tables for JSON file collections
+- **Examples**: JSON Lines (JSONL) file processing
 
 ## Contributing
 
