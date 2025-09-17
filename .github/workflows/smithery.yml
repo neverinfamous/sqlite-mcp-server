@@ -110,7 +110,7 @@ jobs:
     - name: Run Smithery Test Suite
       run: |
         # Install test dependencies
-        pip install aiohttp
+        pip install aiohttp aiohttp-cors
         
         # Start server in background for testing
         cd src

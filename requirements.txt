@@ -1,6 +1,10 @@
 # Production dependencies
 mcp>=1.14.0
 
+# HTTP server dependencies (for Smithery deployment)
+aiohttp>=3.8.0
+aiohttp-cors>=0.7.0
+
 # Security fixes - pin vulnerable packages to fixed versions
 h11>=0.16.0  # Fix for CVE-2025-43859, GHSA-vqfr-h8mv-ghfj
 starlette>=0.47.2  # Fix for CVE-2025-54121
