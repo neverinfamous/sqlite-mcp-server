@@ -122,10 +122,11 @@ class EnhancedSqliteDatabase:
         Initialize the database connection.
         
         Args:
-            db_path: Path to SQLite database file
+            db_path: Path to SQLite database file (can be :memory: for temporary)
         """
         self.db_path = str(Path(db_path).expanduser())
-        Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
+        if db_path != ":memory:":
+            Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
         
         # Initialize components
         self.version_info = check_sqlite_version()
@@ -404,8 +405,11 @@ class EnhancedSqliteDatabase:
             self.json_logger.log_error(e, {"query": query})
             raise
 
-async def main(db_path: str):
-    logger.info(f"Starting Enhanced SQLite MCP Server with DB path: {db_path}")
+async def main(db_path: str = ":memory:"):
+    if db_path == ":memory:":
+        logger.info("Starting Enhanced SQLite MCP Server (no default database)")
+    else:
+        logger.info(f"Starting Enhanced SQLite MCP Server with default DB: {db_path}")
 
     # Initialize database with enhanced features
     db = EnhancedSqliteDatabase(db_path)

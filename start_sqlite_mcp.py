@@ -85,7 +85,7 @@ Examples:
     parser.add_argument(
         '--db-path', 
         type=str, 
-        help='Explicit path to the SQLite database file'
+        help='Explicit path to the SQLite database file (optional)'
     )
     
     parser.add_argument(
@@ -113,20 +113,19 @@ Examples:
     if args.db_path:
         db_path = args.db_path
         logger.info(f"Using explicit database path: {db_path}")
-    else:
+    elif args.create_data_dir:
         if args.project_root:
             project_root = Path(args.project_root)
         else:
             project_root = find_project_root()
-            
-        if args.create_data_dir:
-            data_dir = project_root / "data"
-            data_dir.mkdir(exist_ok=True)
-            db_path = str(data_dir / args.db_name)
-            logger.debug(f"Created data directory and using: {db_path}")
-        else:
-            db_path = get_default_db_path()
-            logger.debug(f"Using default database path: {db_path}")
+        data_dir = project_root / "data"
+        data_dir.mkdir(exist_ok=True)
+        db_path = str(data_dir / args.db_name)
+        logger.debug(f"Created data directory and using: {db_path}")
+    else:
+        # No database specified - use in-memory database
+        db_path = ":memory:"
+        logger.info("No database specified - server will run without default database")
     
     # Ensure parent directory exists
     db_path_obj = Path(db_path)
