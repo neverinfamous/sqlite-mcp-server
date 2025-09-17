@@ -5666,34 +5666,34 @@ The sample mean is {'significantly different from' if significant else 'not sign
             where_sql = f" WHERE {where_clause}" if where_clause else ""
             
             # Use the global db instance
-                query = f"""
-                SELECT {column_name}, rowid
-                FROM {table_name}{where_sql}
-                WHERE {column_name} IS NOT NULL
-                LIMIT {limit}
-                """
+            query = f"""
+            SELECT {column_name}, rowid
+            FROM {table_name}{where_sql}
+            WHERE {column_name} IS NOT NULL
+            LIMIT {limit}
+            """
                 
-                result = db._execute_query(query)
+            result = db._execute_query(query)
                 
-                if not result:
-                    return [types.TextContent(type="text", text="No data found for regex extraction")]
+            if not result:
+                return [types.TextContent(type="text", text="No data found for regex extraction")]
                 
-                matches = []
-                for row in result:
-                    text = str(row[column_name])
-                    match_result = compiled_pattern.search(text)
-                    if match_result:
-                        groups = match_result.groups() if match_result.groups() else (match_result.group(0),)
-                        matches.append({
-                            "rowid": row["rowid"],
-                            "original_text": text,
-                            "match": match_result.group(0),
-                            "groups": groups,
-                            "start": match_result.start(),
-                            "end": match_result.end()
-                        })
+            matches = []
+            for row in result:
+                text = str(row[column_name])
+                match_result = compiled_pattern.search(text)
+                if match_result:
+                    groups = match_result.groups() if match_result.groups() else (match_result.group(0),)
+                    matches.append({
+                        "rowid": row["rowid"],
+                        "original_text": text,
+                        "match": match_result.group(0),
+                        "groups": groups,
+                        "start": match_result.start(),
+                        "end": match_result.end()
+                    })
                 
-                output = f"""Regex Extraction Results for {table_name}.{column_name}:
+            output = f"""Regex Extraction Results for {table_name}.{column_name}:
 Pattern: {pattern}
 Flags: {flags if flags else 'None'}
 
@@ -5701,18 +5701,18 @@ Found {len(matches)} matches:
 
 """
                 
-                for i, match in enumerate(matches[:20], 1):  # Show first 20 matches
-                    output += f"Match {i} (Row {match['rowid']}):\n"
-                    output += f"  Text: {match['original_text'][:100]}{'...' if len(match['original_text']) > 100 else ''}\n"
-                    output += f"  Match: '{match['match']}' (pos {match['start']}-{match['end']})\n"
-                    if len(match['groups']) > 1:
-                        output += f"  Groups: {match['groups']}\n"
-                    output += "\n"
+            for i, match in enumerate(matches[:20], 1):  # Show first 20 matches
+                output += f"Match {i} (Row {match['rowid']}):\n"
+                output += f"  Text: {match['original_text'][:100]}{'...' if len(match['original_text']) > 100 else ''}\n"
+                output += f"  Match: '{match['match']}' (pos {match['start']}-{match['end']})\n"
+                if len(match['groups']) > 1:
+                    output += f"  Groups: {match['groups']}\n"
+                output += "\n"
                 
-                if len(matches) > 20:
-                    output += f"... and {len(matches) - 20} more matches\n"
+            if len(matches) > 20:
+                output += f"... and {len(matches) - 20} more matches\n"
                 
-                return [types.TextContent(type="text", text=output)]
+            return [types.TextContent(type="text", text=output)]
                 
         except re.error as e:
             error_msg = f"Invalid regex pattern: {str(e)}"
@@ -5749,35 +5749,35 @@ Found {len(matches)} matches:
             where_sql = f" WHERE {where_clause}" if where_clause else ""
             
             # Use the global db instance
-                query = f"""
-                SELECT {column_name}, rowid
-                FROM {table_name}{where_sql}
-                WHERE {column_name} IS NOT NULL
-                LIMIT 100
-                """
+            query = f"""
+            SELECT {column_name}, rowid
+            FROM {table_name}{where_sql}
+            WHERE {column_name} IS NOT NULL
+            LIMIT 100
+            """
                 
-                result = db._execute_query(query)
+            result = db._execute_query(query)
                 
-                if not result:
-                    return [types.TextContent(type="text", text="No data found for regex replacement")]
+            if not result:
+                return [types.TextContent(type="text", text="No data found for regex replacement")]
                 
-                replacements = []
-                for row in result:
-                    original_text = str(row[column_name])
-                    if max_replacements > 0:
-                        new_text = compiled_pattern.sub(replacement, original_text, count=max_replacements)
-                    else:
-                        new_text = compiled_pattern.sub(replacement, original_text)
+            replacements = []
+            for row in result:
+                original_text = str(row[column_name])
+                if max_replacements > 0:
+                    new_text = compiled_pattern.sub(replacement, original_text, count=max_replacements)
+                else:
+                    new_text = compiled_pattern.sub(replacement, original_text)
                     
-                    if new_text != original_text:
-                        replacements.append({
-                            "rowid": row["rowid"],
-                            "original": original_text,
-                            "new": new_text,
-                            "changes": len(compiled_pattern.findall(original_text))
-                        })
+                if new_text != original_text:
+                    replacements.append({
+                        "rowid": row["rowid"],
+                        "original": original_text,
+                        "new": new_text,
+                        "changes": len(compiled_pattern.findall(original_text))
+                    })
                 
-                output = f"""Regex Replacement {'Preview' if preview_only else 'Results'} for {table_name}.{column_name}:
+            output = f"""Regex Replacement {'Preview' if preview_only else 'Results'} for {table_name}.{column_name}:
 Pattern: {pattern}
 Replacement: {replacement}
 Flags: {flags if flags else 'None'}
@@ -5787,29 +5787,29 @@ Found {len(replacements)} rows with changes:
 
 """
                 
-                for i, repl in enumerate(replacements[:10], 1):  # Show first 10
-                    output += f"Row {repl['rowid']} ({repl['changes']} changes):\n"
-                    output += f"  Before: {repl['original'][:100]}{'...' if len(repl['original']) > 100 else ''}\n"
-                    output += f"  After:  {repl['new'][:100]}{'...' if len(repl['new']) > 100 else ''}\n\n"
+            for i, repl in enumerate(replacements[:10], 1):  # Show first 10
+                output += f"Row {repl['rowid']} ({repl['changes']} changes):\n"
+                output += f"  Before: {repl['original'][:100]}{'...' if len(repl['original']) > 100 else ''}\n"
+                output += f"  After:  {repl['new'][:100]}{'...' if len(repl['new']) > 100 else ''}\n\n"
                 
-                if len(replacements) > 10:
-                    output += f"... and {len(replacements) - 10} more rows\n"
+            if len(replacements) > 10:
+                output += f"... and {len(replacements) - 10} more rows\n"
                 
-                if preview_only:
-                    output += "\nTo execute these changes, set preview_only=false"
-                else:
-                    # Execute the replacements
-                    for repl in replacements:
-                        update_query = f"""
-                        UPDATE {table_name} 
-                        SET {column_name} = ? 
-                        WHERE rowid = ?
-                        """
-                        db._execute_query(update_query, (repl['new'], repl['rowid']))
+            if preview_only:
+                output += "\nTo execute these changes, set preview_only=false"
+            else:
+                # Execute the replacements
+                for repl in replacements:
+                    update_query = f"""
+                    UPDATE {table_name} 
+                    SET {column_name} = ? 
+                    WHERE rowid = ?
+                    """
+                    db._execute_query(update_query, (repl['new'], repl['rowid']))
                     
-                    output += f"\n✅ Successfully updated {len(replacements)} rows"
+                output += f"\n✅ Successfully updated {len(replacements)} rows"
                 
-                return [types.TextContent(type="text", text=output)]
+            return [types.TextContent(type="text", text=output)]
                 
         except re.error as e:
             error_msg = f"Invalid regex pattern: {str(e)}"
@@ -5836,63 +5836,63 @@ Found {len(replacements)} rows with changes:
             where_sql = f" WHERE {where_clause}" if where_clause else ""
             
             # Use the global db instance
-                query = f"""
-                SELECT {column_name}, rowid
-                FROM {table_name}{where_sql}
-                WHERE {column_name} IS NOT NULL
-                LIMIT {limit * 2}
-                """
+            query = f"""
+            SELECT {column_name}, rowid
+            FROM {table_name}{where_sql}
+            WHERE {column_name} IS NOT NULL
+            LIMIT {limit * 2}
+            """
                 
-                result = db._execute_query(query)
+            result = db._execute_query(query)
                 
-                if not result:
-                    return [types.TextContent(type="text", text="No data found for fuzzy matching")]
+            if not result:
+                return [types.TextContent(type="text", text="No data found for fuzzy matching")]
                 
-                matches = []
-                search_lower = search_term.lower()
+            matches = []
+            search_lower = search_term.lower()
                 
-                for row in result:
-                    text = str(row[column_name])
-                    text_lower = text.lower()
+            for row in result:
+                text = str(row[column_name])
+                text_lower = text.lower()
                     
-                    # Calculate similarity using difflib
-                    similarity = difflib.SequenceMatcher(None, search_lower, text_lower).ratio()
+                # Calculate similarity using difflib
+                similarity = difflib.SequenceMatcher(None, search_lower, text_lower).ratio()
                     
-                    if similarity >= threshold:
-                        # Also calculate Levenshtein-like distance
-                        max_len = max(len(search_term), len(text))
-                        distance = max_len - (similarity * max_len)
+                if similarity >= threshold:
+                    # Also calculate Levenshtein-like distance
+                    max_len = max(len(search_term), len(text))
+                    distance = max_len - (similarity * max_len)
                         
-                        matches.append({
-                            "rowid": row["rowid"],
-                            "text": text,
-                            "similarity": similarity,
-                            "distance": int(distance),
-                            "exact_match": search_lower == text_lower
-                        })
+                    matches.append({
+                        "rowid": row["rowid"],
+                        "text": text,
+                        "similarity": similarity,
+                        "distance": int(distance),
+                        "exact_match": search_lower == text_lower
+                    })
                 
-                # Sort by similarity (highest first)
-                matches.sort(key=lambda x: (-x["similarity"], x["distance"]))
-                matches = matches[:limit]
+            # Sort by similarity (highest first)
+            matches.sort(key=lambda x: (-x["similarity"], x["distance"]))
+            matches = matches[:limit]
                 
-                output = f"""Fuzzy Match Results for {table_name}.{column_name}:
+            output = f"""Fuzzy Match Results for {table_name}.{column_name}:
 Search Term: "{search_term}"
 Threshold: {threshold:.2f} (similarity)
 Found {len(matches)} matches:
 
 """
                 
-                for i, match in enumerate(matches, 1):
-                    match_type = "🎯 EXACT" if match["exact_match"] else "🔍 FUZZY"
-                    output += f"{i}. {match_type} (Row {match['rowid']})\n"
-                    output += f"   Text: {match['text']}\n"
-                    output += f"   Similarity: {match['similarity']:.3f} | Distance: {match['distance']}\n\n"
+            for i, match in enumerate(matches, 1):
+                match_type = "🎯 EXACT" if match["exact_match"] else "🔍 FUZZY"
+                output += f"{i}. {match_type} (Row {match['rowid']})\n"
+                output += f"   Text: {match['text']}\n"
+                output += f"   Similarity: {match['similarity']:.3f} | Distance: {match['distance']}\n\n"
                 
-                if not matches:
-                    output += f"No matches found above threshold {threshold:.2f}\n"
-                    output += "Try lowering the threshold or using a different search term."
+            if not matches:
+                output += f"No matches found above threshold {threshold:.2f}\n"
+                output += "Try lowering the threshold or using a different search term."
                 
-                return [types.TextContent(type="text", text=output)]
+            return [types.TextContent(type="text", text=output)]
                 
         except Exception as e:
             error_msg = f"Failed to perform fuzzy matching: {str(e)}"
@@ -5921,12 +5921,12 @@ Found {len(matches)} matches:
             
             # Mapping for consonants
             mapping = {
-                'B': '1', 'F': '1', 'P': '1', 'V': '1',
-                'C': '2', 'G': '2', 'J': '2', 'K': '2', 'Q': '2', 'S': '2', 'X': '2', 'Z': '2',
-                'D': '3', 'T': '3',
-                'L': '4',
-                'M': '5', 'N': '5',
-                'R': '6'
+            'B': '1', 'F': '1', 'P': '1', 'V': '1',
+            'C': '2', 'G': '2', 'J': '2', 'K': '2', 'Q': '2', 'S': '2', 'X': '2', 'Z': '2',
+            'D': '3', 'T': '3',
+            'L': '4',
+            'M': '5', 'N': '5',
+            'R': '6'
             }
             
             for char in word[1:]:
@@ -5949,9 +5949,9 @@ Found {len(matches)} matches:
             
             # Simple phonetic transformations
             transformations = [
-                ('PH', 'F'), ('GH', 'F'), ('CK', 'K'), ('SCH', 'SK'),
-                ('QU', 'KW'), ('WH', 'W'), ('TH', 'T'), ('SH', 'S'),
-                ('CH', 'K'), ('C', 'K'), ('G', 'J'), ('Y', 'I')
+            ('PH', 'F'), ('GH', 'F'), ('CK', 'K'), ('SCH', 'SK'),
+            ('QU', 'KW'), ('WH', 'W'), ('TH', 'T'), ('SH', 'S'),
+            ('CH', 'K'), ('C', 'K'), ('G', 'J'), ('Y', 'I')
             ]
             
             for old, new in transformations:
@@ -5970,60 +5970,60 @@ Found {len(matches)} matches:
             where_sql = f" WHERE {where_clause}" if where_clause else ""
             
             # Use the global db instance
-                query = f"""
-                SELECT {column_name}, rowid
-                FROM {table_name}{where_sql}
-                WHERE {column_name} IS NOT NULL
-                LIMIT {limit * 2}
-                """
+            query = f"""
+            SELECT {column_name}, rowid
+            FROM {table_name}{where_sql}
+            WHERE {column_name} IS NOT NULL
+            LIMIT {limit * 2}
+            """
                 
-                result = db._execute_query(query)
+            result = db._execute_query(query)
                 
-                if not result:
-                    return [types.TextContent(type="text", text="No data found for phonetic matching")]
+            if not result:
+                return [types.TextContent(type="text", text="No data found for phonetic matching")]
                 
-                # Calculate phonetic code for search term
-                if algorithm.lower() == "soundex":
-                    search_code = soundex(search_term)
-                    algo_name = "Soundex"
-                else:
-                    search_code = simple_metaphone(search_term)
-                    algo_name = "Metaphone"
+            # Calculate phonetic code for search term
+            if algorithm.lower() == "soundex":
+                search_code = soundex(search_term)
+                algo_name = "Soundex"
+            else:
+                search_code = simple_metaphone(search_term)
+                algo_name = "Metaphone"
                 
-                matches = []
+            matches = []
                 
-                for row in result:
-                    text = str(row[column_name])
+            for row in result:
+                text = str(row[column_name])
                     
-                    # Handle multi-word text by checking each word
-                    words = text.split()
-                    best_match = False
+                # Handle multi-word text by checking each word
+                words = text.split()
+                best_match = False
                     
-                    for word in words:
-                        # Clean word (remove punctuation)
-                        clean_word = re.sub(r'[^A-Za-z]', '', word)
-                        if not clean_word:
-                            continue
+                for word in words:
+                    # Clean word (remove punctuation)
+                    clean_word = re.sub(r'[^A-Za-z]', '', word)
+                    if not clean_word:
+                        continue
                             
-                        if algorithm.lower() == "soundex":
-                            word_code = soundex(clean_word)
-                        else:
-                            word_code = simple_metaphone(clean_word)
+                    if algorithm.lower() == "soundex":
+                        word_code = soundex(clean_word)
+                    else:
+                        word_code = simple_metaphone(clean_word)
                         
-                        if word_code == search_code:
-                            best_match = True
-                            break
+                    if word_code == search_code:
+                        best_match = True
+                        break
                     
-                    if best_match:
-                        matches.append({
-                            "rowid": row["rowid"],
-                            "text": text,
-                            "phonetic_code": search_code
-                        })
+                if best_match:
+                    matches.append({
+                        "rowid": row["rowid"],
+                        "text": text,
+                        "phonetic_code": search_code
+                    })
                 
-                matches = matches[:limit]
+            matches = matches[:limit]
                 
-                output = f"""Phonetic Match Results for {table_name}.{column_name}:
+            output = f"""Phonetic Match Results for {table_name}.{column_name}:
 Search Term: "{search_term}"
 Algorithm: {algo_name}
 Phonetic Code: {search_code}
@@ -6031,16 +6031,16 @@ Found {len(matches)} matches:
 
 """
                 
-                for i, match in enumerate(matches, 1):
-                    output += f"{i}. Row {match['rowid']}\n"
-                    output += f"   Text: {match['text']}\n"
-                    output += f"   Phonetic Code: {match['phonetic_code']}\n\n"
+            for i, match in enumerate(matches, 1):
+                output += f"{i}. Row {match['rowid']}\n"
+                output += f"   Text: {match['text']}\n"
+                output += f"   Phonetic Code: {match['phonetic_code']}\n\n"
                 
-                if not matches:
-                    output += f"No phonetic matches found for '{search_term}' (code: {search_code})\n"
-                    output += f"Try a different search term or algorithm."
+            if not matches:
+                output += f"No phonetic matches found for '{search_term}' (code: {search_code})\n"
+                output += f"Try a different search term or algorithm."
                 
-                return [types.TextContent(type="text", text=output)]
+            return [types.TextContent(type="text", text=output)]
                 
         except Exception as e:
             error_msg = f"Failed to perform phonetic matching: {str(e)}"
@@ -6099,60 +6099,60 @@ Found {len(matches)} matches:
             where_sql = f" WHERE {where_clause}" if where_clause else ""
             
             # Use the global db instance
+            if compare_column:
+                query = f"""
+                SELECT {column_name}, {compare_column}, rowid
+                FROM {table_name}{where_sql}
+                WHERE {column_name} IS NOT NULL AND {compare_column} IS NOT NULL
+                LIMIT {limit}
+                """
+            else:
+                query = f"""
+                SELECT {column_name}, rowid
+                FROM {table_name}{where_sql}
+                WHERE {column_name} IS NOT NULL
+                LIMIT {limit}
+                """
+                
+            result = db._execute_query(query)
+                
+            if not result:
+                return [types.TextContent(type="text", text="No data found for similarity calculation")]
+                
+            similarities = []
+                
+            for row in result:
+                text1 = str(row[column_name])
+                    
                 if compare_column:
-                    query = f"""
-                    SELECT {column_name}, {compare_column}, rowid
-                    FROM {table_name}{where_sql}
-                    WHERE {column_name} IS NOT NULL AND {compare_column} IS NOT NULL
-                    LIMIT {limit}
-                    """
+                    text2 = str(row[compare_column])
+                    comparison_text = text2
                 else:
-                    query = f"""
-                    SELECT {column_name}, rowid
-                    FROM {table_name}{where_sql}
-                    WHERE {column_name} IS NOT NULL
-                    LIMIT {limit}
-                    """
-                
-                result = db._execute_query(query)
-                
-                if not result:
-                    return [types.TextContent(type="text", text="No data found for similarity calculation")]
-                
-                similarities = []
-                
-                for row in result:
-                    text1 = str(row[column_name])
+                    text2 = reference_text
+                    comparison_text = reference_text
                     
-                    if compare_column:
-                        text2 = str(row[compare_column])
-                        comparison_text = text2
-                    else:
-                        text2 = reference_text
-                        comparison_text = reference_text
+                # Calculate similarity based on method
+                if method.lower() == "jaccard":
+                    similarity = jaccard_similarity(text1, text2)
+                elif method.lower() == "cosine":
+                    similarity = cosine_similarity(text1, text2)
+                else:  # levenshtein
+                    similarity = levenshtein_similarity(text1, text2)
                     
-                    # Calculate similarity based on method
-                    if method.lower() == "jaccard":
-                        similarity = jaccard_similarity(text1, text2)
-                    elif method.lower() == "cosine":
-                        similarity = cosine_similarity(text1, text2)
-                    else:  # levenshtein
-                        similarity = levenshtein_similarity(text1, text2)
-                    
-                    similarities.append({
-                        "rowid": row["rowid"],
-                        "text1": text1,
-                        "text2": comparison_text if not compare_column else text2,
-                        "similarity": similarity
-                    })
+                similarities.append({
+                    "rowid": row["rowid"],
+                    "text1": text1,
+                    "text2": comparison_text if not compare_column else text2,
+                    "similarity": similarity
+                })
                 
-                # Sort by similarity (highest first)
-                similarities.sort(key=lambda x: -x["similarity"])
+            # Sort by similarity (highest first)
+            similarities.sort(key=lambda x: -x["similarity"])
                 
-                method_name = method.title()
-                comparison_type = f"column '{compare_column}'" if compare_column else f"reference text"
+            method_name = method.title()
+            comparison_type = f"column '{compare_column}'" if compare_column else f"reference text"
                 
-                output = f"""Text Similarity Analysis for {table_name}.{column_name}:
+            output = f"""Text Similarity Analysis for {table_name}.{column_name}:
 Method: {method_name}
 Comparison: {comparison_type}
 {"Reference: " + reference_text[:100] + ("..." if len(reference_text) > 100 else "") if reference_text else ""}
@@ -6161,23 +6161,23 @@ Similarity Results (sorted by score):
 
 """
                 
-                for i, sim in enumerate(similarities[:20], 1):
-                    output += f"{i}. Row {sim['rowid']} (Similarity: {sim['similarity']:.3f})\n"
-                    output += f"   Text 1: {sim['text1'][:80]}{'...' if len(sim['text1']) > 80 else ''}\n"
-                    if compare_column:
-                        output += f"   Text 2: {sim['text2'][:80]}{'...' if len(sim['text2']) > 80 else ''}\n"
-                    output += "\n"
+            for i, sim in enumerate(similarities[:20], 1):
+                output += f"{i}. Row {sim['rowid']} (Similarity: {sim['similarity']:.3f})\n"
+                output += f"   Text 1: {sim['text1'][:80]}{'...' if len(sim['text1']) > 80 else ''}\n"
+                if compare_column:
+                    output += f"   Text 2: {sim['text2'][:80]}{'...' if len(sim['text2']) > 80 else ''}\n"
+                output += "\n"
                 
-                if len(similarities) > 20:
-                    output += f"... and {len(similarities) - 20} more results\n"
+            if len(similarities) > 20:
+                output += f"... and {len(similarities) - 20} more results\n"
                 
-                # Add statistics
-                scores = [s["similarity"] for s in similarities]
-                output += f"\nStatistics:\n"
-                output += f"Average Similarity: {sum(scores) / len(scores):.3f}\n"
-                output += f"Highest: {max(scores):.3f} | Lowest: {min(scores):.3f}\n"
+            # Add statistics
+            scores = [s["similarity"] for s in similarities]
+            output += f"\nStatistics:\n"
+            output += f"Average Similarity: {sum(scores) / len(scores):.3f}\n"
+            output += f"Highest: {max(scores):.3f} | Lowest: {min(scores):.3f}\n"
                 
-                return [types.TextContent(type="text", text=output)]
+            return [types.TextContent(type="text", text=output)]
                 
         except Exception as e:
             error_msg = f"Failed to calculate text similarity: {str(e)}"
@@ -6213,7 +6213,7 @@ Similarity Results (sorted by score):
                     result = unicodedata.normalize('NFKC', result)
                 elif op == "remove_accents":
                     result = ''.join(c for c in unicodedata.normalize('NFD', result)
-                                   if unicodedata.category(c) != 'Mn')
+                    if unicodedata.category(c) != 'Mn')
                 elif op == "remove_extra_spaces":
                     result = re.sub(r'\s+', ' ', result).strip()
                 elif op == "remove_punctuation":
@@ -6231,62 +6231,62 @@ Similarity Results (sorted by score):
             where_sql = f" WHERE {where_clause}" if where_clause else ""
             
             # Use the global db instance
-                query = f"""
-                SELECT {column_name}, rowid
-                FROM {table_name}{where_sql}
-                WHERE {column_name} IS NOT NULL
-                LIMIT {limit}
-                """
+            query = f"""
+            SELECT {column_name}, rowid
+            FROM {table_name}{where_sql}
+            WHERE {column_name} IS NOT NULL
+            LIMIT {limit}
+            """
                 
-                result = db._execute_query(query)
+            result = db._execute_query(query)
                 
-                if not result:
-                    return [types.TextContent(type="text", text="No data found for text normalization")]
+            if not result:
+                return [types.TextContent(type="text", text="No data found for text normalization")]
                 
-                normalizations = []
+            normalizations = []
                 
-                for row in result:
-                    original_text = str(row[column_name])
-                    normalized_text = normalize_text(original_text, operations)
+            for row in result:
+                original_text = str(row[column_name])
+                normalized_text = normalize_text(original_text, operations)
                     
-                    if original_text != normalized_text:
-                        normalizations.append({
-                            "rowid": row["rowid"],
-                            "original": original_text,
-                            "normalized": normalized_text
-                        })
+                if original_text != normalized_text:
+                    normalizations.append({
+                        "rowid": row["rowid"],
+                        "original": original_text,
+                        "normalized": normalized_text
+                    })
                 
-                operations_str = ", ".join(operations)
-                output = f"""Text Normalization {'Preview' if preview_only else 'Results'} for {table_name}.{column_name}:
+            operations_str = ", ".join(operations)
+            output = f"""Text Normalization {'Preview' if preview_only else 'Results'} for {table_name}.{column_name}:
 Operations: {operations_str}
 
 Found {len(normalizations)} rows requiring normalization:
 
 """
                 
-                for i, norm in enumerate(normalizations[:15], 1):
-                    output += f"{i}. Row {norm['rowid']}\n"
-                    output += f"   Before: {norm['original'][:100]}{'...' if len(norm['original']) > 100 else ''}\n"
-                    output += f"   After:  {norm['normalized'][:100]}{'...' if len(norm['normalized']) > 100 else ''}\n\n"
+            for i, norm in enumerate(normalizations[:15], 1):
+                output += f"{i}. Row {norm['rowid']}\n"
+                output += f"   Before: {norm['original'][:100]}{'...' if len(norm['original']) > 100 else ''}\n"
+                output += f"   After:  {norm['normalized'][:100]}{'...' if len(norm['normalized']) > 100 else ''}\n\n"
                 
-                if len(normalizations) > 15:
-                    output += f"... and {len(normalizations) - 15} more rows\n"
+            if len(normalizations) > 15:
+                output += f"... and {len(normalizations) - 15} more rows\n"
                 
-                if preview_only:
-                    output += "\nTo execute these normalizations, set preview_only=false"
-                else:
-                    # Execute the normalizations
-                    for norm in normalizations:
-                        update_query = f"""
-                        UPDATE {table_name} 
-                        SET {column_name} = ? 
-                        WHERE rowid = ?
-                        """
-                        db._execute_query(update_query, (norm['normalized'], norm['rowid']))
+            if preview_only:
+                output += "\nTo execute these normalizations, set preview_only=false"
+            else:
+                # Execute the normalizations
+                for norm in normalizations:
+                    update_query = f"""
+                    UPDATE {table_name} 
+                    SET {column_name} = ? 
+                    WHERE rowid = ?
+                    """
+                    db._execute_query(update_query, (norm['normalized'], norm['rowid']))
                     
-                    output += f"\n✅ Successfully normalized {len(normalizations)} rows"
+                output += f"\n✅ Successfully normalized {len(normalizations)} rows"
                 
-                return [types.TextContent(type="text", text=output)]
+            return [types.TextContent(type="text", text=output)]
                 
         except Exception as e:
             error_msg = f"Failed to normalize text: {str(e)}"
@@ -6310,118 +6310,118 @@ Found {len(normalizations)} rows requiring normalization:
             where_sql = f" WHERE {where_clause}" if where_clause else ""
             
             # Use the global db instance
-                query = f"""
-                SELECT {column_name}, rowid
-                FROM {table_name}{where_sql}
-                WHERE {column_name} IS NOT NULL
-                LIMIT {limit * 2}
-                """
+            query = f"""
+            SELECT {column_name}, rowid
+            FROM {table_name}{where_sql}
+            WHERE {column_name} IS NOT NULL
+            LIMIT {limit * 2}
+            """
                 
-                result = db._execute_query(query)
+            result = db._execute_query(query)
                 
-                if not result:
-                    return [types.TextContent(type="text", text="No data found for advanced search")]
+            if not result:
+                return [types.TextContent(type="text", text="No data found for advanced search")]
                 
-                all_matches = []
-                search_lower = search_term.lower()
+            all_matches = []
+            search_lower = search_term.lower()
                 
-                for row in result:
-                    text = str(row[column_name])
-                    text_lower = text.lower()
-                    match_types = []
-                    scores = {}
+            for row in result:
+                text = str(row[column_name])
+                text_lower = text.lower()
+                match_types = []
+                scores = {}
                     
-                    # Exact match
-                    if "exact" in methods:
-                        if search_lower in text_lower:
-                            match_types.append("EXACT")
-                            scores["exact"] = 1.0
+                # Exact match
+                if "exact" in methods:
+                    if search_lower in text_lower:
+                        match_types.append("EXACT")
+                        scores["exact"] = 1.0
                     
-                    # Fuzzy match
-                    if "fuzzy" in methods:
-                        similarity = difflib.SequenceMatcher(None, search_lower, text_lower).ratio()
-                        if similarity >= fuzzy_threshold:
-                            match_types.append("FUZZY")
-                            scores["fuzzy"] = similarity
+                # Fuzzy match
+                if "fuzzy" in methods:
+                    similarity = difflib.SequenceMatcher(None, search_lower, text_lower).ratio()
+                    if similarity >= fuzzy_threshold:
+                        match_types.append("FUZZY")
+                        scores["fuzzy"] = similarity
                     
-                    # Regex match (treat search term as potential regex)
-                    if "regex" in methods:
-                        try:
-                            if re.search(search_term, text, re.IGNORECASE):
-                                match_types.append("REGEX")
-                                scores["regex"] = 1.0
-                        except re.error:
-                            pass  # Invalid regex, skip
+                # Regex match (treat search term as potential regex)
+                if "regex" in methods:
+                    try:
+                        if re.search(search_term, text, re.IGNORECASE):
+                            match_types.append("REGEX")
+                            scores["regex"] = 1.0
+                    except re.error:
+                        pass  # Invalid regex, skip
                     
-                    # Word boundary match
-                    if "word" in methods:
-                        word_pattern = r'\b' + re.escape(search_term) + r'\b'
-                        if re.search(word_pattern, text, re.IGNORECASE):
-                            match_types.append("WORD")
-                            scores["word"] = 1.0
+                # Word boundary match
+                if "word" in methods:
+                    word_pattern = r'\b' + re.escape(search_term) + r'\b'
+                    if re.search(word_pattern, text, re.IGNORECASE):
+                        match_types.append("WORD")
+                        scores["word"] = 1.0
                     
-                    # Phonetic match
-                    if "phonetic" in methods:
-                        # Simple soundex check
-                        def simple_soundex(word):
-                            if not word: return "0000"
-                            word = word.upper()
-                            code = word[0]
-                            mapping = {'B':'1','F':'1','P':'1','V':'1','C':'2','G':'2','J':'2','K':'2','Q':'2','S':'2','X':'2','Z':'2','D':'3','T':'3','L':'4','M':'5','N':'5','R':'6'}
-                            for char in word[1:]:
-                                if char in mapping and (not code or code[-1] != mapping[char]):
-                                    code += mapping[char]
-                            return (code + "0000")[:4]
+                # Phonetic match
+                if "phonetic" in methods:
+                    # Simple soundex check
+                    def simple_soundex(word):
+                        if not word: return "0000"
+                        word = word.upper()
+                        code = word[0]
+                        mapping = {'B':'1','F':'1','P':'1','V':'1','C':'2','G':'2','J':'2','K':'2','Q':'2','S':'2','X':'2','Z':'2','D':'3','T':'3','L':'4','M':'5','N':'5','R':'6'}
+                        for char in word[1:]:
+                            if char in mapping and (not code or code[-1] != mapping[char]):
+                                code += mapping[char]
+                        return (code + "0000")[:4]
                         
-                        search_soundex = simple_soundex(search_term)
-                        text_words = re.findall(r'\w+', text)
-                        for word in text_words:
-                            if simple_soundex(word) == search_soundex:
-                                match_types.append("PHONETIC")
-                                scores["phonetic"] = 0.8
-                                break
+                    search_soundex = simple_soundex(search_term)
+                    text_words = re.findall(r'\w+', text)
+                    for word in text_words:
+                        if simple_soundex(word) == search_soundex:
+                            match_types.append("PHONETIC")
+                            scores["phonetic"] = 0.8
+                            break
                     
-                    if match_types:
-                        # Calculate composite score
-                        composite_score = max(scores.values()) if scores else 0
+                if match_types:
+                    # Calculate composite score
+                    composite_score = max(scores.values()) if scores else 0
                         
-                        all_matches.append({
-                            "rowid": row["rowid"],
-                            "text": text,
-                            "match_types": match_types,
-                            "scores": scores,
-                            "composite_score": composite_score
-                        })
+                    all_matches.append({
+                        "rowid": row["rowid"],
+                        "text": text,
+                        "match_types": match_types,
+                        "scores": scores,
+                        "composite_score": composite_score
+                    })
                 
-                # Sort by composite score (highest first), then by number of match types
-                all_matches.sort(key=lambda x: (-x["composite_score"], -len(x["match_types"])))
-                all_matches = all_matches[:limit]
+            # Sort by composite score (highest first), then by number of match types
+            all_matches.sort(key=lambda x: (-x["composite_score"], -len(x["match_types"])))
+            all_matches = all_matches[:limit]
                 
-                methods_str = ", ".join(methods)
-                output = f"""Advanced Search Results for {table_name}.{column_name}:
+            methods_str = ", ".join(methods)
+            output = f"""Advanced Search Results for {table_name}.{column_name}:
 Search Term: "{search_term}"
 Methods: {methods_str}
 Found {len(all_matches)} matches:
 
 """
                 
-                for i, match in enumerate(all_matches, 1):
-                    types_str = " + ".join(match["match_types"])
-                    output += f"{i}. {types_str} (Row {match['rowid']}) - Score: {match['composite_score']:.3f}\n"
-                    output += f"   Text: {match['text'][:120]}{'...' if len(match['text']) > 120 else ''}\n"
+            for i, match in enumerate(all_matches, 1):
+                types_str = " + ".join(match["match_types"])
+                output += f"{i}. {types_str} (Row {match['rowid']}) - Score: {match['composite_score']:.3f}\n"
+                output += f"   Text: {match['text'][:120]}{'...' if len(match['text']) > 120 else ''}\n"
                     
-                    # Show individual scores
-                    if len(match["scores"]) > 1:
-                        score_details = ", ".join([f"{k}: {v:.3f}" for k, v in match["scores"].items()])
-                        output += f"   Scores: {score_details}\n"
+                # Show individual scores
+                if len(match["scores"]) > 1:
+                    score_details = ", ".join([f"{k}: {v:.3f}" for k, v in match["scores"].items()])
+                    output += f"   Scores: {score_details}\n"
                     
-                    output += "\n"
+                output += "\n"
                 
-                if not all_matches:
-                    output += f"No matches found using methods: {methods_str}\n"
-                    output += "Try different search methods or adjust the fuzzy threshold."
+            if not all_matches:
+                output += f"No matches found using methods: {methods_str}\n"
+                output += "Try different search methods or adjust the fuzzy threshold."
                 
-                return [types.TextContent(type="text", text=output)]
+            return [types.TextContent(type="text", text=output)]
                 
         except Exception as e:
             error_msg = f"Failed to perform advanced search: {str(e)}"
@@ -6472,39 +6472,39 @@ Found {len(all_matches)} matches:
             where_sql = f" WHERE {where_clause}" if where_clause else ""
             
             # Use the global db instance
-                query = f"""
-                SELECT {column_name}, rowid
-                FROM {table_name}{where_sql}
-                WHERE {column_name} IS NOT NULL
-                LIMIT {limit}
-                """
+            query = f"""
+            SELECT {column_name}, rowid
+            FROM {table_name}{where_sql}
+            WHERE {column_name} IS NOT NULL
+            LIMIT {limit}
+            """
                 
-                result = db._execute_query(query)
+            result = db._execute_query(query)
                 
-                if not result:
-                    return [types.TextContent(type="text", text="No data found for text validation")]
+            if not result:
+                return [types.TextContent(type="text", text="No data found for text validation")]
                 
-                valid_entries = []
-                invalid_entries = []
+            valid_entries = []
+            invalid_entries = []
                 
-                for row in result:
-                    text = str(row[column_name]).strip()
+            for row in result:
+                text = str(row[column_name]).strip()
                     
-                    if compiled_pattern.match(text):
-                        valid_entries.append({
-                            "rowid": row["rowid"],
-                            "text": text
-                        })
-                    else:
-                        invalid_entries.append({
-                            "rowid": row["rowid"],
-                            "text": text
-                        })
+                if compiled_pattern.match(text):
+                    valid_entries.append({
+                        "rowid": row["rowid"],
+                        "text": text
+                    })
+                else:
+                    invalid_entries.append({
+                        "rowid": row["rowid"],
+                        "text": text
+                    })
                 
-                total_checked = len(valid_entries) + len(invalid_entries)
-                valid_percent = (len(valid_entries) / total_checked * 100) if total_checked > 0 else 0
+            total_checked = len(valid_entries) + len(invalid_entries)
+            valid_percent = (len(valid_entries) / total_checked * 100) if total_checked > 0 else 0
                 
-                output = f"""Text Validation Results for {table_name}.{column_name}:
+            output = f"""Text Validation Results for {table_name}.{column_name}:
 Validation Type: {pattern_name}
 Pattern: {pattern}
 
@@ -6515,22 +6515,22 @@ Total Checked: {total_checked}
 
 """
                 
-                if invalid_entries:
-                    output += "Invalid Entries:\n"
-                    for i, entry in enumerate(invalid_entries[:20], 1):
-                        output += f"{i}. Row {entry['rowid']}: {entry['text']}\n"
+            if invalid_entries:
+                output += "Invalid Entries:\n"
+                for i, entry in enumerate(invalid_entries[:20], 1):
+                    output += f"{i}. Row {entry['rowid']}: {entry['text']}\n"
                     
-                    if len(invalid_entries) > 20:
-                        output += f"... and {len(invalid_entries) - 20} more invalid entries\n"
+                if len(invalid_entries) > 20:
+                    output += f"... and {len(invalid_entries) - 20} more invalid entries\n"
                     
-                    output += "\n"
+                output += "\n"
                 
-                if valid_entries and len(valid_entries) <= 10:
-                    output += "Valid Entries:\n"
-                    for i, entry in enumerate(valid_entries, 1):
-                        output += f"{i}. Row {entry['rowid']}: {entry['text']}\n"
+            if valid_entries and len(valid_entries) <= 10:
+                output += "Valid Entries:\n"
+                for i, entry in enumerate(valid_entries, 1):
+                    output += f"{i}. Row {entry['rowid']}: {entry['text']}\n"
                 
-                return [types.TextContent(type="text", text=output)]
+            return [types.TextContent(type="text", text=output)]
                 
         except re.error as e:
             error_msg = f"Invalid regex pattern: {str(e)}"
@@ -6547,11 +6547,11 @@ Total Checked: {total_checked}
             read_stream,
             write_stream,
             InitializationOptions(
-                server_name="sqlite-custom",
-                server_version="2.2.0",
-                capabilities=server.get_capabilities(
-                    notification_options=NotificationOptions(),
-                    experimental_capabilities={},
-                ),
+            server_name="sqlite-custom",
+            server_version="2.2.0",
+            capabilities=server.get_capabilities(
+                notification_options=NotificationOptions(),
+                experimental_capabilities={},
+            ),
             ),
         )
