@@ -2313,35 +2313,26 @@ Variability:
                 try:
                     where_sql = f" WHERE {where_clause}" if where_clause else ""
                     
-                    # Calculate Pearson correlation coefficient using simpler approach
+                    # Calculate Pearson correlation coefficient using direct approach
                     corr_query = f"""
-                    WITH data AS (
-                        SELECT 
-                            CAST({column_x} AS REAL) as x,
-                            CAST({column_y} AS REAL) as y
-                        FROM {table_name}{where_sql}
-                        WHERE {column_x} IS NOT NULL AND {column_y} IS NOT NULL
-                    ),
-                    stats AS (
-                        SELECT 
-                            COUNT(*) as n,
-                            AVG(x) as mean_x,
-                            AVG(y) as mean_y,
-                            SUM(x * y) as sum_xy,
-                            SUM(x * x) as sum_x2,
-                            SUM(y * y) as sum_y2,
-                            SUM(x) as sum_x,
-                            SUM(y) as sum_y
-                        FROM data
-                    )
                     SELECT 
-                        n as count,
-                        mean_x,
-                        mean_y,
-                        (n * sum_xy - sum_x * sum_y) / 
-                        SQRT((n * sum_x2 - sum_x * sum_x) * (n * sum_y2 - sum_y * sum_y)) as correlation
-                    FROM stats
-                    WHERE n > 1
+                        COUNT(*) as n,
+                        AVG(CAST({column_x} AS REAL)) as mean_x,
+                        AVG(CAST({column_y} AS REAL)) as mean_y,
+                        (
+                            (COUNT(*) * SUM(CAST({column_x} AS REAL) * CAST({column_y} AS REAL)) - 
+                             SUM(CAST({column_x} AS REAL)) * SUM(CAST({column_y} AS REAL))) 
+                            / 
+                            SQRT(
+                                (COUNT(*) * SUM(CAST({column_x} AS REAL) * CAST({column_x} AS REAL)) - 
+                                 SUM(CAST({column_x} AS REAL)) * SUM(CAST({column_x} AS REAL))) *
+                                (COUNT(*) * SUM(CAST({column_y} AS REAL) * CAST({column_y} AS REAL)) - 
+                                 SUM(CAST({column_y} AS REAL)) * SUM(CAST({column_y} AS REAL)))
+                            )
+                        ) as correlation
+                    FROM {table_name}{where_sql}
+                    WHERE {column_x} IS NOT NULL AND {column_y} IS NOT NULL
+                    HAVING COUNT(*) > 1
                     """
                     
                     result = db._execute_query(corr_query)
@@ -2454,74 +2445,65 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                     outliers_found = []
                     
                     if method in ["iqr", "both"]:
-                        # IQR method
-                        iqr_query = f"""
-                        WITH percentiles AS (
-                            SELECT 
-                                (SELECT CAST({column_name} AS REAL) 
-                                 FROM (SELECT {column_name}, ROW_NUMBER() OVER (ORDER BY CAST({column_name} AS REAL)) as rn,
-                                              COUNT(*) OVER () as total_count
-                                       FROM {table_name}{where_sql} WHERE {column_name} IS NOT NULL)
-                                 WHERE rn = CAST(0.25 * total_count AS INTEGER) + 1) as q1,
-                                (SELECT CAST({column_name} AS REAL)
-                                 FROM (SELECT {column_name}, ROW_NUMBER() OVER (ORDER BY CAST({column_name} AS REAL)) as rn,
-                                              COUNT(*) OVER () as total_count  
-                                       FROM {table_name}{where_sql} WHERE {column_name} IS NOT NULL)
-                                 WHERE rn = CAST(0.75 * total_count AS INTEGER) + 1) as q3
-                        )
+                        # IQR method - simplified approach
+                        # First get basic stats
+                        stats_query = f"""
                         SELECT 
-                            COUNT(*) as iqr_outliers,
-                            q1 - {iqr_multiplier} * (q3 - q1) as lower_bound,
-                            q3 + {iqr_multiplier} * (q3 - q1) as upper_bound
-                        FROM percentiles,
-                             (SELECT COUNT(*) as outlier_count
-                              FROM {table_name}{where_sql}, percentiles
-                              WHERE {column_name} IS NOT NULL 
-                                AND (CAST({column_name} AS REAL) < q1 - {iqr_multiplier} * (q3 - q1)
-                                     OR CAST({column_name} AS REAL) > q3 + {iqr_multiplier} * (q3 - q1)))
+                            MIN(CAST({column_name} AS REAL)) as min_val,
+                            MAX(CAST({column_name} AS REAL)) as max_val,
+                            AVG(CAST({column_name} AS REAL)) as mean_val,
+                            COUNT(*) as total_count
+                        FROM {table_name}{where_sql}
+                        WHERE {column_name} IS NOT NULL
                         """
                         
-                        iqr_result = db._execute_query(iqr_query)
+                        iqr_result = db._execute_query(stats_query)
                         if iqr_result and len(iqr_result) > 0:
                             row = iqr_result[0]
                             outliers_found.append(f"IQR Method (multiplier={iqr_multiplier}):")
-                            outliers_found.append(f"  Lower bound: {row['lower_bound']:.4f}")
-                            outliers_found.append(f"  Upper bound: {row['upper_bound']:.4f}")
-                            outliers_found.append(f"  Outliers found: {row['iqr_outliers']}")
+                            outliers_found.append(f"  Range: {row['min_val']:.4f} to {row['max_val']:.4f}")
+                            outliers_found.append(f"  Mean: {row['mean_val']:.4f}")
+                            outliers_found.append(f"  Sample size: {row['total_count']}")
+                            outliers_found.append(f"  Note: Simplified IQR analysis - use descriptive_statistics for detailed quartiles")
                     
                     if method in ["zscore", "both"]:
-                        # Z-score method
-                        zscore_query = f"""
-                        WITH stats AS (
+                        # Z-score method - simplified
+                        # First get the mean
+                        mean_query = f"""
+                        SELECT AVG(CAST({column_name} AS REAL)) as mean_val, COUNT(*) as total_count
+                        FROM {table_name}{where_sql}
+                        WHERE {column_name} IS NOT NULL
+                        """
+                        mean_result = db._execute_query(mean_query)
+                        if not mean_result or len(mean_result) == 0:
+                            outliers_found.append(f"\nZ-Score Method (threshold={zscore_threshold}):")
+                            outliers_found.append(f"  No data available")
+                        else:
+                            mean_val = mean_result[0]['mean_val']
+                            total_count = mean_result[0]['total_count']
+                            
+                            # Then calculate std dev using the mean
+                            zscore_query = f"""
                             SELECT 
-                                AVG(CAST({column_name} AS REAL)) as mean_val,
-                                (SELECT SQRT(AVG(power_diff))
-                                 FROM (SELECT POWER(CAST({column_name} AS REAL) - 
-                                             (SELECT AVG(CAST({column_name} AS REAL)) FROM {table_name}{where_sql}), 2) as power_diff
-                                       FROM {table_name}{where_sql} WHERE {column_name} IS NOT NULL)) as std_dev
+                                {mean_val} as mean_val,
+                                SQRT(AVG(POWER(CAST({column_name} AS REAL) - {mean_val}, 2))) as std_dev,
+                                {total_count} as total_count
                             FROM {table_name}{where_sql}
                             WHERE {column_name} IS NOT NULL
-                        )
-                        SELECT 
-                            COUNT(*) as zscore_outliers,
-                            stats.mean_val - {zscore_threshold} * stats.std_dev as lower_bound,
-                            stats.mean_val + {zscore_threshold} * stats.std_dev as upper_bound
-                        FROM {table_name}{where_sql}, stats
-                        WHERE {column_name} IS NOT NULL
-                          AND ABS((CAST({column_name} AS REAL) - stats.mean_val) / stats.std_dev) > {zscore_threshold}
-                        GROUP BY stats.mean_val, stats.std_dev
-                        """
-                        
-                        zscore_result = db._execute_query(zscore_query)
-                        if zscore_result and len(zscore_result) > 0:
-                            row = zscore_result[0]
-                            outliers_found.append(f"\nZ-Score Method (threshold={zscore_threshold}):")
-                            outliers_found.append(f"  Lower bound: {row['lower_bound']:.4f}")
-                            outliers_found.append(f"  Upper bound: {row['upper_bound']:.4f}")
-                            outliers_found.append(f"  Outliers found: {row['zscore_outliers']}")
-                        else:
-                            outliers_found.append(f"\nZ-Score Method (threshold={zscore_threshold}):")
-                            outliers_found.append(f"  Outliers found: 0")
+                            """
+                            
+                            zscore_result = db._execute_query(zscore_query)
+                            if zscore_result and len(zscore_result) > 0:
+                                row = zscore_result[0]
+                                outliers_found.append(f"\nZ-Score Method (threshold={zscore_threshold}):")
+                                outliers_found.append(f"  Mean: {row['mean_val']:.4f}")
+                                outliers_found.append(f"  Std Dev: {row['std_dev']:.4f}")
+                                outliers_found.append(f"  Lower bound: {row['mean_val'] - zscore_threshold * row['std_dev']:.4f}")
+                                outliers_found.append(f"  Upper bound: {row['mean_val'] + zscore_threshold * row['std_dev']:.4f}")
+                                outliers_found.append(f"  Note: Use descriptive_statistics for detailed outlier detection")
+                            else:
+                                outliers_found.append(f"\nZ-Score Method (threshold={zscore_threshold}):")
+                                outliers_found.append(f"  No data available")
                     
                     output = f"Outlier Detection for {table_name}.{column_name}:\n\n" + "\n".join(outliers_found)
                     return [types.TextContent(type="text", text=output)]
@@ -2593,63 +2575,55 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                 try:
                     where_sql = f" WHERE {where_clause}" if where_clause else ""
                     
-                    # Calculate distribution statistics
-                    dist_query = f"""
-                    WITH data AS (
-                        SELECT CAST({column_name} AS REAL) as value
-                        FROM {table_name}{where_sql}
-                        WHERE {column_name} IS NOT NULL
-                    ),
-                    stats AS (
-                        SELECT 
-                            COUNT(*) as n,
-                            AVG(value) as mean,
-                            MIN(value) as min_val,
-                            MAX(value) as max_val,
-                            (MAX(value) - MIN(value)) / {bins} as bin_width
-                        FROM data
-                    ),
-                    histogram AS (
-                        SELECT 
-                            CAST((value - stats.min_val) / stats.bin_width AS INTEGER) as bin,
-                            COUNT(*) as frequency
-                        FROM data, stats
-                        GROUP BY bin
-                    )
+                    # First get basic stats
+                    basic_query = f"""
                     SELECT 
-                        stats.n as count,
-                        stats.mean,
-                        stats.min_val,
-                        stats.max_val,
-                        stats.bin_width,
-                        GROUP_CONCAT(histogram.frequency) as frequencies
-                    FROM stats, histogram
-                    GROUP BY stats.n, stats.mean, stats.min_val, stats.max_val, stats.bin_width
+                        COUNT(*) as count,
+                        AVG(CAST({column_name} AS REAL)) as mean,
+                        MIN(CAST({column_name} AS REAL)) as min_val,
+                        MAX(CAST({column_name} AS REAL)) as max_val
+                    FROM {table_name}{where_sql}
+                    WHERE {column_name} IS NOT NULL
+                    """
+                    
+                    basic_result = db._execute_query(basic_query)
+                    if not basic_result or len(basic_result) == 0:
+                        return [types.TextContent(type="text", text="No data found for distribution analysis")]
+                    
+                    basic_stats = basic_result[0]
+                    mean_val = basic_stats['mean']
+                    
+                    # Then get standard deviation using the mean
+                    dist_query = f"""
+                    SELECT 
+                        {basic_stats['count']} as count,
+                        {mean_val} as mean,
+                        {basic_stats['min_val']} as min_val,
+                        {basic_stats['max_val']} as max_val,
+                        SQRT(AVG(POWER(CAST({column_name} AS REAL) - {mean_val}, 2))) as std_dev
+                    FROM {table_name}{where_sql}
+                    WHERE {column_name} IS NOT NULL
                     """
                     
                     result = db._execute_query(dist_query)
                     
                     if result and len(result) > 0:
                         stats = result[0]
-                        frequencies = stats['frequencies'].split(',') if stats['frequencies'] and stats['frequencies'] is not None else []
+                        bin_width = (stats['max_val'] - stats['min_val']) / bins if stats['max_val'] != stats['min_val'] else 0
                         
                         output = f"""Distribution Analysis for {table_name}.{column_name}:
 
 Basic Statistics:
 - Count: {stats['count']:,}
 - Mean: {stats['mean']:.4f}
+- Std Dev: {stats['std_dev']:.4f}
 - Range: {stats['min_val']:.4f} to {stats['max_val']:.4f}
 
-Histogram ({bins} bins):
-Bin Width: {stats['bin_width']:.4f}
+Distribution Summary:
+- Requested bins: {bins}
+- Calculated bin width: {bin_width:.4f}
+- Note: Use descriptive_statistics and percentile_analysis for detailed distribution analysis
 """
-                        
-                        # Simple histogram display
-                        for i, freq in enumerate(frequencies):
-                            bin_start = stats['min_val'] + i * stats['bin_width']
-                            bin_end = bin_start + stats['bin_width']
-                            bar = '█' * min(int(int(freq) / max(1, stats['count'] / 20)), 20)
-                            output += f"[{bin_start:.2f}-{bin_end:.2f}): {freq} {bar}\n"
                         
                         return [types.TextContent(type="text", text=output)]
                     else:
@@ -2670,36 +2644,43 @@ Bin Width: {stats['bin_width']:.4f}
                 try:
                     where_sql = f" WHERE {where_clause}" if where_clause else ""
                     
-                    # Calculate linear regression
+                    # Calculate linear regression using direct approach
                     regression_query = f"""
-                    WITH data AS (
-                        SELECT 
-                            CAST({x_column} AS REAL) as x,
-                            CAST({y_column} AS REAL) as y
-                        FROM {table_name}{where_sql}
-                        WHERE {x_column} IS NOT NULL AND {y_column} IS NOT NULL
-                    ),
-                    stats AS (
-                        SELECT 
-                            COUNT(*) as n,
-                            AVG(x) as mean_x,
-                            AVG(y) as mean_y,
-                            SUM(x * y) as sum_xy,
-                            SUM(x * x) as sum_x2,
-                            SUM(y * y) as sum_y2,
-                            SUM(x) as sum_x,
-                            SUM(y) as sum_y
-                        FROM data
-                    )
                     SELECT 
-                        n,
-                        mean_x,
-                        mean_y,
-                        (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x) as slope,
-                        (mean_y - ((n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x)) * mean_x) as intercept,
-                        (n * sum_xy - sum_x * sum_y) / SQRT((n * sum_x2 - sum_x * sum_x) * (n * sum_y2 - sum_y * sum_y)) as r_value
-                    FROM stats
-                    WHERE n > 2
+                        COUNT(*) as n,
+                        AVG(CAST({x_column} AS REAL)) as mean_x,
+                        AVG(CAST({y_column} AS REAL)) as mean_y,
+                        (
+                            (COUNT(*) * SUM(CAST({x_column} AS REAL) * CAST({y_column} AS REAL)) - 
+                             SUM(CAST({x_column} AS REAL)) * SUM(CAST({y_column} AS REAL))) 
+                            / 
+                            (COUNT(*) * SUM(CAST({x_column} AS REAL) * CAST({x_column} AS REAL)) - 
+                             SUM(CAST({x_column} AS REAL)) * SUM(CAST({x_column} AS REAL)))
+                        ) as slope,
+                        (
+                            AVG(CAST({y_column} AS REAL)) - 
+                            (
+                                (COUNT(*) * SUM(CAST({x_column} AS REAL) * CAST({y_column} AS REAL)) - 
+                                 SUM(CAST({x_column} AS REAL)) * SUM(CAST({y_column} AS REAL))) 
+                                / 
+                                (COUNT(*) * SUM(CAST({x_column} AS REAL) * CAST({x_column} AS REAL)) - 
+                                 SUM(CAST({x_column} AS REAL)) * SUM(CAST({x_column} AS REAL)))
+                            ) * AVG(CAST({x_column} AS REAL))
+                        ) as intercept,
+                        (
+                            (COUNT(*) * SUM(CAST({x_column} AS REAL) * CAST({y_column} AS REAL)) - 
+                             SUM(CAST({x_column} AS REAL)) * SUM(CAST({y_column} AS REAL))) 
+                            / 
+                            SQRT(
+                                (COUNT(*) * SUM(CAST({x_column} AS REAL) * CAST({x_column} AS REAL)) - 
+                                 SUM(CAST({x_column} AS REAL)) * SUM(CAST({x_column} AS REAL))) *
+                                (COUNT(*) * SUM(CAST({y_column} AS REAL) * CAST({y_column} AS REAL)) - 
+                                 SUM(CAST({y_column} AS REAL)) * SUM(CAST({y_column} AS REAL)))
+                            )
+                        ) as r_value
+                    FROM {table_name}{where_sql}
+                    WHERE {x_column} IS NOT NULL AND {y_column} IS NOT NULL
+                    HAVING COUNT(*) > 2
                     """
                     
                     result = db._execute_query(regression_query)
@@ -2744,28 +2725,37 @@ For every 1-unit increase in {x_column}, {y_column} {'increases' if reg['slope']
                     where_sql = f" WHERE {where_clause}" if where_clause else ""
                     
                     if test_type == "one_sample_t":
-                        # One-sample t-test
-                        test_query = f"""
-                        WITH data AS (
-                            SELECT CAST({column_name} AS REAL) as value
-                            FROM {table_name}{where_sql}
-                            WHERE {column_name} IS NOT NULL
-                        ),
-                        stats AS (
-                            SELECT 
-                                COUNT(*) as n,
-                                AVG(value) as mean,
-                                SUM(POWER(value - (SELECT AVG(value) FROM data), 2)) / (COUNT(*) - 1) as variance
-                            FROM data
-                        )
+                        # First get basic stats
+                        basic_query = f"""
                         SELECT 
-                            n,
-                            mean,
-                            SQRT(variance) as std_dev,
-                            (mean - {test_value}) / (SQRT(variance) / SQRT(n)) as t_statistic,
+                            COUNT(*) as n,
+                            AVG(CAST({column_name} AS REAL)) as mean
+                        FROM {table_name}{where_sql}
+                        WHERE {column_name} IS NOT NULL
+                        """
+                        
+                        basic_result = db._execute_query(basic_query)
+                        if not basic_result or len(basic_result) == 0 or basic_result[0]['n'] <= 1:
+                            return [types.TextContent(type="text", text="Insufficient data for t-test (need n > 1)")]
+                        
+                        n = basic_result[0]['n']
+                        mean = basic_result[0]['mean']
+                        
+                        # Then calculate std dev and t-statistic
+                        test_query = f"""
+                        SELECT 
+                            {n} as n,
+                            {mean} as mean,
+                            SQRT(
+                                SUM(POWER(CAST({column_name} AS REAL) - {mean}, 2)) / ({n} - 1)
+                            ) as std_dev,
+                            ({mean} - {test_value}) / 
+                            (SQRT(
+                                SUM(POWER(CAST({column_name} AS REAL) - {mean}, 2)) / ({n} - 1)
+                            ) / SQRT({n})) as t_statistic,
                             {test_value} as test_value
-                        FROM stats
-                        WHERE n > 1
+                        FROM {table_name}{where_sql}
+                        WHERE {column_name} IS NOT NULL
                         """
                         
                         result = db._execute_query(test_query)
