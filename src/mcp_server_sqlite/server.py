@@ -405,11 +405,8 @@ class EnhancedSqliteDatabase:
             self.json_logger.log_error(e, {"query": query})
             raise
 
-async def main(db_path: str = ":memory:"):
-    if db_path == ":memory:":
-        logger.info("Starting Enhanced SQLite MCP Server (no default database)")
-    else:
-        logger.info(f"Starting Enhanced SQLite MCP Server with default DB: {db_path}")
+async def main(db_path: str = "database.db"):
+    logger.info(f"Starting Enhanced SQLite MCP Server with DB: {db_path}")
 
     # Initialize database with enhanced features
     db = EnhancedSqliteDatabase(db_path)

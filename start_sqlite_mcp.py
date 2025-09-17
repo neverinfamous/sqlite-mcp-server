@@ -123,9 +123,13 @@ Examples:
         db_path = str(data_dir / args.db_name)
         logger.debug(f"Created data directory and using: {db_path}")
     else:
-        # No database specified - use in-memory database
-        db_path = ":memory:"
-        logger.info("No database specified - server will run without default database")
+        # No database specified - use default database in current directory
+        if args.project_root:
+            project_root = Path(args.project_root)
+        else:
+            project_root = find_project_root()
+        db_path = str(project_root / args.db_name)
+        logger.debug(f"Using default database: {db_path}")
     
     # Ensure parent directory exists
     db_path_obj = Path(db_path)
