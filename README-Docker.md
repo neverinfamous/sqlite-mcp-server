@@ -1,8 +1,8 @@
 # SQLite MCP Server
 
-*Last Updated September 17, 2025 2:35 AM EST - v2.0.0*
+*Last Updated September 17, 2025 4:40 AM EST - v2.1.0*
 
-*Lightweight, containerized SQLite database server with AI-native features*
+*Lightweight, containerized SQLite database server with AI-native features and statistical analysis*
 
 ## 🚀 Zero-Configuration Database
 **No database setup required!** The server automatically creates and manages persistent SQLite databases **because MCP operations need persistent storage**:

@@ -1,13 +1,14 @@
 # SQLite MCP Server
 
-*Last Updated September 17, 2025 2:35 AM EST - v2.0.0*
+*Last Updated September 17, 2025 4:40 AM EST - v2.1.0*
 
 ## Overview
 
-The SQLite MCP Server provides advanced database interaction and business intelligence capabilities featuring **SpatiaLite Geospatial Analytics**, Enhanced Virtual Tables with Smart Type Inference, Vector Index Optimization with ANN search, Intelligent MCP Resources and Prompts, Semantic/Vector Search, Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
+The SQLite MCP Server provides advanced database interaction and business intelligence capabilities featuring **Statistical Analysis Library**, **SpatiaLite Geospatial Analytics**, Enhanced Virtual Tables with Smart Type Inference, Vector Index Optimization with ANN search, Intelligent MCP Resources and Prompts, Semantic/Vector Search, Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
 
 ## Key Features
 
+- **Statistical Analysis Library**: Comprehensive statistical functions for data analysis including descriptive statistics, percentile analysis, and time series analysis
 - **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements (~15% space savings)
 - **Transaction Safety**: All write operations automatically wrapped in transactions with proper rollback on errors
 - **Foreign Key Enforcement**: Automatic enforcement of foreign key constraints across all connections
@@ -38,6 +39,75 @@ This project is based on the original SQLite MCP Server from the [Model Context 
 **Original Authors**: Model Context Protocol Team  
 **Original Repository**: https://github.com/modelcontextprotocol/servers  
 **License**: MIT License
+
+## Statistical Analysis Library
+
+The SQLite MCP Server v2.1.0 introduces a comprehensive statistical analysis library with 8 specialized functions for data analysis and business intelligence.
+
+### Available Statistical Functions
+
+**Descriptive Statistics:**
+```javascript
+descriptive_statistics({
+  table_name: "sales_data",
+  column_name: "revenue",
+  where_clause: "year = 2024"  // optional
+})
+```
+Returns comprehensive statistics including mean, median, standard deviation, variance, range, and coefficient of variation.
+
+**Percentile Analysis:**
+```javascript
+percentile_analysis({
+  table_name: "sales_data", 
+  column_name: "revenue",
+  percentiles: [25, 50, 75, 90, 95, 99]  // optional
+})
+```
+Calculates quartiles, percentiles, and interquartile range (IQR) for distribution analysis.
+
+**Time Series Analysis:**
+```javascript
+moving_averages({
+  table_name: "daily_sales",
+  value_column: "revenue", 
+  time_column: "date",
+  window_sizes: [7, 30, 90]  // optional
+})
+```
+Generates moving averages with trend analysis for time series data.
+
+### Statistical Analysis Workflow
+
+1. **Explore Data Distribution**: Use `descriptive_statistics` to understand central tendency and variability
+2. **Identify Quartiles**: Apply `percentile_analysis` to find data distribution boundaries  
+3. **Analyze Trends**: Employ `moving_averages` for time series pattern recognition
+4. **Generate Insights**: Combine statistical results with business context using `append_insight`
+
+### Example Analysis Session
+
+```javascript
+// 1. Get overview of sales performance
+descriptive_statistics({
+  table_name: "monthly_sales",
+  column_name: "revenue"
+})
+
+// 2. Understand distribution 
+percentile_analysis({
+  table_name: "monthly_sales", 
+  column_name: "revenue",
+  percentiles: [10, 25, 50, 75, 90]
+})
+
+// 3. Analyze trends over time
+moving_averages({
+  table_name: "monthly_sales",
+  value_column: "revenue",
+  time_column: "month", 
+  window_sizes: [3, 6, 12]
+})
+```
 
 ## Using Full-Text Search
 
