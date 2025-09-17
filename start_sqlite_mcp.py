@@ -41,6 +41,7 @@ def find_project_root():
 def get_default_db_path():
     """
     Determine the default database path based on the environment.
+    Only used when no explicit path is provided.
     Prioritizes: 
     1. ./data/ subdirectory if it exists
     2. Project root
@@ -122,16 +123,16 @@ Examples:
             data_dir = project_root / "data"
             data_dir.mkdir(exist_ok=True)
             db_path = str(data_dir / args.db_name)
-            logger.info(f"Created data directory and using: {db_path}")
+            logger.debug(f"Created data directory and using: {db_path}")
         else:
             db_path = get_default_db_path()
-            logger.info(f"Auto-detected database path: {db_path}")
+            logger.debug(f"Using default database path: {db_path}")
     
     # Ensure parent directory exists
     db_path_obj = Path(db_path)
     if db_path != ":memory:":
         db_path_obj.parent.mkdir(parents=True, exist_ok=True)
-        logger.info(f"Database will be created at: {db_path_obj.absolute()}")
+        logger.debug(f"Database location: {db_path_obj.absolute()}")
     
-    logger.info(f"Starting SQLite MCP Server with database: {db_path}")
+    logger.info(f"SQLite MCP Server ready with database: {db_path}")
     asyncio.run(main(db_path))

@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated September 17, 2025 11:45 PM EST - v1.8.0*
+*Last Updated September 17, 2025 10:42 PM EST - v1.8.0*
 
 ## Overview
 
@@ -631,6 +631,70 @@ The server automatically detects project structure and creates appropriate datab
 - **Note**: The main MCP server is Python-based and works perfectly without any JavaScript dependencies
 
 **For most users**: You only need Python requirements. The JavaScript utilities are optional helpers for advanced use cases.
+
+## Database Configuration
+
+The SQLite MCP Server provides flexible database configuration options:
+
+### Quick Start Options
+
+**Use existing database**:
+```bash
+python start_sqlite_mcp.py --db-path /path/to/your/database.db
+```
+
+**Auto-detect project structure** (default):
+```bash
+python start_sqlite_mcp.py
+# Automatically finds project root and creates database.db
+```
+
+**Create organized data directory**:
+```bash
+python start_sqlite_mcp.py --create-data-dir
+# Creates ./data/database.db in your project
+```
+
+### MCP Client Configuration
+
+**For Cursor/Claude Desktop**:
+```json
+{
+  "mcpServers": {
+    "sqlite-mcp-server": {
+      "command": "python",
+      "args": [
+        "/path/to/sqlite-mcp-server/start_sqlite_mcp.py",
+        "--db-path", "/path/to/your/database.db"
+      ]
+    }
+  }
+}
+```
+
+**For Docker**:
+```json
+{
+  "mcpServers": {
+    "sqlite-mcp-server": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-v", "/host/project:/workspace",
+        "ghcr.io/neverinfamous/sqlite-mcp-server:latest",
+        "--db-path", "/workspace/database.db"
+      ]
+    }
+  }
+}
+```
+
+### Database Location Best Practices
+
+- **`./data/database.db`** - Recommended for projects (organized, version-control friendly)
+- **`./database.db`** - Simple option for small projects  
+- **Existing databases** - Use `--db-path` to connect to any SQLite database
+- **`:memory:`** - Temporary database for testing (data not persisted)
 
 ## JSON Validation and JSONB Support
 
