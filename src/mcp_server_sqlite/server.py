@@ -338,7 +338,8 @@ class EnhancedSqliteDatabase:
                             conn.execute("SELECT InitSpatialMetaData(1)")
                         except:
                             pass  # Already initialized or not needed
-                        conn.enable_load_extension(False)
+                        # Keep extensions enabled for this connection
+                        # conn.enable_load_extension(False)  # Comment out to keep functions available
                     except Exception as e:
                         # Log the actual error for debugging
                         logger.debug(f"SpatiaLite loading failed: {e}")
