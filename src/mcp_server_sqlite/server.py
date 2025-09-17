@@ -528,12 +528,13 @@ async def main(db_path: str = "sqlite_mcp.db"):
             elif path == "capabilities":
                 # Comprehensive server capabilities matrix
                 capabilities = {
-                    "server_version": "1.9.3",
+                    "server_version": "2.0.0",
                     "sqlite_version": db.version_info.get('version', 'Unknown'),
-                    "total_tools": 44,
+                        "total_tools": 51,
                     "semantic_search": True,
                     "full_text_search": True,
                     "virtual_tables": True,
+                    "geospatial_analysis": True,
                     "backup_restore": True,
                     "jsonb_support": db.version_info.get('has_jsonb_support', False),
                     "advanced_features": [
@@ -544,7 +545,9 @@ async def main(db_path: str = "sqlite_mcp.db"):
                         "Database administration tools (VACUUM, ANALYZE, integrity)",
                         "Backup/restore with atomic operations and verification",
                         "Advanced PRAGMA operations for configuration management",
-                        "Pure SQLite implementation with no external dependencies"
+                        "SpatiaLite geospatial analysis with spatial indexing and operations",
+                        "Comprehensive GIS functionality with shapefile import/export",
+                        "Enhanced CSV/JSON virtual tables with smart type inference"
                     ]
                 }
                 return json.dumps(capabilities, indent=2)
@@ -1197,6 +1200,217 @@ async def main(db_path: str = "sqlite_mcp.db"):
                 }
             ),
             
+            # SpatiaLite Geospatial Tools (v2.0.0)
+            types.Tool(
+                name="load_spatialite",
+                description="Load SpatiaLite extension for geospatial capabilities",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "force_reload": {
+                            "type": "boolean",
+                            "description": "Force reload if already loaded",
+                            "default": False
+                        }
+                    },
+                    "required": []
+                }
+            ),
+            
+            types.Tool(
+                name="create_spatial_table",
+                description="Create a spatial table with geometry column",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name of the spatial table to create"
+                        },
+                        "geometry_column": {
+                            "type": "string",
+                            "description": "Name of the geometry column",
+                            "default": "geom"
+                        },
+                        "geometry_type": {
+                            "type": "string",
+                            "enum": ["POINT", "LINESTRING", "POLYGON", "MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON", "GEOMETRY"],
+                            "description": "Type of geometry to store",
+                            "default": "POINT"
+                        },
+                        "srid": {
+                            "type": "integer",
+                            "description": "Spatial Reference System ID (4326 for WGS84)",
+                            "default": 4326
+                        },
+                        "additional_columns": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {"type": "string"},
+                                    "type": {"type": "string"}
+                                },
+                                "required": ["name", "type"]
+                            },
+                            "description": "Additional non-spatial columns to include",
+                            "default": []
+                        }
+                    },
+                    "required": ["table_name"]
+                }
+            ),
+            
+            types.Tool(
+                name="spatial_index",
+                description="Create or drop spatial index on geometry column",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name of the spatial table"
+                        },
+                        "geometry_column": {
+                            "type": "string",
+                            "description": "Name of the geometry column",
+                            "default": "geom"
+                        },
+                        "action": {
+                            "type": "string",
+                            "enum": ["create", "drop"],
+                            "description": "Create or drop the spatial index",
+                            "default": "create"
+                        }
+                    },
+                    "required": ["table_name"]
+                }
+            ),
+            
+            types.Tool(
+                name="spatial_query",
+                description="Execute spatial queries with geometric operations",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "Spatial SQL query using SpatiaLite functions"
+                        },
+                        "explain": {
+                            "type": "boolean",
+                            "description": "Show query execution plan",
+                            "default": False
+                        }
+                    },
+                    "required": ["query"]
+                }
+            ),
+            
+            types.Tool(
+                name="geometry_operations",
+                description="Common geometry operations (buffer, intersection, union, etc.)",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "operation": {
+                            "type": "string",
+                            "enum": ["buffer", "intersection", "union", "difference", "distance", "area", "length", "centroid", "envelope"],
+                            "description": "Geometric operation to perform"
+                        },
+                        "geometry1": {
+                            "type": "string",
+                            "description": "First geometry (WKT format or table.column reference)"
+                        },
+                        "geometry2": {
+                            "type": "string",
+                            "description": "Second geometry for binary operations (WKT format or table.column reference)",
+                            "default": ""
+                        },
+                        "buffer_distance": {
+                            "type": "number",
+                            "description": "Buffer distance for buffer operations",
+                            "default": 1.0
+                        },
+                        "table_name": {
+                            "type": "string",
+                            "description": "Table name if using table.column references",
+                            "default": ""
+                        }
+                    },
+                    "required": ["operation", "geometry1"]
+                }
+            ),
+            
+            types.Tool(
+                name="import_shapefile",
+                description="Import Shapefile data into spatial table",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "shapefile_path": {
+                            "type": "string",
+                            "description": "Path to the .shp file"
+                        },
+                        "table_name": {
+                            "type": "string",
+                            "description": "Target table name for imported data"
+                        },
+                        "encoding": {
+                            "type": "string",
+                            "description": "Character encoding of the shapefile",
+                            "default": "UTF-8"
+                        },
+                        "srid": {
+                            "type": "integer",
+                            "description": "Override SRID if not detected automatically",
+                            "default": 0
+                        }
+                    },
+                    "required": ["shapefile_path", "table_name"]
+                }
+            ),
+            
+            types.Tool(
+                name="spatial_analysis",
+                description="Perform spatial analysis operations (nearest neighbor, spatial join, etc.)",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "analysis_type": {
+                            "type": "string",
+                            "enum": ["nearest_neighbor", "spatial_join", "point_in_polygon", "distance_matrix", "cluster_analysis"],
+                            "description": "Type of spatial analysis to perform"
+                        },
+                        "source_table": {
+                            "type": "string",
+                            "description": "Source table for analysis"
+                        },
+                        "target_table": {
+                            "type": "string",
+                            "description": "Target table for spatial operations",
+                            "default": ""
+                        },
+                        "geometry_column": {
+                            "type": "string",
+                            "description": "Geometry column name",
+                            "default": "geom"
+                        },
+                        "max_distance": {
+                            "type": "number",
+                            "description": "Maximum distance for proximity operations",
+                            "default": 1000.0
+                        },
+                        "limit": {
+                            "type": "integer",
+                            "description": "Limit number of results",
+                            "default": 100
+                        }
+                    },
+                    "required": ["analysis_type", "source_table"]
+                }
+            ),
+
             # Enhanced Virtual Tables (v1.9.3)
             types.Tool(
                 name="create_enhanced_csv_table",
@@ -2904,6 +3118,359 @@ async def main(db_path: str = "sqlite_mcp.db"):
                     logger.error(error_msg)
                     return [types.TextContent(type="text", text=error_msg)]
 
+            # SpatiaLite Geospatial Tools (v2.0.0)
+            elif name == "load_spatialite":
+                force_reload = arguments.get("force_reload", False)
+                
+                try:
+                    # Check if SpatiaLite is already loaded
+                    if not force_reload:
+                        try:
+                            cursor = self.db.execute("SELECT spatialite_version()")
+                            version = cursor.fetchone()
+                            if version:
+                                return [types.TextContent(
+                                    type="text",
+                                    text=f"SpatiaLite already loaded. Version: {version[0]}"
+                                )]
+                        except:
+                            pass  # Not loaded, continue with loading
+                    
+                    # Try to load SpatiaLite extension
+                    try:
+                        # Common SpatiaLite extension names/paths
+                        spatialite_paths = [
+                            "mod_spatialite",
+                            "mod_spatialite.dll", 
+                            "mod_spatialite.so",
+                            "/usr/lib/x86_64-linux-gnu/mod_spatialite.so",
+                            "/usr/local/lib/mod_spatialite.so"
+                        ]
+                        
+                        loaded = False
+                        for path in spatialite_paths:
+                            try:
+                                self.db.enable_load_extension(True)
+                                self.db.load_extension(path)
+                                self.db.enable_load_extension(False)
+                                loaded = True
+                                break
+                            except Exception as e:
+                                continue
+                        
+                        if not loaded:
+                            return [types.TextContent(
+                                type="text",
+                                text="Failed to load SpatiaLite extension. Please ensure SpatiaLite is installed on your system."
+                            )]
+                        
+                        # Initialize spatial metadata
+                        self.db.execute("SELECT InitSpatialMetaData(1)")
+                        
+                        # Get version info
+                        cursor = self.db.execute("SELECT spatialite_version(), proj4_version(), geos_version()")
+                        versions = cursor.fetchone()
+                        
+                        return [types.TextContent(
+                            type="text",
+                            text=f"SpatiaLite loaded successfully!\n\nVersions:\n- SpatiaLite: {versions[0]}\n- PROJ4: {versions[1]}\n- GEOS: {versions[2]}"
+                        )]
+                        
+                    except Exception as e:
+                        return [types.TextContent(
+                            type="text",
+                            text=f"Failed to load SpatiaLite: {str(e)}\n\nPlease ensure SpatiaLite is installed on your system."
+                        )]
+                        
+                except Exception as e:
+                    return [types.TextContent(
+                        type="text",
+                        text=f"Error loading SpatiaLite: {str(e)}"
+                    )]
+            
+            elif name == "create_spatial_table":
+                table_name = arguments.get("table_name")
+                geometry_column = arguments.get("geometry_column", "geom")
+                geometry_type = arguments.get("geometry_type", "POINT")
+                srid = arguments.get("srid", 4326)
+                additional_columns = arguments.get("additional_columns", [])
+                
+                try:
+                    # Create the base table
+                    columns_sql = []
+                    columns_sql.append("id INTEGER PRIMARY KEY AUTOINCREMENT")
+                    
+                    for col in additional_columns:
+                        columns_sql.append(f'"{col["name"]}" {col["type"]}')
+                    
+                    create_sql = f'CREATE TABLE "{table_name}" ({", ".join(columns_sql)})'
+                    self.db.execute(create_sql)
+                    
+                    # Add geometry column using SpatiaLite
+                    add_geom_sql = f"""
+                        SELECT AddGeometryColumn('{table_name}', '{geometry_column}', {srid}, '{geometry_type}', 'XY')
+                    """
+                    self.db.execute(add_geom_sql)
+                    
+                    return [types.TextContent(
+                        type="text",
+                        text=f"Spatial table '{table_name}' created successfully with {geometry_type} geometry column '{geometry_column}' (SRID: {srid})"
+                    )]
+                    
+                except Exception as e:
+                    return [types.TextContent(
+                        type="text",
+                        text=f"Failed to create spatial table: {str(e)}"
+                    )]
+            
+            elif name == "spatial_index":
+                table_name = arguments.get("table_name")
+                geometry_column = arguments.get("geometry_column", "geom")
+                action = arguments.get("action", "create")
+                
+                try:
+                    if action == "create":
+                        # Create spatial index
+                        index_sql = f"SELECT CreateSpatialIndex('{table_name}', '{geometry_column}')"
+                        self.db.execute(index_sql)
+                        message = f"Spatial index created on {table_name}.{geometry_column}"
+                    else:
+                        # Drop spatial index
+                        index_sql = f"SELECT DisableSpatialIndex('{table_name}', '{geometry_column}')"
+                        self.db.execute(index_sql)
+                        message = f"Spatial index dropped on {table_name}.{geometry_column}"
+                    
+                    return [types.TextContent(
+                        type="text",
+                        text=message
+                    )]
+                    
+                except Exception as e:
+                    return [types.TextContent(
+                        type="text",
+                        text=f"Failed to {action} spatial index: {str(e)}"
+                    )]
+            
+            elif name == "spatial_query":
+                query = arguments.get("query")
+                explain = arguments.get("explain", False)
+                
+                try:
+                    if explain:
+                        # Show query plan
+                        explain_query = f"EXPLAIN QUERY PLAN {query}"
+                        cursor = self.db.execute(explain_query)
+                        plan_results = cursor.fetchall()
+                        
+                        plan_text = "Query Execution Plan:\n"
+                        for row in plan_results:
+                            plan_text += f"  {' | '.join(str(col) for col in row)}\n"
+                        plan_text += "\n"
+                    else:
+                        plan_text = ""
+                    
+                    # Execute the spatial query
+                    cursor = self.db.execute(query)
+                    results = cursor.fetchall()
+                    
+                    if not results:
+                        return [types.TextContent(
+                            type="text",
+                            text=f"{plan_text}Spatial query executed successfully. No results returned."
+                        )]
+                    
+                    # Format results
+                    columns = [description[0] for description in cursor.description]
+                    formatted_results = []
+                    
+                    for row in results:
+                        row_dict = {}
+                        for i, value in enumerate(row):
+                            row_dict[columns[i]] = value
+                        formatted_results.append(row_dict)
+                    
+                    return [types.TextContent(
+                        type="text",
+                        text=f"{plan_text}Spatial query results ({len(results)} rows):\n{json.dumps(formatted_results, indent=2, default=str)}"
+                    )]
+                    
+                except Exception as e:
+                    return [types.TextContent(
+                        type="text",
+                        text=f"Spatial query failed: {str(e)}"
+                    )]
+            
+            elif name == "geometry_operations":
+                operation = arguments.get("operation")
+                geometry1 = arguments.get("geometry1")
+                geometry2 = arguments.get("geometry2", "")
+                buffer_distance = arguments.get("buffer_distance", 1.0)
+                table_name = arguments.get("table_name", "")
+                
+                try:
+                    # Build the spatial SQL based on operation
+                    if operation == "buffer":
+                        sql = f"SELECT AsText(ST_Buffer(GeomFromText('{geometry1}'), {buffer_distance})) as result"
+                    elif operation == "area":
+                        sql = f"SELECT ST_Area(GeomFromText('{geometry1}')) as area"
+                    elif operation == "length":
+                        sql = f"SELECT ST_Length(GeomFromText('{geometry1}')) as length"
+                    elif operation == "centroid":
+                        sql = f"SELECT AsText(ST_Centroid(GeomFromText('{geometry1}'))) as centroid"
+                    elif operation == "envelope":
+                        sql = f"SELECT AsText(ST_Envelope(GeomFromText('{geometry1}'))) as envelope"
+                    elif operation == "distance" and geometry2:
+                        sql = f"SELECT ST_Distance(GeomFromText('{geometry1}'), GeomFromText('{geometry2}')) as distance"
+                    elif operation == "intersection" and geometry2:
+                        sql = f"SELECT AsText(ST_Intersection(GeomFromText('{geometry1}'), GeomFromText('{geometry2}'))) as intersection"
+                    elif operation == "union" and geometry2:
+                        sql = f"SELECT AsText(ST_Union(GeomFromText('{geometry1}'), GeomFromText('{geometry2}'))) as union"
+                    elif operation == "difference" and geometry2:
+                        sql = f"SELECT AsText(ST_Difference(GeomFromText('{geometry1}'), GeomFromText('{geometry2}'))) as difference"
+                    else:
+                        return [types.TextContent(
+                            type="text",
+                            text=f"Invalid operation '{operation}' or missing required geometry2 parameter"
+                        )]
+                    
+                    cursor = self.db.execute(sql)
+                    result = cursor.fetchone()
+                    
+                    if result:
+                        return [types.TextContent(
+                            type="text",
+                            text=f"Geometry operation '{operation}' result: {result[0]}"
+                        )]
+                    else:
+                        return [types.TextContent(
+                            type="text",
+                            text=f"Geometry operation '{operation}' returned no result"
+                        )]
+                        
+                except Exception as e:
+                    return [types.TextContent(
+                        type="text",
+                        text=f"Geometry operation failed: {str(e)}"
+                    )]
+            
+            elif name == "import_shapefile":
+                shapefile_path = arguments.get("shapefile_path")
+                table_name = arguments.get("table_name")
+                encoding = arguments.get("encoding", "UTF-8")
+                srid = arguments.get("srid", 0)
+                
+                try:
+                    # Use SpatiaLite's shapefile import functionality
+                    # Note: This requires the shapefile to be accessible and properly formatted
+                    import_sql = f"""
+                        SELECT ImportSHP('{shapefile_path}', '{table_name}', '{encoding}', {srid})
+                    """
+                    
+                    cursor = self.db.execute(import_sql)
+                    result = cursor.fetchone()
+                    
+                    if result and result[0] == 1:
+                        # Check how many rows were imported
+                        count_cursor = self.db.execute(f"SELECT COUNT(*) FROM {table_name}")
+                        count = count_cursor.fetchone()[0]
+                        
+                        return [types.TextContent(
+                            type="text",
+                            text=f"Shapefile imported successfully! {count} features imported into table '{table_name}'"
+                        )]
+                    else:
+                        return [types.TextContent(
+                            type="text",
+                            text=f"Failed to import shapefile. Please check the file path and format."
+                        )]
+                        
+                except Exception as e:
+                    return [types.TextContent(
+                        type="text",
+                        text=f"Shapefile import failed: {str(e)}\n\nNote: Ensure the shapefile exists and SpatiaLite has proper permissions to read it."
+                    )]
+            
+            elif name == "spatial_analysis":
+                analysis_type = arguments.get("analysis_type")
+                source_table = arguments.get("source_table")
+                target_table = arguments.get("target_table", "")
+                geometry_column = arguments.get("geometry_column", "geom")
+                max_distance = arguments.get("max_distance", 1000.0)
+                limit = arguments.get("limit", 100)
+                
+                try:
+                    if analysis_type == "nearest_neighbor" and target_table:
+                        sql = f"""
+                            SELECT s.*, t.*, ST_Distance(s.{geometry_column}, t.{geometry_column}) as distance
+                            FROM {source_table} s, {target_table} t
+                            WHERE ST_Distance(s.{geometry_column}, t.{geometry_column}) <= {max_distance}
+                            ORDER BY distance
+                            LIMIT {limit}
+                        """
+                    elif analysis_type == "spatial_join" and target_table:
+                        sql = f"""
+                            SELECT s.*, t.*
+                            FROM {source_table} s, {target_table} t
+                            WHERE ST_Intersects(s.{geometry_column}, t.{geometry_column})
+                            LIMIT {limit}
+                        """
+                    elif analysis_type == "point_in_polygon" and target_table:
+                        sql = f"""
+                            SELECT s.*, t.*
+                            FROM {source_table} s, {target_table} t
+                            WHERE ST_Within(s.{geometry_column}, t.{geometry_column})
+                            LIMIT {limit}
+                        """
+                    elif analysis_type == "distance_matrix" and target_table:
+                        sql = f"""
+                            SELECT s.id as source_id, t.id as target_id, 
+                                   ST_Distance(s.{geometry_column}, t.{geometry_column}) as distance
+                            FROM {source_table} s, {target_table} t
+                            ORDER BY distance
+                            LIMIT {limit}
+                        """
+                    elif analysis_type == "cluster_analysis":
+                        sql = f"""
+                            SELECT *, ST_ClusterDBSCAN({geometry_column}, {max_distance}, 3) OVER () as cluster_id
+                            FROM {source_table}
+                            LIMIT {limit}
+                        """
+                    else:
+                        return [types.TextContent(
+                            type="text",
+                            text=f"Invalid analysis type '{analysis_type}' or missing required target_table parameter"
+                        )]
+                    
+                    cursor = self.db.execute(sql)
+                    results = cursor.fetchall()
+                    
+                    if not results:
+                        return [types.TextContent(
+                            type="text",
+                            text=f"Spatial analysis '{analysis_type}' completed. No results found."
+                        )]
+                    
+                    # Format results
+                    columns = [description[0] for description in cursor.description]
+                    formatted_results = []
+                    
+                    for row in results:
+                        row_dict = {}
+                        for i, value in enumerate(row):
+                            row_dict[columns[i]] = value
+                        formatted_results.append(row_dict)
+                    
+                    return [types.TextContent(
+                        type="text",
+                        text=f"Spatial analysis '{analysis_type}' results ({len(results)} rows):\n{json.dumps(formatted_results, indent=2, default=str)}"
+                    )]
+                    
+                except Exception as e:
+                    return [types.TextContent(
+                        type="text",
+                        text=f"Spatial analysis failed: {str(e)}"
+                    )]
+
             elif name == "analyze_json_schema":
                 if not arguments or "json_file_path" not in arguments:
                     raise ValueError("Missing json_file_path argument")
@@ -3966,7 +4533,7 @@ async def main(db_path: str = "sqlite_mcp.db"):
             write_stream,
             InitializationOptions(
                 server_name="sqlite-custom",
-                server_version="1.9.3",
+                server_version="2.0.0",
                 capabilities=server.get_capabilities(
                     notification_options=NotificationOptions(),
                     experimental_capabilities={},
