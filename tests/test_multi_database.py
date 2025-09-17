@@ -92,13 +92,12 @@ def test_multi_database():
         
         print("\n" + "=" * 40)
         print("🎉 MULTI-DATABASE TESTS COMPLETED!")
-        return True
         
     except Exception as e:
         print(f"\n❌ MULTI-DATABASE TEST FAILED: {e}")
         import traceback
         traceback.print_exc()
-        return False
+        assert False, f"Multi-database test failed: {e}"
     
     finally:
         # Cleanup

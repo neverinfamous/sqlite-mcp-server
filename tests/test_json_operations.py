@@ -222,13 +222,12 @@ def test_json_operations():
         
         print("\n" + "=" * 45)
         print("🎉 ALL JSON OPERATIONS TESTS PASSED!")
-        return True
         
     except Exception as e:
         print(f"\n❌ JSON OPERATIONS TEST FAILED: {e}")
         import traceback
         traceback.print_exc()
-        return False
+        assert False, f"JSON operations test failed: {e}"
     
     finally:
         # Cleanup

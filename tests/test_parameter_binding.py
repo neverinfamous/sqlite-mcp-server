@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from mcp_server_sqlite.server import EnhancedSqliteDatabase
 from mcp_server_sqlite.db_integration import DatabaseIntegration
 
-async def test_parameter_binding():
+def test_parameter_binding():
     """Test parameter binding with the actual sqlite-mcp-server implementation"""
     
     print("🧪 Testing SQLite MCP Server Parameter Binding")
@@ -54,7 +54,7 @@ async def test_parameter_binding():
             print(f"✅ INSERT with parameters successful: {result}")
         except Exception as e:
             print(f"❌ INSERT with parameters failed: {e}")
-            return False
+            assert False, f"Test step failed: {e}"
         
         # Test 3: Parameter binding with SELECT
         print("\n🔍 Test 3: SELECT with parameter binding")
@@ -66,7 +66,7 @@ async def test_parameter_binding():
             print(f"✅ SELECT with parameters successful: {result}")
         except Exception as e:
             print(f"❌ SELECT with parameters failed: {e}")
-            return False
+            assert False, f"Test step failed: {e}"
         
         # Test 4: JSON operations with parameters
         print("\n🔧 Test 4: JSON operations with parameter binding")
@@ -78,7 +78,7 @@ async def test_parameter_binding():
             print(f"✅ JSON extraction with parameters successful: {result}")
         except Exception as e:
             print(f"❌ JSON extraction with parameters failed: {e}")
-            return False
+            assert False, f"Test step failed: {e}"
         
         # Test 5: UPDATE with parameters
         print("\n📝 Test 5: UPDATE with parameter binding")
@@ -90,7 +90,7 @@ async def test_parameter_binding():
             print(f"✅ UPDATE with parameters successful: {result}")
         except Exception as e:
             print(f"❌ UPDATE with parameters failed: {e}")
-            return False
+            assert False, f"Test step failed: {e}"
         
         # Test 6: Verify update
         print("\n✅ Test 6: Verify UPDATE results")
@@ -117,18 +117,17 @@ async def test_parameter_binding():
             print(f"✅ Complex query with parameters successful: {result}")
         except Exception as e:
             print(f"❌ Complex query with parameters failed: {e}")
-            return False
+            assert False, f"Test step failed: {e}"
         
         print("\n" + "=" * 50)
         print("🎉 ALL PARAMETER BINDING TESTS PASSED!")
         print("✅ Parameter binding is working correctly in sqlite-mcp-server")
-        return True
         
     except Exception as e:
         print(f"\n❌ CRITICAL ERROR: {e}")
         import traceback
         traceback.print_exc()
-        return False
+        assert False, f"Parameter binding test failed: {e}"
     
     finally:
         # Cleanup
