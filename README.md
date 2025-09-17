@@ -1,10 +1,10 @@
 # SQLite MCP Server
 
-*Last Updated September 17, 2025 11:55 PM EST - v1.9.2*
+*Last Updated September 17, 2025 1:10 AM EST - v1.9.3*
 
 ## Overview
 
-The SQLite MCP Server provides advanced database interaction and business intelligence capabilities through SQLite featuring Vector Index Optimization with ANN search, Intelligent MCP Resources and Prompts, Semantic/Vector Search, Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
+The SQLite MCP Server provides advanced database interaction and business intelligence capabilities through SQLite featuring Enhanced Virtual Tables with Smart Type Inference, Vector Index Optimization with ANN search, Intelligent MCP Resources and Prompts, Semantic/Vector Search, Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
 
 ## Key Features
 
@@ -23,6 +23,7 @@ The SQLite MCP Server provides advanced database interaction and business intell
 - **Backup/Restore Operations**: Enterprise-grade backup and restore capabilities with SQLite backup API, integrity verification, and safety confirmations
 - **Advanced PRAGMA Operations**: Comprehensive SQLite configuration management, performance optimization, and database introspection tools
 - **Virtual Table Management**: Complete virtual table lifecycle management for R-Tree spatial indexing, CSV file access, and sequence generation
+- **Enhanced Virtual Tables**: Smart CSV/JSON import with automatic data type inference, nested object flattening, and schema analysis
 - **Semantic/Vector Search**: AI-native semantic search with embedding storage, cosine similarity, and hybrid keyword+semantic ranking
 - **Vector Index Optimization**: Approximate Nearest Neighbor (ANN) search with k-means clustering and spatial indexing for sub-linear O(log n) performance
 - **Intelligent MCP Resources**: Dynamic database meta-awareness with real-time schema, capabilities, statistics, search indexes, and performance insights
@@ -1092,6 +1093,108 @@ embedding = model.encode("Your content").tolist()
 store_embedding(table_name="hf_embeddings", embedding=embedding, content="Your content")
 ```
 
+## Enhanced Virtual Tables
+
+The SQLite MCP Server provides intelligent data import capabilities with automatic schema detection, type inference, and seamless conversion of CSV and JSON files into queryable SQLite tables.
+
+### Enhanced CSV Virtual Tables
+
+**`create_enhanced_csv_table`** - Smart CSV import with automatic data type inference
+```javascript
+create_enhanced_csv_table({
+  "table_name": "employees",
+  "csv_file_path": "/path/to/employees.csv",
+  "delimiter": ",",                    // CSV delimiter (default: comma)
+  "has_header": true,                  // Whether CSV has header row
+  "sample_rows": 100,                  // Rows to sample for type inference
+  "null_values": ["", "NULL", "N/A"]   // Values to treat as NULL
+})
+```
+
+**`analyze_csv_schema`** - Deep CSV analysis without creating tables
+```javascript
+analyze_csv_schema({
+  "csv_file_path": "/path/to/data.csv",
+  "sample_rows": 1000                  // Rows to analyze for schema detection
+})
+// Returns: file stats, column analysis, type confidence, sample values
+```
+
+### JSON Collection Virtual Tables
+
+**`create_json_collection_table`** - Import JSONL and JSON array files with flattening
+```javascript
+create_json_collection_table({
+  "table_name": "user_events",
+  "json_file_path": "/path/to/events.jsonl",
+  "format_type": "auto",               // auto, jsonl, json_array
+  "flatten_nested": true,              // Flatten nested objects with dot notation
+  "max_depth": 3,                      // Maximum nesting depth to flatten
+  "sample_records": 100                // Records to sample for schema inference
+})
+```
+
+**`analyze_json_schema`** - Comprehensive JSON structure analysis
+```javascript
+analyze_json_schema({
+  "json_file_path": "/path/to/data.jsonl",
+  "format_type": "auto",               // Auto-detect JSONL vs JSON array
+  "sample_records": 1000               // Records to analyze
+})
+// Returns: schema analysis, type distribution, nested structure mapping
+```
+
+### Smart Type Inference Engine
+
+**Automatic Data Type Detection:**
+- **INTEGER**: Detects whole numbers, IDs, counts
+- **REAL**: Identifies decimals, percentages, measurements  
+- **TEXT**: Handles strings, mixed content, complex data
+- **DATE**: Recognizes ISO dates, common date formats
+- **BOOLEAN**: Converts true/false, yes/no, 1/0 patterns
+
+**Advanced Features:**
+- **Configurable Null Handling**: Customizable null value patterns
+- **Statistical Analysis**: Type confidence based on sample data
+- **Clean Column Names**: Automatic SQL-safe column naming
+- **Error Resilience**: Graceful handling of malformed data
+- **Performance Optimized**: Configurable sampling for large files
+
+### Example Workflows
+
+**CSV Data Import:**
+```javascript
+// 1. Analyze CSV structure first
+analyze_csv_schema({"csv_file_path": "./sales_data.csv"})
+
+// 2. Create table with inferred types
+create_enhanced_csv_table({
+  "table_name": "sales",
+  "csv_file_path": "./sales_data.csv",
+  "sample_rows": 500
+})
+
+// 3. Query your data immediately
+SELECT product, SUM(amount) FROM sales GROUP BY product
+```
+
+**JSON Collection Import:**
+```javascript
+// 1. Analyze nested JSON structure
+analyze_json_schema({"json_file_path": "./user_logs.jsonl"})
+
+// 2. Create flattened table
+create_json_collection_table({
+  "table_name": "user_activity",
+  "json_file_path": "./user_logs.jsonl",
+  "flatten_nested": true,
+  "max_depth": 2
+})
+
+// 3. Query flattened data
+SELECT user_id, event_type, metadata_browser FROM user_activity
+```
+
 ## Vector Index Optimization
 
 The SQLite MCP Server provides enterprise-grade vector index optimization with Approximate Nearest Neighbor (ANN) search capabilities, transforming vector similarity search from O(n) linear to O(log n) sub-linear performance for massive datasets.
@@ -1208,7 +1311,7 @@ MCP Resources provide dynamic "knowledge hooks" that give the AI model instant a
 **`database://capabilities`** - Comprehensive server capabilities matrix
 ```javascript
 // Provides real-time information about:
-// - Available tools (40 total)
+// - Available tools (44 total)
 // - Feature support (FTS5, semantic search, virtual tables)
 // - Advanced features and limitations
 // - Server and SQLite versions
@@ -1282,13 +1385,13 @@ MCP Prompts provide intelligent workflow automation, acting as "recipes" that gu
 
 ## Planned Future Enhancements
 
-#### **1. Enhanced CSV Virtual Tables - MEDIUM PRIORITY**
-- **Planned**: Advanced CSV parsing with data type inference
-- **Examples**: Automatic schema detection, column type conversion
+#### **1. Advanced Data Connectors - MEDIUM PRIORITY**
+- **Planned**: Direct database connectors (PostgreSQL, MySQL, MongoDB)
+- **Examples**: Cross-database queries, data synchronization
 
-#### **2. JSON Virtual Tables - LOW PRIORITY**
-- **Planned**: Virtual tables for JSON file collections
-- **Examples**: JSON Lines (JSONL) file processing
+#### **2. Real-time Data Streaming - LOW PRIORITY**
+- **Planned**: Live data ingestion from streaming sources
+- **Examples**: Kafka, WebSocket, API polling integration
 
 ## Contributing
 
