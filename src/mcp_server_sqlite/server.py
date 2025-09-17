@@ -827,7 +827,7 @@ async def main(db_path: str):
                         "has_header": {
                             "type": "boolean",
                             "description": "Whether CSV has header row",
-                            "default": true
+                            "default": True
                         },
                         "delimiter": {
                             "type": "string",
@@ -891,7 +891,7 @@ async def main(db_path: str):
                         "confirm": {
                             "type": "boolean",
                             "description": "Confirmation flag (required to prevent accidental drops)",
-                            "default": false
+                            "default": False
                         }
                     },
                     "required": ["table_name", "confirm"]
