@@ -4,7 +4,7 @@
 
 ## Overview
 
-The SQLite MCP Server provides advanced database interaction and business intelligence capabilities featuring **Advanced Text Processing**, **Statistical Analysis Library**, **SpatiaLite Geospatial Analytics**, Enhanced Virtual Tables with Smart Type Inference, Vector Index Optimization with ANN search, Intelligent MCP Resources and Prompts, Semantic/Vector Search, Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
+The SQLite MCP Server provides advanced database interaction and business intelligence capabilities featuring **Advanced Text Processing**, **Statistical Analysis Library**, **SpatiaLite Geospatial Analytics**, Enhanced Virtual Tables with Smart Type Inference, Vector Index Optimization with ANN search, Intelligent MCP Resources and Prompts, Semantic/Vector Search, Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support, advanced text processing (regex, fuzzy, phonetic, similarity), transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
 
 ## Key Features
 
