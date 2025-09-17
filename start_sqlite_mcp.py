@@ -19,9 +19,10 @@ from mcp_server_sqlite.server import main
 def find_project_root():
     """
     Find the project root directory by looking for common project indicators.
-    Returns the current directory if no project root is found.
+    Returns the script's directory if no project root is found.
     """
-    current = Path.cwd()
+    # Start from the script's directory instead of CWD to handle MCP execution context
+    script_dir = Path(__file__).parent.resolve()
     
     # Look for common project root indicators
     indicators = [
@@ -30,13 +31,14 @@ def find_project_root():
         'pom.xml', 'build.gradle', 'composer.json'
     ]
     
-    # Check current directory and parents
-    for path in [current] + list(current.parents):
+    # Check script directory and parents (this should find our project root)
+    for path in [script_dir] + list(script_dir.parents):
         for indicator in indicators:
             if (path / indicator).exists():
                 return path
     
-    return current
+    # Fallback to script directory if no indicators found
+    return script_dir
 
 def get_default_db_path():
     """
