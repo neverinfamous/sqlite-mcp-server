@@ -869,7 +869,6 @@ async def main(db_path: str):
             elif name == "vacuum_database":
                 logger.info("Executing VACUUM operation")
                 # VACUUM must run outside of transactions, so we use a direct connection
-                import sqlite3
                 from contextlib import closing
                 try:
                     with closing(sqlite3.connect(db.db_path)) as conn:
@@ -1015,7 +1014,6 @@ async def main(db_path: str):
                 backup_path = arguments["backup_path"]
                 overwrite = arguments.get("overwrite", False)
                 
-                import sqlite3
                 import os
                 from pathlib import Path
                 
@@ -1061,7 +1059,6 @@ async def main(db_path: str):
                     logger.warning(error_msg)
                     return [types.TextContent(type="text", text=error_msg)]
                 
-                import sqlite3
                 import os
                 
                 try:
@@ -1101,7 +1098,6 @@ async def main(db_path: str):
                 logger.info(f"Verifying backup file: {arguments.get('backup_path')}")
                 backup_path = arguments["backup_path"]
                 
-                import sqlite3
                 import os
                 
                 try:
