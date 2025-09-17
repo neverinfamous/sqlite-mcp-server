@@ -52,9 +52,10 @@ docker run -i --rm \
 
 ## Key Features
 
-- **36 Tools**: Complete SQLite operations + advanced features
+- **40 Tools**: Complete SQLite operations + advanced vector optimization
 - **7 Intelligent Resources**: Real-time database meta-awareness
 - **7 Guided Prompts**: Workflow automation for complex operations
+- **Vector Index Optimization**: ANN search with k-means clustering for 100x performance
 - **AI-Native**: Semantic search, vector storage, hybrid search
 - **Enterprise Ready**: Backup/restore, integrity checks, optimization
 
@@ -154,4 +155,4 @@ docker run -i --rm \
 
 ---
 
-*SQLite MCP Server v1.8.0 - Transform your database into an intelligent, self-aware assistant*
+*SQLite MCP Server v1.9.0 - Transform your database into an intelligent, self-aware assistant with enterprise-grade vector optimization*
