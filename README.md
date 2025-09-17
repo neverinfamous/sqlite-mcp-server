@@ -41,6 +41,52 @@ This project is based on the original SQLite MCP Server from the [Model Context 
 **Original Repository**: https://github.com/modelcontextprotocol/servers  
 **License**: MIT License
 
+## Docker Hub Deployment
+
+The SQLite MCP Server is available on Docker Hub at `writenotenow/sqlite-mcp-server` with both `latest` and version-specific tags.
+
+### Available Docker Images
+
+```bash
+# Pull latest version
+docker pull writenotenow/sqlite-mcp-server:latest
+
+# Pull specific version
+docker pull writenotenow/sqlite-mcp-server:v2.2.0
+```
+
+### Docker Hub Authentication for Contributors
+
+If you need to push updates to the Docker Hub repository, you'll need to authenticate using a Personal Access Token (PAT):
+
+```bash
+# Method 1: Interactive login (recommended)
+docker login -u writenotenow
+# Enter your Docker Hub Personal Access Token when prompted
+
+# Method 2: Using token from command line
+echo "YOUR_DOCKER_HUB_PAT_TOKEN" | docker login -u writenotenow --password-stdin
+```
+
+**Important Notes:**
+- Use your Docker Hub Personal Access Token, not your regular password
+- Create a PAT at: https://hub.docker.com/settings/security
+- Required permissions: Read, Write, Delete for repository access
+- Store your token securely and never commit it to version control
+
+**Example Push Workflow:**
+```bash
+# Build image locally
+docker build -t writenotenow/sqlite-mcp-server:v2.2.0 .
+
+# Tag with latest
+docker tag writenotenow/sqlite-mcp-server:v2.2.0 writenotenow/sqlite-mcp-server:latest
+
+# Push both tags
+docker push writenotenow/sqlite-mcp-server:v2.2.0
+docker push writenotenow/sqlite-mcp-server:latest
+```
+
 ## Advanced Text Processing
 
 The SQLite MCP Server v2.2.0 introduces a comprehensive text processing toolkit with 8 specialized functions for advanced text analysis, pattern matching, and data cleaning. This brings the total server capabilities to **67 tools** for complete database and text processing operations.

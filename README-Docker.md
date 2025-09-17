@@ -16,13 +16,16 @@
 
 ### Pull and Run
 ```bash
-# Pull latest image
-docker pull ghcr.io/neverinfamous/sqlite-mcp-server:latest
+# Pull from Docker Hub (recommended)
+docker pull writenotenow/sqlite-mcp-server:latest
+
+# Or pull specific version
+docker pull writenotenow/sqlite-mcp-server:v2.2.0
 
 # Run with volume mount
 docker run -i --rm \
   -v /path/to/your/data:/workspace \
-  ghcr.io/neverinfamous/sqlite-mcp-server:latest \
+  writenotenow/sqlite-mcp-server:latest \
   --db-path /workspace/database.db
 ```
 
@@ -37,7 +40,7 @@ docker run -i --rm \
       "args": [
         "run", "-i", "--rm",
         "-v", "/path/to/your/project:/workspace",
-        "ghcr.io/neverinfamous/sqlite-mcp-server:latest",
+        "writenotenow/sqlite-mcp-server:latest",
         "--db-path", "/workspace/database.db"
       ]
     }
@@ -207,10 +210,28 @@ docker run -i --rm \
 **Database Not Found**: Check volume mount and file paths
 **Connection Issues**: Verify MCP client configuration
 
+## Docker Hub Authentication (For Contributors)
+
+If you need to push updates to the Docker Hub repository, authenticate using a Personal Access Token:
+
+```bash
+# Interactive login (recommended)
+docker login -u writenotenow
+# Enter your Docker Hub Personal Access Token when prompted
+
+# Command line login
+echo "YOUR_DOCKER_HUB_PAT_TOKEN" | docker login -u writenotenow --password-stdin
+```
+
+**Authentication Notes:**
+- Use Docker Hub Personal Access Token, not password
+- Create PAT at: https://hub.docker.com/settings/security
+- Required permissions: Read, Write, Delete
+
 ## Links
 
 - **GitHub**: https://github.com/neverinfamous/sqlite-mcp-server
-- **Docker Hub**: https://hub.docker.com/r/neverinfamous/sqlite-mcp-server
+- **Docker Hub**: https://hub.docker.com/r/writenotenow/sqlite-mcp-server
 - **Full Documentation**: See main README.md for complete feature documentation
 
 ---
