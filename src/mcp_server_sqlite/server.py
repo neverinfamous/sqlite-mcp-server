@@ -271,6 +271,8 @@ class EnhancedSqliteDatabase:
 
     def _load_spatialite_if_needed(self, conn, query: str):
         """Load SpatiaLite extension if the query contains spatial functions"""
+        import sqlite3  # Import here to avoid scoping issues
+        
         spatial_functions = [
             'spatialite_version', 'AddGeometryColumn', 'GeomFromText', 'AsText', 'AsBinary',
             'ST_Distance', 'ST_Buffer', 'ST_Area', 'ST_Length', 'ST_Intersects', 'ST_Within',
