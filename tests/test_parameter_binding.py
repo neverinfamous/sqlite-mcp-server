@@ -3,7 +3,6 @@
 Test script to verify parameter binding functionality in sqlite-mcp-server
 """
 
-import asyncio
 import json
 import sys
 from pathlib import Path
@@ -138,5 +137,4 @@ def test_parameter_binding():
             print(f"⚠️ Cleanup warning: {e}")
 
 if __name__ == "__main__":
-    success = asyncio.run(test_parameter_binding())
-    sys.exit(0 if success else 1)
+    test_parameter_binding()
