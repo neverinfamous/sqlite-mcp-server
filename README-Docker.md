@@ -1,6 +1,15 @@
-# SQLite MCP Server - Docker Quick Start
+# SQLite MCP Server
+
+*Last Updated September 17, 2025 11:55 PM EST - v1.9.0*
 
 *Lightweight, containerized SQLite database server with AI-native features*
+
+## 🚀 Zero-Configuration Database
+**No database setup required!** The server automatically creates and manages persistent SQLite databases:
+- **Auto-creates** database files as needed
+- **Persists all data** between container runs
+- **Connects to any existing** SQLite database
+- **Works immediately** - mount your data directory and go!
 
 ## Quick Start
 

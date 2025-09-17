@@ -635,7 +635,14 @@ The server automatically detects project structure and creates appropriate datab
 
 ## Database Configuration
 
-The SQLite MCP Server provides flexible database configuration options:
+The SQLite MCP Server provides flexible database configuration with **automatic database creation** - no manual setup required!
+
+### **🚀 Zero-Configuration Start**
+The server automatically creates and manages a persistent SQLite database:
+- **Auto-creates** `database.db` in your project root if none exists
+- **Persists all data** between sessions and MCP tool calls  
+- **Works immediately** - no database setup or file creation needed
+- **Connects to existing databases** - works with any SQLite file you specify
 
 ### Quick Start Options
 
