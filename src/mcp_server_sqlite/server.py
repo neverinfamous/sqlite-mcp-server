@@ -2347,7 +2347,7 @@ async def main(db_path: str = "sqlite_mcp.db"):
 
     @server.call_tool()
     async def handle_call_tool(
-        name: str, arguments: dict[str, Any] | None
+        self, name: str, arguments: dict[str, Any] | None
     ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
         """Handle tool execution requests"""
         try:
