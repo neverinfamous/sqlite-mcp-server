@@ -2714,6 +2714,7 @@ async def main(db_path: str = "sqlite_mcp.db"):
                     columns_def = []
                     for col in sorted(all_columns):
                         # Clean column name for SQL
+                        import re
                         clean_col = re.sub(r'[^a-zA-Z0-9_]', '_', col)
                         col_type = final_schema[col]
                         columns_def.append(f'"{clean_col}" {col_type}')
