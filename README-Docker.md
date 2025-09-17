@@ -5,8 +5,9 @@
 *Lightweight, containerized SQLite database server with AI-native features*
 
 ## 🚀 Zero-Configuration Database
-**No database setup required!** The server automatically creates and manages persistent SQLite databases:
-- **Auto-creates** database files as needed
+**No database setup required!** The server automatically creates and manages persistent SQLite databases **because MCP operations need persistent storage**:
+- **Auto-creates** `sqlite_mcp.db` files as needed (MCP tools require shared data storage)
+- **Why create a file?** Tables, indexes, and data must persist between MCP tool calls
 - **Persists all data** between container runs
 - **Connects to any existing** SQLite database
 - **Works immediately** - mount your data directory and go!

@@ -99,8 +99,8 @@ Examples:
     parser.add_argument(
         '--db-name',
         type=str,
-        default='database.db',
-        help='Database filename (used with project-root, default: database.db)'
+        default='sqlite_mcp.db',
+        help='Database filename (used with project-root, default: sqlite_mcp.db)'
     )
     
     parser.add_argument(

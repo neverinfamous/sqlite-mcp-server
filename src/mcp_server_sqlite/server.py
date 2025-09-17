@@ -405,7 +405,7 @@ class EnhancedSqliteDatabase:
             self.json_logger.log_error(e, {"query": query})
             raise
 
-async def main(db_path: str = "database.db"):
+async def main(db_path: str = "sqlite_mcp.db"):
     logger.info(f"Starting Enhanced SQLite MCP Server with DB: {db_path}")
 
     # Initialize database with enhanced features

@@ -638,8 +638,9 @@ The server automatically detects project structure and creates appropriate datab
 The SQLite MCP Server provides flexible database configuration with **automatic database creation** - no manual setup required!
 
 ### **🚀 Zero-Configuration Start**
-The server automatically creates and manages a persistent SQLite database:
-- **Auto-creates** `database.db` in your project root if none exists
+The server automatically creates and manages a persistent SQLite database **because MCP operations require persistent storage** between tool calls:
+- **Auto-creates** `sqlite_mcp.db` in your project root if none exists
+- **Why create a file?** MCP tool calls need shared, persistent data storage (tables, indexes, etc.)
 - **Persists all data** between sessions and MCP tool calls  
 - **Works immediately** - no database setup or file creation needed
 - **Connects to existing databases** - works with any SQLite file you specify
@@ -654,13 +655,13 @@ python start_sqlite_mcp.py --db-path /path/to/your/database.db
 **Auto-detect project structure** (default):
 ```bash
 python start_sqlite_mcp.py
-# Automatically finds project root and creates database.db
+# Automatically finds project root and creates sqlite_mcp.db
 ```
 
 **Create organized data directory**:
 ```bash
 python start_sqlite_mcp.py --create-data-dir
-# Creates ./data/database.db in your project
+# Creates ./data/sqlite_mcp.db in your project
 ```
 
 ### MCP Client Configuration
@@ -699,8 +700,8 @@ python start_sqlite_mcp.py --create-data-dir
 
 ### Database Location Best Practices
 
-- **`./data/database.db`** - Recommended for projects (organized, version-control friendly)
-- **`./database.db`** - Simple option for small projects  
+- **`./data/sqlite_mcp.db`** - Recommended for projects (organized, version-control friendly)
+- **`./sqlite_mcp.db`** - Simple option for small projects  
 - **Existing databases** - Use `--db-path` to connect to any SQLite database
 - **`:memory:`** - Temporary database for testing (data not persisted)
 
