@@ -2593,7 +2593,8 @@ async def main(db_path: str = "sqlite_mcp.db"):
                     }
                     
                     logger.info(f"Enhanced CSV table '{table_name}' created successfully with {rows_inserted} rows")
-                    return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
+                    import json as json_module
+                    return [types.TextContent(type="text", text=json_module.dumps(result_info, indent=2))]
                     
                 except Exception as e:
                     error_msg = f"Failed to create enhanced CSV table: {str(e)}"
@@ -2643,14 +2644,16 @@ async def main(db_path: str = "sqlite_mcp.db"):
                                 if i >= sample_records:
                                     break
                                 if line.strip():
-                                    sample_data.append(json.loads(line))
+                                    import json as json_module
+                                    sample_data.append(json_module.loads(line))
                     
                     # Flatten nested objects and infer schema
                     def flatten_dict(d, parent_key='', sep='.', depth=0):
                         items = []
                         if depth >= max_depth:
                             # Convert to JSON string if max depth reached
-                            items.append((parent_key, json.dumps(d) if isinstance(d, (dict, list)) else str(d)))
+                            import json as json_module
+                            items.append((parent_key, json_module.dumps(d) if isinstance(d, (dict, list)) else str(d)))
                             return items
                         
                         if isinstance(d, dict):
@@ -2731,10 +2734,12 @@ async def main(db_path: str = "sqlite_mcp.db"):
                     
                     with open(json_file_path, 'r', encoding='utf-8') as f:
                         if format_type == "json_array":
-                            data = json.load(f)
+                            import json as json_module
+                            data = json_module.load(f)
                             records = data if isinstance(data, list) else [data]
                         else:  # jsonl
-                            records = [json.loads(line) for line in f if line.strip()]
+                            import json as json_module
+                            records = [json_module.loads(line) for line in f if line.strip()]
                     
                     for record in records:
                         flattened = dict(flatten_dict(record) if flatten_nested else record.items())
@@ -2777,7 +2782,8 @@ async def main(db_path: str = "sqlite_mcp.db"):
                     }
                     
                     logger.info(f"JSON collection table '{table_name}' created successfully with {rows_inserted} rows")
-                    return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
+                    import json as json_module
+                    return [types.TextContent(type="text", text=json_module.dumps(result_info, indent=2))]
                     
                 except Exception as e:
                     error_msg = f"Failed to create JSON collection table: {str(e)}"
@@ -2889,7 +2895,8 @@ async def main(db_path: str = "sqlite_mcp.db"):
                         }
                     
                     logger.info(f"CSV schema analysis completed for '{csv_file_path}'")
-                    return [types.TextContent(type="text", text=json.dumps(analysis_result, indent=2))]
+                    import json as json_module
+                    return [types.TextContent(type="text", text=json_module.dumps(analysis_result, indent=2))]
                     
                 except Exception as e:
                     error_msg = f"Failed to analyze CSV schema: {str(e)}"
@@ -2933,7 +2940,8 @@ async def main(db_path: str = "sqlite_mcp.db"):
                     # Load and analyze data
                     with open(json_file_path, 'r', encoding='utf-8') as f:
                         if format_type == "json_array":
-                            data = json.load(f)
+                            import json as json_module
+                            data = json_module.load(f)
                             if isinstance(data, list):
                                 total_records = len(data)
                                 sample_data = data[:sample_records]
@@ -2943,7 +2951,8 @@ async def main(db_path: str = "sqlite_mcp.db"):
                         else:  # jsonl
                             all_lines = [line for line in f if line.strip()]
                             total_records = len(all_lines)
-                            sample_data = [json.loads(line) for line in all_lines[:sample_records]]
+                            import json as json_module
+                            sample_data = [json_module.loads(line) for line in all_lines[:sample_records]]
                     
                     analysis_result.update({
                         "total_records": total_records,
@@ -3026,7 +3035,8 @@ async def main(db_path: str = "sqlite_mcp.db"):
                     analysis_result["total_unique_fields"] = len(schema_analysis)
                     
                     logger.info(f"JSON schema analysis completed for '{json_file_path}'")
-                    return [types.TextContent(type="text", text=json.dumps(analysis_result, indent=2))]
+                    import json as json_module
+                    return [types.TextContent(type="text", text=json_module.dumps(analysis_result, indent=2))]
                     
                 except Exception as e:
                     error_msg = f"Failed to analyze JSON schema: {str(e)}"
