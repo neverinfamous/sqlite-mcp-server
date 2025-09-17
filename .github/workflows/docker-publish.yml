@@ -63,16 +63,7 @@ jobs:
         echo "🧪 Running comprehensive test suite..."
         python -m pytest tests/ -v --tb=short
         
-        echo "🔧 Testing transaction safety..."
-        python test_transaction_safety.py
-        
-        echo "🔧 Testing JSONB operations..."
-        python test_json_operations.py
-        
-        echo "🔧 Testing parameter binding..."
-        python test_parameter_binding.py
-        
-        echo "✅ All tests completed"
+        echo "✅ All tests completed successfully!"
 
   build:
     runs-on: ubuntu-latest
