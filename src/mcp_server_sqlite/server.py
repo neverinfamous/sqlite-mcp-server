@@ -545,31 +545,749 @@ class EnhancedSqliteDatabase:
 
     async def _handle_regex_replace(self, arguments: Dict[str, Any]) -> List[types.TextContent]:
         """Replace text using PCRE-style regular expressions."""
-        return [types.TextContent(type="text", text="Text processing method not yet implemented")]
+        if not all(key in arguments for key in ["table_name", "column_name", "pattern", "replacement"]):
+            raise ValueError("Missing required arguments: table_name, column_name, pattern, replacement")
+    
+        table_name = arguments["table_name"]
+        column_name = arguments["column_name"]
+        pattern = arguments["pattern"]
+        replacement = arguments["replacement"]
+        flags = arguments.get("flags", "")
+        max_replacements = arguments.get("max_replacements", 0)  # 0 = all
+        where_clause = arguments.get("where_clause", "")
+        preview_only = arguments.get("preview_only", True)  # Safe default
+    
+        try:
+            # Compile regex with flags
+            regex_flags = 0
+            if 'i' in flags.lower(): regex_flags |= re.IGNORECASE
+            if 'm' in flags.lower(): regex_flags |= re.MULTILINE
+            if 's' in flags.lower(): regex_flags |= re.DOTALL
+        
+            compiled_pattern = re.compile(pattern, regex_flags)
+        
+            where_sql = f" WHERE {where_clause}" if where_clause else ""
+        
+            query = f"""
+            SELECT {column_name}, rowid
+            FROM {table_name}{where_sql}
+            WHERE {column_name} IS NOT NULL
+            LIMIT 100
+            """
+            
+            result = self._execute_query(query)
+            
+            if not result:
+                return [types.TextContent(type="text", text="No data found for regex replacement")]
+            
+            replacements = []
+            for row in result:
+                original_text = str(row[column_name])
+                if max_replacements > 0:
+                    new_text = compiled_pattern.sub(replacement, original_text, count=max_replacements)
+                else:
+                    new_text = compiled_pattern.sub(replacement, original_text)
+                
+                if new_text != original_text:
+                    replacements.append({
+                        "rowid": row["rowid"],
+                        "original": original_text,
+                        "new": new_text,
+                        "changes": len(compiled_pattern.findall(original_text))
+                    })
+            
+            output = f"""Regex Replacement {'Preview' if preview_only else 'Results'} for {table_name}.{column_name}:
+        Pattern: {pattern}
+        Replacement: {replacement}
+        Flags: {flags if flags else 'None'}
+        Max Replacements: {'All' if max_replacements == 0 else max_replacements}
+
+        Found {len(replacements)} rows with changes:
+
+        """
+            
+            for i, repl in enumerate(replacements[:10], 1):  # Show first 10
+                output += f"Row {repl['rowid']} ({repl['changes']} changes):\n"
+                output += f"  Before: {repl['original'][:100]}{'...' if len(repl['original']) > 100 else ''}\n"
+                output += f"  After:  {repl['new'][:100]}{'...' if len(repl['new']) > 100 else ''}\n\n"
+            
+            if len(replacements) > 10:
+                output += f"... and {len(replacements) - 10} more rows\n"
+            
+            if preview_only:
+                output += "\nTo execute these changes, set preview_only=false"
+            else:
+                # Execute the replacements
+                for repl in replacements:
+                    update_query = f"""
+                    UPDATE {table_name} 
+                    SET {column_name} = ? 
+                    WHERE rowid = ?
+                    """
+                    self._execute_query(update_query, (repl['new'], repl['rowid']))
+                
+                output += f"\n✅ Successfully updated {len(replacements)} rows"
+            
+            return [types.TextContent(type="text", text=output)]
+            
+        except re.error as e:
+            error_msg = f"Invalid regex pattern: {str(e)}"
+            logger.error(error_msg)
+            return [types.TextContent(type="text", text=error_msg)]
+        except Exception as e:
+            error_msg = f"Failed to perform regex replacement: {str(e)}"
+            logger.error(error_msg)
+            return [types.TextContent(type="text", text=error_msg)]
 
     async def _handle_fuzzy_match(self, arguments: Dict[str, Any]) -> List[types.TextContent]:
         """Find fuzzy matches using Levenshtein distance and sequence matching."""
-        return [types.TextContent(type="text", text="Text processing method not yet implemented")]
+        if not all(key in arguments for key in ["table_name", "column_name", "search_term"]):
+            raise ValueError("Missing required arguments: table_name, column_name, search_term")
+    
+        table_name = arguments["table_name"]
+        column_name = arguments["column_name"]
+        search_term = arguments["search_term"]
+        threshold = arguments.get("threshold", 0.6)
+        limit = arguments.get("limit", 50)
+        where_clause = arguments.get("where_clause", "")
+    
+        try:
+            where_sql = f" WHERE {where_clause}" if where_clause else ""
+        
+            query = f"""
+            SELECT {column_name}, rowid
+            FROM {table_name}{where_sql}
+            WHERE {column_name} IS NOT NULL
+            LIMIT 1000
+            """
+            
+            result = self._execute_query(query)
+            
+            if not result:
+                return [types.TextContent(type="text", text="No data found for fuzzy matching")]
+            
+            # Calculate similarity scores
+            matches = []
+            for row in result:
+                text = str(row[column_name])
+                # Use difflib's SequenceMatcher for similarity
+                similarity = difflib.SequenceMatcher(None, search_term.lower(), text.lower()).ratio()
+                
+                if similarity >= threshold:
+                    matches.append({
+                        "rowid": row["rowid"],
+                        "text": text,
+                        "similarity": round(similarity, 3),
+                        "match_type": "exact" if similarity >= 0.95 else "fuzzy"
+                    })
+            
+            # Sort by similarity score (highest first)
+            matches.sort(key=lambda x: x["similarity"], reverse=True)
+            matches = matches[:limit]
+            
+            output = f"""Fuzzy Match Results for {table_name}.{column_name}:
+        Search Term: "{search_term}"
+        Threshold: {threshold}
+        
+        Found {len(matches)} matches:
+
+        """
+            
+            for i, match in enumerate(matches, 1):
+                output += f"Match {i} (Row {match['rowid']}) - Similarity: {match['similarity']:.3f} ({match['match_type']}):\n"
+                output += f"  Text: {match['text'][:100]}{'...' if len(match['text']) > 100 else ''}\n\n"
+            
+            if len(matches) == 0:
+                output += f"No matches found above threshold {threshold}\n"
+            
+            return [types.TextContent(type="text", text=output)]
+            
+        except Exception as e:
+            error_msg = f"Failed to perform fuzzy matching: {str(e)}"
+            logger.error(error_msg)
+            return [types.TextContent(type="text", text=error_msg)]
 
     async def _handle_phonetic_match(self, arguments: Dict[str, Any]) -> List[types.TextContent]:
         """Find phonetic matches using Soundex and Metaphone algorithms."""
-        return [types.TextContent(type="text", text="Text processing method not yet implemented")]
+        if not all(key in arguments for key in ["table_name", "column_name", "search_term"]):
+            raise ValueError("Missing required arguments: table_name, column_name, search_term")
+    
+        table_name = arguments["table_name"]
+        column_name = arguments["column_name"]
+        search_term = arguments["search_term"]
+        algorithm = arguments.get("algorithm", "soundex")
+        limit = arguments.get("limit", 50)
+        where_clause = arguments.get("where_clause", "")
+    
+        def simple_soundex(word):
+            """Simple Soundex implementation"""
+            if not word:
+                return "0000"
+            
+            word = word.upper()
+            soundex = word[0]
+            
+            # Mapping for consonants
+            mapping = {
+                'B': '1', 'F': '1', 'P': '1', 'V': '1',
+                'C': '2', 'G': '2', 'J': '2', 'K': '2', 'Q': '2', 'S': '2', 'X': '2', 'Z': '2',
+                'D': '3', 'T': '3',
+                'L': '4',
+                'M': '5', 'N': '5',
+                'R': '6'
+            }
+            
+            for char in word[1:]:
+                if char in mapping:
+                    code = mapping[char]
+                    if soundex[-1] != code:
+                        soundex += code
+                if len(soundex) == 4:
+                    break
+            
+            return (soundex + "000")[:4]
+        
+        def simple_metaphone(word):
+            """Simple Metaphone-like implementation"""
+            if not word:
+                return ""
+            
+            word = word.upper()
+            result = ""
+            
+            # Simple phonetic transformations
+            replacements = [
+                ('PH', 'F'), ('GH', 'F'), ('CK', 'K'), ('SCH', 'SK'),
+                ('QU', 'KW'), ('X', 'KS'), ('Z', 'S'), ('C', 'K')
+            ]
+            
+            for old, new in replacements:
+                word = word.replace(old, new)
+            
+            # Keep only consonants and some vowels
+            keep_chars = 'BFPVKGJQSXZTDLMNR'
+            result = ''.join(char for char in word if char in keep_chars)
+            
+            return result[:6]  # Limit length
+    
+        try:
+            where_sql = f" WHERE {where_clause}" if where_clause else ""
+        
+            query = f"""
+            SELECT {column_name}, rowid
+            FROM {table_name}{where_sql}
+            WHERE {column_name} IS NOT NULL
+            LIMIT 1000
+            """
+            
+            result = self._execute_query(query)
+            
+            if not result:
+                return [types.TextContent(type="text", text="No data found for phonetic matching")]
+            
+            # Calculate phonetic codes
+            if algorithm.lower() == "soundex":
+                search_code = simple_soundex(search_term)
+                phonetic_func = simple_soundex
+            else:  # metaphone
+                search_code = simple_metaphone(search_term)
+                phonetic_func = simple_metaphone
+            
+            matches = []
+            for row in result:
+                text = str(row[column_name])
+                # Extract first word for phonetic matching
+                first_word = text.split()[0] if text.split() else text
+                text_code = phonetic_func(first_word)
+                
+                if text_code == search_code:
+                    matches.append({
+                        "rowid": row["rowid"],
+                        "text": text,
+                        "phonetic_code": text_code,
+                        "matched_word": first_word
+                    })
+            
+            matches = matches[:limit]
+            
+            output = f"""Phonetic Match Results for {table_name}.{column_name}:
+        Search Term: "{search_term}" (Code: {search_code})
+        Algorithm: {algorithm.title()}
+        
+        Found {len(matches)} phonetic matches:
+
+        """
+            
+            for i, match in enumerate(matches, 1):
+                output += f"Match {i} (Row {match['rowid']}) - Code: {match['phonetic_code']}:\n"
+                output += f"  Matched Word: '{match['matched_word']}'\n"
+                output += f"  Full Text: {match['text'][:100]}{'...' if len(match['text']) > 100 else ''}\n\n"
+            
+            if len(matches) == 0:
+                output += f"No phonetic matches found for '{search_term}' (code: {search_code})\n"
+            
+            return [types.TextContent(type="text", text=output)]
+            
+        except Exception as e:
+            error_msg = f"Failed to perform phonetic matching: {str(e)}"
+            logger.error(error_msg)
+            return [types.TextContent(type="text", text=error_msg)]
 
     async def _handle_text_similarity(self, arguments: Dict[str, Any]) -> List[types.TextContent]:
         """Calculate text similarity between columns or against reference text."""
-        return [types.TextContent(type="text", text="Text processing method not yet implemented")]
+        if not all(key in arguments for key in ["table_name", "column_name"]):
+            raise ValueError("Missing required arguments: table_name, column_name")
+    
+        table_name = arguments["table_name"]
+        column_name = arguments["column_name"]
+        reference_text = arguments.get("reference_text", "")
+        compare_column = arguments.get("compare_column", "")
+        algorithm = arguments.get("algorithm", "cosine")
+        limit = arguments.get("limit", 100)
+        where_clause = arguments.get("where_clause", "")
+    
+        def jaccard_similarity(text1, text2):
+            """Calculate Jaccard similarity between two texts"""
+            set1 = set(text1.lower().split())
+            set2 = set(text2.lower().split())
+            intersection = set1.intersection(set2)
+            union = set1.union(set2)
+            return len(intersection) / len(union) if union else 0
+        
+        def cosine_similarity(text1, text2):
+            """Simple cosine similarity using word frequency"""
+            words1 = text1.lower().split()
+            words2 = text2.lower().split()
+            
+            # Get all unique words
+            all_words = set(words1 + words2)
+            
+            # Create frequency vectors
+            vec1 = [words1.count(word) for word in all_words]
+            vec2 = [words2.count(word) for word in all_words]
+            
+            # Calculate dot product and magnitudes
+            dot_product = sum(a * b for a, b in zip(vec1, vec2))
+            magnitude1 = math.sqrt(sum(a * a for a in vec1))
+            magnitude2 = math.sqrt(sum(b * b for b in vec2))
+            
+            if magnitude1 == 0 or magnitude2 == 0:
+                return 0
+            
+            return dot_product / (magnitude1 * magnitude2)
+        
+        def levenshtein_similarity(text1, text2):
+            """Calculate Levenshtein similarity (normalized)"""
+            return difflib.SequenceMatcher(None, text1.lower(), text2.lower()).ratio()
+    
+        try:
+            where_sql = f" WHERE {where_clause}" if where_clause else ""
+            
+            if compare_column:
+                # Compare two columns
+                query = f"""
+                SELECT {column_name}, {compare_column}, rowid
+                FROM {table_name}{where_sql}
+                WHERE {column_name} IS NOT NULL AND {compare_column} IS NOT NULL
+                LIMIT {limit}
+                """
+                
+                result = self._execute_query(query)
+                
+                if not result:
+                    return [types.TextContent(type="text", text="No data found for column comparison")]
+                
+                similarities = []
+                for row in result:
+                    text1 = str(row[column_name])
+                    text2 = str(row[compare_column])
+                    
+                    if algorithm.lower() == "jaccard":
+                        similarity = jaccard_similarity(text1, text2)
+                    elif algorithm.lower() == "levenshtein":
+                        similarity = levenshtein_similarity(text1, text2)
+                    else:  # cosine
+                        similarity = cosine_similarity(text1, text2)
+                    
+                    similarities.append({
+                        "rowid": row["rowid"],
+                        "text1": text1,
+                        "text2": text2,
+                        "similarity": round(similarity, 3)
+                    })
+                
+                # Sort by similarity (highest first)
+                similarities.sort(key=lambda x: x["similarity"], reverse=True)
+                
+                output = f"""Text Similarity Results for {table_name}.{column_name} vs {compare_column}:
+        Algorithm: {algorithm.title()}
+        
+        Found {len(similarities)} comparisons:
+
+        """
+                
+                for i, sim in enumerate(similarities, 1):
+                    output += f"Row {sim['rowid']} - Similarity: {sim['similarity']:.3f}:\n"
+                    output += f"  Text 1: {sim['text1'][:80]}{'...' if len(sim['text1']) > 80 else ''}\n"
+                    output += f"  Text 2: {sim['text2'][:80]}{'...' if len(sim['text2']) > 80 else ''}\n\n"
+                
+            elif reference_text:
+                # Compare against reference text
+                query = f"""
+                SELECT {column_name}, rowid
+                FROM {table_name}{where_sql}
+                WHERE {column_name} IS NOT NULL
+                LIMIT {limit}
+                """
+                
+                result = self._execute_query(query)
+                
+                if not result:
+                    return [types.TextContent(type="text", text="No data found for reference comparison")]
+                
+                similarities = []
+                for row in result:
+                    text = str(row[column_name])
+                    
+                    if algorithm.lower() == "jaccard":
+                        similarity = jaccard_similarity(reference_text, text)
+                    elif algorithm.lower() == "levenshtein":
+                        similarity = levenshtein_similarity(reference_text, text)
+                    else:  # cosine
+                        similarity = cosine_similarity(reference_text, text)
+                    
+                    similarities.append({
+                        "rowid": row["rowid"],
+                        "text": text,
+                        "similarity": round(similarity, 3)
+                    })
+                
+                # Sort by similarity (highest first)
+                similarities.sort(key=lambda x: x["similarity"], reverse=True)
+                
+                output = f"""Text Similarity Results for {table_name}.{column_name} vs Reference:
+        Reference Text: "{reference_text[:100]}{'...' if len(reference_text) > 100 else ''}"
+        Algorithm: {algorithm.title()}
+        
+        Found {len(similarities)} comparisons:
+
+        """
+                
+                for i, sim in enumerate(similarities, 1):
+                    output += f"Match {i} (Row {sim['rowid']}) - Similarity: {sim['similarity']:.3f}:\n"
+                    output += f"  Text: {sim['text'][:100]}{'...' if len(sim['text']) > 100 else ''}\n\n"
+            
+            else:
+                return [types.TextContent(type="text", text="Please provide either reference_text or compare_column for similarity calculation")]
+            
+            return [types.TextContent(type="text", text=output)]
+            
+        except Exception as e:
+            error_msg = f"Failed to calculate text similarity: {str(e)}"
+            logger.error(error_msg)
+            return [types.TextContent(type="text", text=error_msg)]
 
     async def _handle_text_normalize(self, arguments: Dict[str, Any]) -> List[types.TextContent]:
         """Normalize text with various transformations."""
-        return [types.TextContent(type="text", text="Text processing method not yet implemented")]
+        if not all(key in arguments for key in ["table_name", "column_name"]):
+            raise ValueError("Missing required arguments: table_name, column_name")
+    
+        table_name = arguments["table_name"]
+        column_name = arguments["column_name"]
+        operations = arguments.get("operations", ["lowercase", "trim"])
+        preview_only = arguments.get("preview_only", True)
+        where_clause = arguments.get("where_clause", "")
+    
+        try:
+            where_sql = f" WHERE {where_clause}" if where_clause else ""
+        
+            query = f"""
+            SELECT {column_name}, rowid
+            FROM {table_name}{where_sql}
+            WHERE {column_name} IS NOT NULL
+            LIMIT 100
+            """
+            
+            result = self._execute_query(query)
+            
+            if not result:
+                return [types.TextContent(type="text", text="No data found for text normalization")]
+            
+            normalizations = []
+            for row in result:
+                original_text = str(row[column_name])
+                normalized_text = original_text
+                
+                # Apply normalization operations
+                for operation in operations:
+                    if operation.lower() == "lowercase":
+                        normalized_text = normalized_text.lower()
+                    elif operation.lower() == "uppercase":
+                        normalized_text = normalized_text.upper()
+                    elif operation.lower() == "trim":
+                        normalized_text = normalized_text.strip()
+                    elif operation.lower() == "remove_extra_spaces":
+                        normalized_text = re.sub(r'\s+', ' ', normalized_text)
+                    elif operation.lower() == "remove_punctuation":
+                        normalized_text = re.sub(r'[^\w\s]', '', normalized_text)
+                    elif operation.lower() == "remove_digits":
+                        normalized_text = re.sub(r'\d+', '', normalized_text)
+                    elif operation.lower() == "normalize_unicode":
+                        normalized_text = unicodedata.normalize('NFKD', normalized_text)
+                
+                if normalized_text != original_text:
+                    normalizations.append({
+                        "rowid": row["rowid"],
+                        "original": original_text,
+                        "normalized": normalized_text
+                    })
+            
+            output = f"""Text Normalization {'Preview' if preview_only else 'Results'} for {table_name}.{column_name}:
+        Operations: {', '.join(operations)}
+        
+        Found {len(normalizations)} rows with changes:
+
+        """
+            
+            for i, norm in enumerate(normalizations[:20], 1):  # Show first 20
+                output += f"Row {norm['rowid']}:\n"
+                output += f"  Before: {norm['original'][:100]}{'...' if len(norm['original']) > 100 else ''}\n"
+                output += f"  After:  {norm['normalized'][:100]}{'...' if len(norm['normalized']) > 100 else ''}\n\n"
+            
+            if len(normalizations) > 20:
+                output += f"... and {len(normalizations) - 20} more rows\n"
+            
+            if preview_only:
+                output += "\nTo execute these changes, set preview_only=false"
+            else:
+                # Execute the normalizations
+                for norm in normalizations:
+                    update_query = f"""
+                    UPDATE {table_name} 
+                    SET {column_name} = ? 
+                    WHERE rowid = ?
+                    """
+                    self._execute_query(update_query, (norm['normalized'], norm['rowid']))
+                
+                output += f"\n✅ Successfully normalized {len(normalizations)} rows"
+            
+            if len(normalizations) == 0:
+                output += "No changes needed - text is already normalized"
+            
+            return [types.TextContent(type="text", text=output)]
+            
+        except Exception as e:
+            error_msg = f"Failed to normalize text: {str(e)}"
+            logger.error(error_msg)
+            return [types.TextContent(type="text", text=error_msg)]
 
     async def _handle_advanced_search(self, arguments: Dict[str, Any]) -> List[types.TextContent]:
         """Advanced search combining multiple text processing techniques."""
-        return [types.TextContent(type="text", text="Text processing method not yet implemented")]
+        if not all(key in arguments for key in ["table_name", "column_name", "search_term"]):
+            raise ValueError("Missing required arguments: table_name, column_name, search_term")
+    
+        table_name = arguments["table_name"]
+        column_name = arguments["column_name"]
+        search_term = arguments["search_term"]
+        techniques = arguments.get("techniques", ["exact", "fuzzy", "phonetic"])
+        fuzzy_threshold = arguments.get("fuzzy_threshold", 0.6)
+        limit = arguments.get("limit", 100)
+        where_clause = arguments.get("where_clause", "")
+    
+        try:
+            where_sql = f" WHERE {where_clause}" if where_clause else ""
+        
+            query = f"""
+            SELECT {column_name}, rowid
+            FROM {table_name}{where_sql}
+            WHERE {column_name} IS NOT NULL
+            LIMIT 1000
+            """
+            
+            result = self._execute_query(query)
+            
+            if not result:
+                return [types.TextContent(type="text", text="No data found for advanced search")]
+            
+            all_matches = []
+            
+            for row in result:
+                text = str(row[column_name])
+                matches = []
+                
+                # Exact match
+                if "exact" in techniques:
+                    if search_term.lower() in text.lower():
+                        matches.append({"type": "exact", "score": 1.0})
+                
+                # Fuzzy match
+                if "fuzzy" in techniques:
+                    similarity = difflib.SequenceMatcher(None, search_term.lower(), text.lower()).ratio()
+                    if similarity >= fuzzy_threshold:
+                        matches.append({"type": "fuzzy", "score": similarity})
+                
+                # Phonetic match
+                if "phonetic" in techniques:
+                    def simple_soundex(word):
+                        if not word:
+                            return "0000"
+                        word = word.upper()
+                        soundex = word[0]
+                        mapping = {
+                            'B': '1', 'F': '1', 'P': '1', 'V': '1',
+                            'C': '2', 'G': '2', 'J': '2', 'K': '2', 'Q': '2', 'S': '2', 'X': '2', 'Z': '2',
+                            'D': '3', 'T': '3', 'L': '4', 'M': '5', 'N': '5', 'R': '6'
+                        }
+                        for char in word[1:]:
+                            if char in mapping:
+                                code = mapping[char]
+                                if soundex[-1] != code:
+                                    soundex += code
+                            if len(soundex) == 4:
+                                break
+                        return (soundex + "000")[:4]
+                    
+                    search_soundex = simple_soundex(search_term)
+                    text_words = text.split()
+                    for word in text_words:
+                        if simple_soundex(word) == search_soundex:
+                            matches.append({"type": "phonetic", "score": 0.8})
+                            break
+                
+                if matches:
+                    # Calculate combined score (highest individual score)
+                    best_match = max(matches, key=lambda x: x["score"])
+                    all_matches.append({
+                        "rowid": row["rowid"],
+                        "text": text,
+                        "match_types": [m["type"] for m in matches],
+                        "best_score": best_match["score"],
+                        "best_type": best_match["type"]
+                    })
+            
+            # Sort by score (highest first)
+            all_matches.sort(key=lambda x: x["best_score"], reverse=True)
+            all_matches = all_matches[:limit]
+            
+            output = f"""Advanced Search Results for {table_name}.{column_name}:
+        Search Term: "{search_term}"
+        Techniques: {', '.join(techniques)}
+        Fuzzy Threshold: {fuzzy_threshold}
+        
+        Found {len(all_matches)} matches:
+
+        """
+            
+            for i, match in enumerate(all_matches, 1):
+                output += f"Match {i} (Row {match['rowid']}) - Score: {match['best_score']:.3f} ({match['best_type']}):\n"
+                output += f"  Match Types: {', '.join(match['match_types'])}\n"
+                output += f"  Text: {match['text'][:100]}{'...' if len(match['text']) > 100 else ''}\n\n"
+            
+            if len(all_matches) == 0:
+                output += f"No matches found using techniques: {', '.join(techniques)}\n"
+            
+            return [types.TextContent(type="text", text=output)]
+            
+        except Exception as e:
+            error_msg = f"Failed to perform advanced search: {str(e)}"
+            logger.error(error_msg)
+            return [types.TextContent(type="text", text=error_msg)]
 
     async def _handle_text_validation(self, arguments: Dict[str, Any]) -> List[types.TextContent]:
         """Validate text against various patterns and rules."""
-        return [types.TextContent(type="text", text="Text processing method not yet implemented")]
+        if not all(key in arguments for key in ["table_name", "column_name"]):
+            raise ValueError("Missing required arguments: table_name, column_name")
+    
+        table_name = arguments["table_name"]
+        column_name = arguments["column_name"]
+        validation_type = arguments.get("validation_type", "email")
+        custom_pattern = arguments.get("custom_pattern", "")
+        return_invalid_only = arguments.get("return_invalid_only", True)
+        where_clause = arguments.get("where_clause", "")
+    
+        # Validation patterns
+        patterns = {
+            "email": r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+            "phone": r'^\+?1?-?\.?\s?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})$',
+            "url": r'^https?://(?:[-\w.])+(?:\.[a-zA-Z]{2,})+(?:/[^?\s]*)?(?:\?[^#\s]*)?(?:#[^\s]*)?$',
+            "custom_regex": custom_pattern
+        }
+    
+        try:
+            if validation_type not in patterns:
+                return [types.TextContent(type="text", text=f"Unsupported validation type: {validation_type}")]
+            
+            pattern = patterns[validation_type]
+            if not pattern:
+                return [types.TextContent(type="text", text="Custom pattern is required for custom_regex validation")]
+            
+            compiled_pattern = re.compile(pattern)
+            where_sql = f" WHERE {where_clause}" if where_clause else ""
+        
+            query = f"""
+            SELECT {column_name}, rowid
+            FROM {table_name}{where_sql}
+            WHERE {column_name} IS NOT NULL
+            LIMIT 1000
+            """
+            
+            result = self._execute_query(query)
+            
+            if not result:
+                return [types.TextContent(type="text", text="No data found for text validation")]
+            
+            validations = []
+            valid_count = 0
+            invalid_count = 0
+            
+            for row in result:
+                text = str(row[column_name]).strip()
+                is_valid = bool(compiled_pattern.match(text))
+                
+                if is_valid:
+                    valid_count += 1
+                else:
+                    invalid_count += 1
+                
+                # Add to results based on return_invalid_only setting
+                if not return_invalid_only or not is_valid:
+                    validations.append({
+                        "rowid": row["rowid"],
+                        "text": text,
+                        "is_valid": is_valid,
+                        "status": "✅ Valid" if is_valid else "❌ Invalid"
+                    })
+            
+            output = f"""Text Validation Results for {table_name}.{column_name}:
+        Validation Type: {validation_type.title()}
+        Pattern: {pattern}
+        
+        Summary:
+        ✅ Valid: {valid_count}
+        ❌ Invalid: {invalid_count}
+        Total: {valid_count + invalid_count}
+
+        {"Invalid " if return_invalid_only else ""}Results:
+
+        """
+            
+            for i, validation in enumerate(validations[:50], 1):  # Show first 50
+                output += f"Row {validation['rowid']} - {validation['status']}:\n"
+                output += f"  Text: {validation['text'][:100]}{'...' if len(validation['text']) > 100 else ''}\n\n"
+            
+            if len(validations) > 50:
+                output += f"... and {len(validations) - 50} more results\n"
+            
+            return [types.TextContent(type="text", text=output)]
+            
+        except re.error as e:
+            error_msg = f"Invalid validation pattern: {str(e)}"
+            logger.error(error_msg)
+            return [types.TextContent(type="text", text=error_msg)]
+        except Exception as e:
+            error_msg = f"Failed to validate text: {str(e)}"
+            logger.error(error_msg)
+            return [types.TextContent(type="text", text=error_msg)]
 
 async def main(db_path: str = "sqlite_mcp.db"):
     logger.info(f"Starting Enhanced SQLite MCP Server with DB: {db_path}")
