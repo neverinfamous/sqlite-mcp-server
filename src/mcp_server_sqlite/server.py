@@ -271,7 +271,6 @@ class EnhancedSqliteDatabase:
 
     def _load_spatialite_if_needed(self, conn, query: str):
         """Load SpatiaLite extension if the query contains spatial functions"""
-        import sqlite3  # Import here to avoid scoping issues
         
         spatial_functions = [
             'spatialite_version', 'AddGeometryColumn', 'GeomFromText', 'AsText', 'AsBinary',
@@ -3193,8 +3192,6 @@ async def main(db_path: str = "sqlite_mcp.db"):
                         for path in spatialite_paths:
                             try:
                                 # Create direct connection for extension loading
-                                import sqlite3
-                                from contextlib import closing
                                 with closing(sqlite3.connect(db.db_path)) as conn:
                                     conn.enable_load_extension(True)
                                     conn.load_extension(path)
