@@ -1757,16 +1757,11 @@ MCP Prompts provide intelligent workflow automation, acting as "recipes" that gu
 - **Examples**: 10-100x faster semantic search, large-scale embedding storage
 - **Impact**: Replace custom vector optimization with proven ANN algorithms
 
-#### **2. Advanced Text Processing - MEDIUM PRIORITY**
-- **Planned**: PCRE regex support and advanced string functions (sqlean-text, sqlite-regex)
-- **Examples**: Complex pattern matching, fuzzy search, phonetic algorithms, data validation
-- **Impact**: Enhanced text analysis beyond FTS5 capabilities
-
-#### **3. Advanced Data Connectors - MEDIUM PRIORITY**
+#### **2. Advanced Data Connectors - MEDIUM PRIORITY**
 - **Planned**: Direct database connectors (PostgreSQL, MySQL, MongoDB)
 - **Examples**: Cross-database queries, data synchronization
 
-#### **4. Real-time Data Streaming - LOW PRIORITY**
+#### **3. Real-time Data Streaming - LOW PRIORITY**
 - **Planned**: Live data ingestion from streaming sources
 - **Examples**: Kafka, WebSocket, API polling integration
 

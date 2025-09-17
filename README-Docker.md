@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated September 17, 2025 6:15 AM EST - v2.2.0*
+*Last Updated September 17, 2025 7:35 AM EST - v2.2.0*
 
 *Lightweight, containerized SQLite database server with AI-native features, advanced text processing, and statistical analysis*
 
@@ -75,7 +75,7 @@ docker run -i --rm \
 - **JSON Validation**: Prevents invalid JSON from being stored in the database
 - **Comprehensive Schema Tools**: Enhanced tools for exploring and documenting database structure
 - **Database Administration Tools**: Complete suite of maintenance tools including VACUUM, ANALYZE, integrity checks, performance statistics, and index usage analysis
-- **✅ SpatiaLite Geospatial Analytics**: Enterprise-grade GIS capabilities with spatial indexing and geometric operations
+- **SpatiaLite Geospatial Analytics**: Enterprise-grade GIS capabilities with spatial indexing and geometric operations
 - **Enhanced Virtual Tables**: Smart CSV/JSON import with automatic data type inference and schema analysis (67 tools total)
 - **Full-Text Search (FTS5)**: Comprehensive FTS5 implementation with table creation, index management, and enhanced search with BM25 ranking and snippets
 - **Backup/Restore Operations**: Enterprise-grade backup and restore capabilities with SQLite backup API, integrity verification, and safety confirmations
