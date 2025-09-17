@@ -1,10 +1,10 @@
 # SQLite MCP Server
 
-*Last Updated September 17, 2025 1:10 AM EST - v1.9.3*
+*Last Updated September 17, 2025 2:35 AM EST - v2.0.0*
 
 ## Overview
 
-The SQLite MCP Server provides advanced database interaction and business intelligence capabilities featuring Enhanced Virtual Tables with Smart Type Inference, Vector Index Optimization with ANN search, Intelligent MCP Resources and Prompts, Semantic/Vector Search, Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
+The SQLite MCP Server provides advanced database interaction and business intelligence capabilities featuring **SpatiaLite Geospatial Analytics**, Enhanced Virtual Tables with Smart Type Inference, Vector Index Optimization with ANN search, Intelligent MCP Resources and Prompts, Semantic/Vector Search, Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
 
 ## Key Features
 
@@ -23,6 +23,7 @@ The SQLite MCP Server provides advanced database interaction and business intell
 - **Backup/Restore Operations**: Enterprise-grade backup and restore capabilities with SQLite backup API, integrity verification, and safety confirmations
 - **Advanced PRAGMA Operations**: Comprehensive SQLite configuration management, performance optimization, and database introspection tools
 - **Virtual Table Management**: Complete virtual table lifecycle management for R-Tree spatial indexing, CSV file access, and sequence generation
+- **SpatiaLite Geospatial Analytics**: Enterprise-grade GIS capabilities with spatial indexing, geometric operations, and comprehensive spatial analysis
 - **Enhanced Virtual Tables**: Smart CSV/JSON import with automatic data type inference, nested object flattening, and schema analysis
 - **Semantic/Vector Search**: AI-native semantic search with embedding storage, cosine similarity, and hybrid keyword+semantic ranking
 - **Vector Index Optimization**: Approximate Nearest Neighbor (ANN) search with k-means clustering and spatial indexing for sub-linear O(log n) performance
@@ -1093,6 +1094,192 @@ embedding = model.encode("Your content").tolist()
 store_embedding(table_name="hf_embeddings", embedding=embedding, content="Your content")
 ```
 
+## SpatiaLite Geospatial Analytics
+
+The SQLite MCP Server provides enterprise-grade geospatial capabilities through SpatiaLite integration, transforming SQLite into a comprehensive GIS platform for location-based business intelligence and spatial data analysis.
+
+### SpatiaLite Integration
+
+**`load_spatialite`** - Load SpatiaLite extension with automatic detection
+```javascript
+load_spatialite({
+  "force_reload": false  // Force reload if already loaded
+})
+// Returns: Version information for SpatiaLite, PROJ4, and GEOS libraries
+```
+
+**`create_spatial_table`** - Create spatial tables with geometry columns
+```javascript
+create_spatial_table({
+  "table_name": "locations",
+  "geometry_type": "POINT",           // POINT, LINESTRING, POLYGON, etc.
+  "geometry_column": "geom",          // Name of geometry column
+  "srid": 4326,                       // Spatial Reference System (WGS84)
+  "additional_columns": [             // Additional non-spatial columns
+    {"name": "name", "type": "TEXT"},
+    {"name": "category", "type": "TEXT"}
+  ]
+})
+```
+
+### Spatial Indexing & Performance
+
+**`spatial_index`** - Manage spatial indexes for high-performance queries
+```javascript
+spatial_index({
+  "table_name": "locations",
+  "geometry_column": "geom",
+  "action": "create"                  // create or drop
+})
+```
+
+**Performance Benefits:**
+- **Sub-linear query performance** for spatial operations
+- **Automatic R-Tree indexing** for geometry columns  
+- **Optimized spatial joins** and proximity searches
+- **Enterprise-scale** geospatial data handling
+
+### Geometric Operations
+
+**`geometry_operations`** - Common geometric calculations and transformations
+```javascript
+geometry_operations({
+  "operation": "distance",            // buffer, intersection, union, distance, area, etc.
+  "geometry1": "POINT(0 0)",         // First geometry (WKT format)
+  "geometry2": "POINT(3 4)",         // Second geometry for binary operations
+  "buffer_distance": 100.0           // Distance for buffer operations
+})
+// Returns: Calculated result (e.g., distance: 5.0)
+```
+
+**Supported Operations:**
+- **Buffer**: Create buffer zones around geometries
+- **Distance**: Calculate distances between geometries
+- **Area/Length**: Measure geometric properties
+- **Intersection/Union**: Geometric set operations
+- **Centroid/Envelope**: Geometric transformations
+
+### Advanced Spatial Analysis
+
+**`spatial_analysis`** - Enterprise spatial analysis algorithms
+```javascript
+spatial_analysis({
+  "analysis_type": "nearest_neighbor", // nearest_neighbor, spatial_join, point_in_polygon, etc.
+  "source_table": "stores",
+  "target_table": "customers",
+  "max_distance": 1000.0,             // Maximum distance for proximity operations
+  "limit": 100                        // Limit results for performance
+})
+```
+
+**Analysis Types:**
+- **Nearest Neighbor**: Find closest features
+- **Spatial Join**: Join tables based on spatial relationships
+- **Point-in-Polygon**: Determine containment relationships
+- **Distance Matrix**: Calculate all pairwise distances
+- **Cluster Analysis**: Spatial clustering with DBSCAN
+
+### Shapefile Integration
+
+**`import_shapefile`** - Import industry-standard Shapefile data
+```javascript
+import_shapefile({
+  "shapefile_path": "/path/to/data.shp",
+  "table_name": "imported_features",
+  "encoding": "UTF-8",                // Character encoding
+  "srid": 4326                        // Override SRID if needed
+})
+// Returns: Number of features imported
+```
+
+### Spatial Queries
+
+**`spatial_query`** - Execute advanced spatial SQL with optimization
+```javascript
+spatial_query({
+  "query": "SELECT name, ST_Area(geom) as area FROM parcels WHERE ST_Intersects(geom, ST_Buffer(GeomFromText('POINT(-122.4 37.8)'), 1000))",
+  "explain": true                     // Show query execution plan
+})
+```
+
+### SpatiaLite Installation
+
+**Windows:**
+```bash
+# Download from Gaia-SINS: https://www.gaia-gis.it/gaia-sins/
+# Extract mod_spatialite.dll to your system PATH
+```
+
+**macOS (Homebrew):**
+```bash
+brew install spatialite-tools
+brew install gdal
+```
+
+**Linux (Debian/Ubuntu):**
+```bash
+sudo apt-get install libsqlite3-mod-spatialite
+# or for older versions:
+sudo apt-get install spatialite-bin
+```
+
+### Example Workflows
+
+**Location-Based Business Intelligence:**
+```javascript
+// 1. Load SpatiaLite extension
+load_spatialite()
+
+// 2. Create spatial table for store locations
+create_spatial_table({
+  "table_name": "stores",
+  "geometry_type": "POINT",
+  "additional_columns": [
+    {"name": "store_name", "type": "TEXT"},
+    {"name": "revenue", "type": "REAL"}
+  ]
+})
+
+// 3. Create spatial index for performance
+spatial_index({"table_name": "stores", "action": "create"})
+
+// 4. Find stores within 5km of a location
+spatial_query({
+  "query": "SELECT store_name, revenue FROM stores WHERE ST_Distance(geom, GeomFromText('POINT(-122.4 37.8)')) <= 5000"
+})
+
+// 5. Calculate market coverage areas
+geometry_operations({
+  "operation": "buffer",
+  "geometry1": "POINT(-122.4 37.8)",
+  "buffer_distance": 2000
+})
+```
+
+**Spatial Analysis Pipeline:**
+```javascript
+// 1. Import geographic data
+import_shapefile({
+  "shapefile_path": "./data/census_tracts.shp",
+  "table_name": "demographics"
+})
+
+// 2. Perform spatial join analysis
+spatial_analysis({
+  "analysis_type": "spatial_join",
+  "source_table": "stores",
+  "target_table": "demographics"
+})
+
+// 3. Find optimal locations using proximity analysis
+spatial_analysis({
+  "analysis_type": "nearest_neighbor",
+  "source_table": "potential_sites",
+  "target_table": "competitors",
+  "max_distance": 3000
+})
+```
+
 ## Enhanced Virtual Tables
 
 The SQLite MCP Server provides intelligent data import capabilities with automatic schema detection, type inference, and seamless conversion of CSV and JSON files into queryable SQLite tables.
@@ -1311,7 +1498,7 @@ MCP Resources provide dynamic "knowledge hooks" that give the AI model instant a
 **`database://capabilities`** - Comprehensive server capabilities matrix
 ```javascript
 // Provides real-time information about:
-// - Available tools (44 total)
+// - Available tools (51 total)
 // - Feature support (FTS5, semantic search, virtual tables)
 // - Advanced features and limitations
 // - Server and SQLite versions
@@ -1385,31 +1572,26 @@ MCP Prompts provide intelligent workflow automation, acting as "recipes" that gu
 
 ## Planned Future Enhancements
 
-#### **1. Geospatial Analytics with SpatiaLite - HIGH PRIORITY**
-- **Planned**: Full GIS capabilities beyond basic R-Tree indexing
-- **Examples**: Geographic BI, spatial joins, distance calculations, coordinate transformations
-- **Impact**: Transform basic spatial indexing into enterprise-grade geospatial analysis
-
-#### **2. Advanced Vector Search with sqlite-vss - HIGH PRIORITY**
+#### **1. Advanced Vector Search with sqlite-vss - HIGH PRIORITY**
 - **Planned**: Industry-standard HNSW and IVF vector indexing
 - **Examples**: 10-100x faster semantic search, large-scale embedding storage
 - **Impact**: Replace custom vector optimization with proven ANN algorithms
 
-#### **3. Statistical Analytics with sqlean-stats - HIGH PRIORITY**
+#### **2. Statistical Analytics with sqlean-stats - HIGH PRIORITY**
 - **Planned**: Comprehensive statistical function library
 - **Examples**: Correlation analysis, regression, percentiles, hypothesis testing
 - **Impact**: Fill major gap in statistical capabilities for advanced BI
 
-#### **4. Advanced Text Processing - MEDIUM PRIORITY**
+#### **3. Advanced Text Processing - MEDIUM PRIORITY**
 - **Planned**: PCRE regex support and advanced string functions (sqlean-text, sqlite-regex)
 - **Examples**: Complex pattern matching, fuzzy search, phonetic algorithms, data validation
 - **Impact**: Enhanced text analysis beyond FTS5 capabilities
 
-#### **5. Advanced Data Connectors - MEDIUM PRIORITY**
+#### **4. Advanced Data Connectors - MEDIUM PRIORITY**
 - **Planned**: Direct database connectors (PostgreSQL, MySQL, MongoDB)
 - **Examples**: Cross-database queries, data synchronization
 
-#### **6. Real-time Data Streaming - LOW PRIORITY**
+#### **5. Real-time Data Streaming - LOW PRIORITY**
 - **Planned**: Live data ingestion from streaming sources
 - **Examples**: Kafka, WebSocket, API polling integration
 
