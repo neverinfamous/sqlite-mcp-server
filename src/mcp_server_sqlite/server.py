@@ -3260,19 +3260,17 @@ async def main(db_path: str = "sqlite_mcp.db"):
                     if explain:
                         # Show query plan
                         explain_query = f"EXPLAIN QUERY PLAN {query}"
-                        result = db._execute_query(explain_query)
-                        plan_results = cursor.fetchall()
+                        plan_results = db._execute_query(explain_query)
                         
                         plan_text = "Query Execution Plan:\n"
                         for row in plan_results:
-                            plan_text += f"  {' | '.join(str(col) for col in row)}\n"
+                            plan_text += f"  {' | '.join(str(val) for val in row.values())}\n"
                         plan_text += "\n"
                     else:
                         plan_text = ""
                     
                     # Execute the spatial query
-                    result = db._execute_query(query)
-                    results = cursor.fetchall()
+                    results = db._execute_query(query)
                     
                     if not results:
                         return [types.TextContent(
@@ -3280,15 +3278,8 @@ async def main(db_path: str = "sqlite_mcp.db"):
                             text=f"{plan_text}Spatial query executed successfully. No results returned."
                         )]
                     
-                    # Format results
-                    columns = [description[0] for description in cursor.description]
-                    formatted_results = []
-                    
-                    for row in results:
-                        row_dict = {}
-                        for i, value in enumerate(row):
-                            row_dict[columns[i]] = value
-                        formatted_results.append(row_dict)
+                    # Results are already formatted as list of dictionaries
+                    formatted_results = results
                     
                     return [types.TextContent(
                         type="text",
@@ -3334,13 +3325,15 @@ async def main(db_path: str = "sqlite_mcp.db"):
                             text=f"Invalid operation '{operation}' or missing required geometry2 parameter"
                         )]
                     
-                    result = db._execute_query(sql)
-                    result = cursor.fetchone()
+                    result_data = db._execute_query(sql)
                     
-                    if result:
+                    if result_data and len(result_data) > 0:
+                        # Get the first value from the first row
+                        first_result = result_data[0]
+                        result_value = list(first_result.values())[0]
                         return [types.TextContent(
                             type="text",
-                            text=f"Geometry operation '{operation}' result: {result[0]}"
+                            text=f"Geometry operation '{operation}' result: {result_value}"
                         )]
                     else:
                         return [types.TextContent(
@@ -3368,17 +3361,19 @@ async def main(db_path: str = "sqlite_mcp.db"):
                     """
                     
                     result = db._execute_query(import_sql)
-                    result = cursor.fetchone()
                     
-                    if result and result[0] == 1:
-                        # Check how many rows were imported
-                        count_result = db._execute_query(f"SELECT COUNT(*) FROM {table_name}")
-                        count = count_cursor.fetchone()[0]
-                        
-                        return [types.TextContent(
-                            type="text",
-                            text=f"Shapefile imported successfully! {count} features imported into table '{table_name}'"
-                        )]
+                    if result and len(result) > 0:
+                        # Check if import was successful (result should be 1)
+                        import_success = list(result[0].values())[0] == 1
+                        if import_success:
+                            # Check how many rows were imported
+                            count_result = db._execute_query(f"SELECT COUNT(*) FROM {table_name}")
+                            count = count_result[0]["COUNT(*)"] if count_result else 0
+                            
+                            return [types.TextContent(
+                                type="text",
+                                text=f"Shapefile imported successfully! {count} features imported into table '{table_name}'"
+                            )]
                     else:
                         return [types.TextContent(
                             type="text",
@@ -3442,8 +3437,7 @@ async def main(db_path: str = "sqlite_mcp.db"):
                             text=f"Invalid analysis type '{analysis_type}' or missing required target_table parameter"
                         )]
                     
-                    result = db._execute_query(sql)
-                    results = cursor.fetchall()
+                    results = db._execute_query(sql)
                     
                     if not results:
                         return [types.TextContent(
@@ -3451,15 +3445,8 @@ async def main(db_path: str = "sqlite_mcp.db"):
                             text=f"Spatial analysis '{analysis_type}' completed. No results found."
                         )]
                     
-                    # Format results
-                    columns = [description[0] for description in cursor.description]
-                    formatted_results = []
-                    
-                    for row in results:
-                        row_dict = {}
-                        for i, value in enumerate(row):
-                            row_dict[columns[i]] = value
-                        formatted_results.append(row_dict)
+                    # Results are already formatted as list of dictionaries
+                    formatted_results = results
                     
                     return [types.TextContent(
                         type="text",
