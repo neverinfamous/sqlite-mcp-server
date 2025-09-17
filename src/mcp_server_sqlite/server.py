@@ -6282,7 +6282,7 @@ Found {len(normalizations)} rows requiring normalization:
                     SET {column_name} = ? 
                     WHERE rowid = ?
                     """
-                    db._execute_query(update_query, (norm['normalized'], norm['rowid']))
+                    self._execute_query(update_query, (norm['normalized'], norm['rowid']))
                     
                 output += f"\n✅ Successfully normalized {len(normalizations)} rows"
                 
