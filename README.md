@@ -4,7 +4,7 @@
 
 ## Overview
 
-The SQLite MCP Server provides advanced database interaction and business intelligence capabilities through SQLite featuring Enhanced Virtual Tables with Smart Type Inference, Vector Index Optimization with ANN search, Intelligent MCP Resources and Prompts, Semantic/Vector Search, Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
+The SQLite MCP Server provides advanced database interaction and business intelligence capabilities featuring Enhanced Virtual Tables with Smart Type Inference, Vector Index Optimization with ANN search, Intelligent MCP Resources and Prompts, Semantic/Vector Search, Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
 
 ## Key Features
 
@@ -1385,11 +1385,31 @@ MCP Prompts provide intelligent workflow automation, acting as "recipes" that gu
 
 ## Planned Future Enhancements
 
-#### **1. Advanced Data Connectors - MEDIUM PRIORITY**
+#### **1. Geospatial Analytics with SpatiaLite - HIGH PRIORITY**
+- **Planned**: Full GIS capabilities beyond basic R-Tree indexing
+- **Examples**: Geographic BI, spatial joins, distance calculations, coordinate transformations
+- **Impact**: Transform basic spatial indexing into enterprise-grade geospatial analysis
+
+#### **2. Advanced Vector Search with sqlite-vss - HIGH PRIORITY**
+- **Planned**: Industry-standard HNSW and IVF vector indexing
+- **Examples**: 10-100x faster semantic search, large-scale embedding storage
+- **Impact**: Replace custom vector optimization with proven ANN algorithms
+
+#### **3. Statistical Analytics with sqlean-stats - HIGH PRIORITY**
+- **Planned**: Comprehensive statistical function library
+- **Examples**: Correlation analysis, regression, percentiles, hypothesis testing
+- **Impact**: Fill major gap in statistical capabilities for advanced BI
+
+#### **4. Advanced Text Processing - MEDIUM PRIORITY**
+- **Planned**: PCRE regex support and advanced string functions (sqlean-text, sqlite-regex)
+- **Examples**: Complex pattern matching, fuzzy search, phonetic algorithms, data validation
+- **Impact**: Enhanced text analysis beyond FTS5 capabilities
+
+#### **5. Advanced Data Connectors - MEDIUM PRIORITY**
 - **Planned**: Direct database connectors (PostgreSQL, MySQL, MongoDB)
 - **Examples**: Cross-database queries, data synchronization
 
-#### **2. Real-time Data Streaming - LOW PRIORITY**
+#### **6. Real-time Data Streaming - LOW PRIORITY**
 - **Planned**: Live data ingestion from streaming sources
 - **Examples**: Kafka, WebSocket, API polling integration
 
