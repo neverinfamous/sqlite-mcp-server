@@ -1,10 +1,10 @@
 # SQLite MCP Server
 
-*Last Updated September 16, 2025 7:54 PM EST - v1.4.0*
+*Last Updated September 16, 2025 9:15 PM EST - v1.5.0*
 
 ## Overview
 
-The SQLite MCP Server provides advanced database interaction and business intelligence capabilities through SQLite featuring Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
+The SQLite MCP Server provides advanced database interaction and business intelligence capabilities through SQLite featuring Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
 
 ## Key Features
 
@@ -21,6 +21,7 @@ The SQLite MCP Server provides advanced database interaction and business intell
 - **Database Administration Tools**: Complete suite of maintenance tools including VACUUM, ANALYZE, integrity checks, performance statistics, and index usage analysis
 - **Full-Text Search (FTS5)**: Comprehensive FTS5 implementation with table creation, index management, and enhanced search with BM25 ranking and snippets
 - **Backup/Restore Operations**: Enterprise-grade backup and restore capabilities with SQLite backup API, integrity verification, and safety confirmations
+- **Advanced PRAGMA Operations**: Comprehensive SQLite configuration management, performance optimization, and database introspection tools
 - **Advanced SQLite Engine**: Upgraded to SQLite 3.45.x with significant performance enhancements
 
 ## Attribution
@@ -38,6 +39,7 @@ This enhanced version builds upon their excellent foundation with additional fea
 - Multi-database configuration support
 - Full-Text Search (FTS5)
 - Backup/Restore Operations
+- Advanced PRAGMA Operations
 - Database Administration Tools
 - Extended error handling and diagnostics
 - Production-ready Docker containerization
@@ -163,6 +165,67 @@ restore_database({
 - **Integrity Verification**: Comprehensive backup validation before operations
 - **Atomic Operations**: Uses SQLite backup API for consistent, reliable operations
 - **Directory Creation**: Automatically creates backup directories as needed
+
+## Advanced PRAGMA Operations
+
+The SQLite MCP Server provides comprehensive PRAGMA management tools for database configuration, optimization, and introspection.
+
+### Configuration Management
+
+**Get/Set PRAGMA Settings:**
+```javascript
+pragma_settings({
+  "pragma_name": "journal_mode"
+})
+// Returns: PRAGMA journal_mode = delete
+
+pragma_settings({
+  "pragma_name": "synchronous", 
+  "value": "NORMAL"
+})
+// Sets and confirms: PRAGMA synchronous = NORMAL
+```
+
+### Performance Optimization
+
+**Database Optimization:**
+```javascript
+pragma_optimize({
+  "analysis_limit": 1000  // Optional: limit analysis scope
+})
+// Runs PRAGMA optimize for query performance improvements
+```
+
+### Database Introspection
+
+**Detailed Table Information:**
+```javascript
+pragma_table_info({
+  "table_name": "users",
+  "include_foreign_keys": true  // Include FK and index info
+})
+// Returns: columns, foreign keys, indexes, constraints
+```
+
+**Database List:**
+```javascript
+pragma_database_list()
+// Returns: all attached databases with file paths and schemas
+```
+
+**SQLite Capabilities:**
+```javascript
+pragma_compile_options()
+// Returns: SQLite version, compile options, feature availability
+```
+
+### Supported PRAGMA Commands
+
+- **Configuration**: journal_mode, synchronous, cache_size, temp_store
+- **Performance**: optimize, analysis_limit, mmap_size  
+- **Security**: foreign_keys, recursive_triggers, secure_delete
+- **Debugging**: compile_options, database_list, table_info
+- **And many more** - supports all SQLite PRAGMA commands
 
 ## Components
 
@@ -632,11 +695,7 @@ The migration to JSONB is transparent to users - simply continue using standard 
 - **Missing**: Tools to create/manage virtual tables beyond FTS5
 - **Examples**: CSV virtual tables, memory virtual tables
 
-#### **2. Advanced PRAGMA Operations - MEDIUM PRIORITY**
-- **Missing**: Comprehensive PRAGMA management tools
-- **Current**: Can execute PRAGMA via queries, but no specialized tools
-
-#### **3. R-Tree Index Support - LOW PRIORITY**
+#### **2. R-Tree Index Support - LOW PRIORITY**
 - **Missing**: Spatial indexing for geometric data
 - **Current**: No specialized tools for R-Tree operations
 
