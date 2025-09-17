@@ -319,8 +319,14 @@ class EnhancedSqliteDatabase:
             with closing(sqlite3.connect(self.db_path)) as conn:
                 conn.row_factory = sqlite3.Row
                 
-                # Load SpatiaLite if needed for this query
-                self._load_spatialite_if_needed(conn, query)
+                # Always load SpatiaLite if path is available (more reliable)
+                if self._spatialite_path:
+                    try:
+                        conn.enable_load_extension(True)
+                        conn.load_extension(self._spatialite_path)
+                        conn.enable_load_extension(False)
+                    except:
+                        pass  # Extension might already be loaded or unavailable
                 
                 # Special handling for memory_journal metadata with JSONB
                 if JSONB_ENABLED and self.version_info['has_jsonb_support']:
