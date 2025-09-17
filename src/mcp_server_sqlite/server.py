@@ -322,11 +322,27 @@ class EnhancedSqliteDatabase:
                 # Always load SpatiaLite if path is available (more reliable)
                 if self._spatialite_path:
                     try:
+                        # Ensure PATH includes SpatiaLite DLLs for Windows
+                        import os
+                        script_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+                        local_spatialite_dir = os.path.join(script_dir, "mod_spatialite-5.1.0-win-amd64")
+                        if os.path.exists(local_spatialite_dir):
+                            original_path = os.environ.get('PATH', '')
+                            if local_spatialite_dir not in original_path:
+                                os.environ['PATH'] = local_spatialite_dir + os.pathsep + original_path
+                        
                         conn.enable_load_extension(True)
                         conn.load_extension(self._spatialite_path)
+                        # Try to initialize spatial metadata if needed
+                        try:
+                            conn.execute("SELECT InitSpatialMetaData(1)")
+                        except:
+                            pass  # Already initialized or not needed
                         conn.enable_load_extension(False)
-                    except:
-                        pass  # Extension might already be loaded or unavailable
+                    except Exception as e:
+                        # Log the actual error for debugging
+                        logger.debug(f"SpatiaLite loading failed: {e}")
+                        pass
                 
                 # Special handling for memory_journal metadata with JSONB
                 if JSONB_ENABLED and self.version_info['has_jsonb_support']:
