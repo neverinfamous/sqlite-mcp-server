@@ -2345,10 +2345,10 @@ async def main(db_path: str = "sqlite_mcp.db"):
         else:
             return basic_tools
 
-@server.call_tool()
-async def handle_call_tool(
-    name: str, arguments: dict[str, Any] | None
-) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
+    @server.call_tool()
+    async def handle_call_tool(
+        name: str, arguments: dict[str, Any] | None
+    ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
         """Handle tool execution requests"""
         try:
             # Handle basic tools
@@ -2361,7 +2361,7 @@ async def handle_call_tool(
             elif name == "describe_table":
                 if not arguments or "table_name" not in arguments:
                     raise ValueError("Missing table_name argument")
-                    
+                
                 results = db._execute_query(
                     f"PRAGMA table_info({arguments['table_name']})"
                 )
@@ -2372,11 +2372,11 @@ async def handle_call_tool(
                 table_name = arguments.get("table_name")
                 column_name = arguments.get("column_name")
                 where_clause = arguments.get("where_clause", "")
-                
+            
                 try:
                     # Build WHERE clause
                     where_sql = f" WHERE {where_clause}" if where_clause else ""
-                    
+                
                     # Calculate comprehensive descriptive statistics
                     stats_query = f"""
                     SELECT 
@@ -2386,7 +2386,7 @@ async def handle_call_tool(
                         MIN(CAST({column_name} AS REAL)) as min_value,
                         MAX(CAST({column_name} AS REAL)) as max_value,
                         SUM(CAST({column_name} AS REAL)) as sum_value,
-                        
+                    
                         -- Standard deviation and variance
                         (
                             SELECT SQRT(AVG(power_diff))
@@ -2397,7 +2397,7 @@ async def handle_call_tool(
                                 WHERE {column_name} IS NOT NULL
                             )
                         ) as std_dev,
-                        
+                    
                         (
                             SELECT AVG(power_diff)
                             FROM (
@@ -2407,10 +2407,10 @@ async def handle_call_tool(
                                 WHERE {column_name} IS NOT NULL
                             )
                         ) as variance,
-                        
+                    
                         -- Range and coefficient of variation
                         (MAX(CAST({column_name} AS REAL)) - MIN(CAST({column_name} AS REAL))) as range_value,
-                        
+                    
                         CASE 
                             WHEN AVG(CAST({column_name} AS REAL)) != 0 THEN
                                 (
@@ -2424,41 +2424,41 @@ async def handle_call_tool(
                                 ) / AVG(CAST({column_name} AS REAL))
                             ELSE NULL
                         END as coefficient_of_variation
-                        
+                    
                     FROM {table_name}{where_sql}
                     WHERE {column_name} IS NOT NULL
                     """
-                    
+                
                     result = db._execute_query(stats_query)
-                    
+                
                     if result:
                         stats = result[0]
-                        
+                    
                         # Format output
                         cv_text = f"{stats['coefficient_of_variation']:.4f}" if stats['coefficient_of_variation'] is not None else 'N/A'
-                        
+                    
                         output = f"""Descriptive Statistics for {table_name}.{column_name}:
 
-Basic Statistics:
-- Count: {stats['count']:,}
-- Distinct Values: {stats['distinct_count']:,}
+        Basic Statistics:
+        - Count: {stats['count']:,}
+        - Distinct Values: {stats['distinct_count']:,}
 
-Central Tendency:
-- Mean: {stats['mean']:.4f}
-- Min: {stats['min_value']:.4f}
-- Max: {stats['max_value']:.4f}
-- Sum: {stats['sum_value']:.4f}
+        Central Tendency:
+        - Mean: {stats['mean']:.4f}
+        - Min: {stats['min_value']:.4f}
+        - Max: {stats['max_value']:.4f}
+        - Sum: {stats['sum_value']:.4f}
 
-Variability:
-- Range: {stats['range_value']:.4f}
-- Standard Deviation: {stats['std_dev']:.4f}
-- Variance: {stats['variance']:.4f}
-- Coefficient of Variation: {cv_text}"""
-                        
+        Variability:
+        - Range: {stats['range_value']:.4f}
+        - Standard Deviation: {stats['std_dev']:.4f}
+        - Variance: {stats['variance']:.4f}
+        - Coefficient of Variation: {cv_text}"""
+                    
                         return [types.TextContent(type="text", text=output)]
                     else:
                         return [types.TextContent(type="text", text="No data found for analysis")]
-                        
+                    
                 except Exception as e:
                     error_msg = f"Failed to calculate descriptive statistics: {str(e)}"
                     logger.error(error_msg)
@@ -2469,10 +2469,10 @@ Variability:
                 column_x = arguments.get("column_x")
                 column_y = arguments.get("column_y")
                 where_clause = arguments.get("where_clause", "")
-                
+            
                 try:
                     where_sql = f" WHERE {where_clause}" if where_clause else ""
-                    
+                
                     # Calculate Pearson correlation coefficient using direct approach
                     corr_query = f"""
                     SELECT 
@@ -2494,13 +2494,13 @@ Variability:
                     WHERE {column_x} IS NOT NULL AND {column_y} IS NOT NULL
                     HAVING COUNT(*) > 1
                     """
-                    
+                
                     result = db._execute_query(corr_query)
-                    
+                
                     if result and len(result) > 0:
                         stats = result[0]
                         correlation = stats['correlation'] if 'correlation' in stats.keys() and stats['correlation'] is not None else 0.0
-                        
+                    
                         # Interpret correlation strength
                         if abs(correlation) >= 0.9:
                             strength = "Very Strong"
@@ -2512,23 +2512,23 @@ Variability:
                             strength = "Weak"
                         else:
                             strength = "Very Weak"
-                        
+                    
                         direction = "Positive" if correlation >= 0 else "Negative"
-                        
+                    
                         output = f"""Correlation Analysis between {column_x} and {column_y}:
 
-Sample Size: {stats['n']:,}
-Mean {column_x}: {stats['mean_x']:.4f}
-Mean {column_y}: {stats['mean_y']:.4f}
+        Sample Size: {stats['n']:,}
+        Mean {column_x}: {stats['mean_x']:.4f}
+        Mean {column_y}: {stats['mean_y']:.4f}
 
-Pearson Correlation Coefficient: {correlation:.4f}
-Relationship: {strength} {direction} correlation
-R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained)"""
-                        
+        Pearson Correlation Coefficient: {correlation:.4f}
+        Relationship: {strength} {direction} correlation
+        R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained)"""
+                    
                         return [types.TextContent(type="text", text=output)]
                     else:
                         return [types.TextContent(type="text", text="No data found for correlation analysis")]
-                        
+                    
                 except Exception as e:
                     error_msg = f"Failed to calculate correlation: {str(e)}"
                     logger.error(error_msg)
@@ -2539,10 +2539,10 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                 column_name = arguments.get("column_name")
                 percentiles = arguments.get("percentiles", [25, 50, 75, 90, 95, 99])
                 where_clause = arguments.get("where_clause", "")
-                
+            
                 try:
                     where_sql = f" WHERE {where_clause}" if where_clause else ""
-                    
+                
                     # Calculate percentiles using NTILE and row_number
                     percentile_queries = []
                     for p in percentiles:
@@ -2556,17 +2556,17 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                                       WHERE {column_name} IS NOT NULL)
                                 WHERE rn = CAST(({p} / 100.0) * total_count AS INTEGER) + 1) as value
                         """)
-                    
+                
                     full_query = " UNION ALL ".join(percentile_queries)
                     result = db._execute_query(full_query)
-                    
+                
                     if result:
                         output = f"Percentile Analysis for {table_name}.{column_name}:\n\n"
-                        
+                    
                         for row in result:
                             p = int(row['percentile'])
                             value = row['value']
-                            
+                        
                             if p == 25:
                                 output += f"Q1 (25th percentile): {value:.4f}\n"
                             elif p == 50:
@@ -2575,17 +2575,17 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                                 output += f"Q3 (75th percentile): {value:.4f}\n"
                             else:
                                 output += f"{p}th percentile: {value:.4f}\n"
-                        
+                    
                         # Calculate IQR
                         q1 = next((row['value'] for row in result if row['percentile'] == 25), None)
                         q3 = next((row['value'] for row in result if row['percentile'] == 75), None)
                         if q1 is not None and q3 is not None:
                             output += f"\nInterquartile Range (IQR): {q3 - q1:.4f}"
-                        
+                    
                         return [types.TextContent(type="text", text=output)]
                     else:
                         return [types.TextContent(type="text", text="No data found for percentile analysis")]
-                        
+                    
                 except Exception as e:
                     error_msg = f"Failed to calculate percentiles: {str(e)}"
                     logger.error(error_msg)
@@ -2598,12 +2598,12 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                 iqr_multiplier = arguments.get("iqr_multiplier", 1.5)
                 zscore_threshold = arguments.get("zscore_threshold", 3.0)
                 where_clause = arguments.get("where_clause", "")
-                
+            
                 try:
                     where_sql = f" WHERE {where_clause}" if where_clause else ""
-                    
+                
                     outliers_found = []
-                    
+                
                     if method in ["iqr", "both"]:
                         # IQR method - simplified approach
                         # First get basic stats
@@ -2616,7 +2616,7 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                         FROM {table_name}{where_sql}
                         WHERE {column_name} IS NOT NULL
                         """
-                        
+                    
                         iqr_result = db._execute_query(stats_query)
                         if iqr_result and len(iqr_result) > 0:
                             row = iqr_result[0]
@@ -2625,7 +2625,7 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                             outliers_found.append(f"  Mean: {row['mean_val']:.4f}")
                             outliers_found.append(f"  Sample size: {row['total_count']}")
                             outliers_found.append(f"  Note: Simplified IQR analysis - use descriptive_statistics for detailed quartiles")
-                    
+                
                     if method in ["zscore", "both"]:
                         # Z-score method - simplified
                         # First get the mean
@@ -2641,7 +2641,7 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                         else:
                             mean_val = mean_result[0]['mean_val']
                             total_count = mean_result[0]['total_count']
-                            
+                        
                             # Then calculate std dev using the mean
                             zscore_query = f"""
                             SELECT 
@@ -2651,7 +2651,7 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                             FROM {table_name}{where_sql}
                             WHERE {column_name} IS NOT NULL
                             """
-                            
+                        
                             zscore_result = db._execute_query(zscore_query)
                             if zscore_result and len(zscore_result) > 0:
                                 row = zscore_result[0]
@@ -2664,10 +2664,10 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                             else:
                                 outliers_found.append(f"\nZ-Score Method (threshold={zscore_threshold}):")
                                 outliers_found.append(f"  No data available")
-                    
+                
                     output = f"Outlier Detection for {table_name}.{column_name}:\n\n" + "\n".join(outliers_found)
                     return [types.TextContent(type="text", text=output)]
-                        
+                    
                 except Exception as e:
                     error_msg = f"Failed to detect outliers: {str(e)}"
                     logger.error(error_msg)
@@ -2679,10 +2679,10 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                 time_column = arguments.get("time_column")
                 window_sizes = arguments.get("window_sizes", [7, 30, 90])
                 where_clause = arguments.get("where_clause", "")
-                
+            
                 try:
                     where_sql = f" WHERE {where_clause}" if where_clause else ""
-                    
+                
                     # Create moving averages for each window size
                     ma_queries = []
                     for window in window_sizes:
@@ -2698,17 +2698,17 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                         FROM {table_name}{where_sql}
                         WHERE {value_column} IS NOT NULL AND {time_column} IS NOT NULL
                         """)
-                    
+                
                     # For now, just show the first window size results
                     result = db._execute_query(ma_queries[0])
-                    
+                
                     if result:
                         output = f"Moving Average Analysis ({window_sizes[0]}-period) for {table_name}.{value_column}:\n\n"
-                        
+                    
                         # Show last 10 records
                         for i, row in enumerate(result[-10:]):
                             output += f"{row[time_column]}: Value={row['value']:.2f}, MA({window_sizes[0]})={row['moving_average']:.2f}\n"
-                        
+                    
                         # Calculate trend
                         if len(result) >= 2:
                             first_ma = result[0]['moving_average']
@@ -2716,11 +2716,11 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                             trend = "Increasing" if last_ma > first_ma else "Decreasing"
                             change = ((last_ma - first_ma) / first_ma) * 100 if first_ma != 0 else 0
                             output += f"\nTrend: {trend} ({change:+.1f}% change)"
-                        
+                    
                         return [types.TextContent(type="text", text=output)]
                     else:
                         return [types.TextContent(type="text", text="No data found for moving average analysis")]
-                        
+                    
                 except Exception as e:
                     error_msg = f"Failed to calculate moving averages: {str(e)}"
                     logger.error(error_msg)
@@ -2731,10 +2731,10 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                 column_name = arguments.get("column_name")
                 bins = arguments.get("bins", 10)
                 where_clause = arguments.get("where_clause", "")
-                
+            
                 try:
                     where_sql = f" WHERE {where_clause}" if where_clause else ""
-                    
+                
                     # First get basic stats
                     basic_query = f"""
                     SELECT 
@@ -2745,14 +2745,14 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                     FROM {table_name}{where_sql}
                     WHERE {column_name} IS NOT NULL
                     """
-                    
+                
                     basic_result = db._execute_query(basic_query)
                     if not basic_result or len(basic_result) == 0:
                         return [types.TextContent(type="text", text="No data found for distribution analysis")]
-                    
+                
                     basic_stats = basic_result[0]
                     mean_val = basic_stats['mean']
-                    
+                
                     # Then get standard deviation using the mean
                     dist_query = f"""
                     SELECT 
@@ -2764,31 +2764,31 @@ R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained
                     FROM {table_name}{where_sql}
                     WHERE {column_name} IS NOT NULL
                     """
-                    
+                
                     result = db._execute_query(dist_query)
-                    
+                
                     if result and len(result) > 0:
                         stats = result[0]
                         bin_width = (stats['max_val'] - stats['min_val']) / bins if stats['max_val'] != stats['min_val'] else 0
-                        
+                    
                         output = f"""Distribution Analysis for {table_name}.{column_name}:
 
-Basic Statistics:
-- Count: {stats['count']:,}
-- Mean: {stats['mean']:.4f}
-- Std Dev: {stats['std_dev']:.4f}
-- Range: {stats['min_val']:.4f} to {stats['max_val']:.4f}
+        Basic Statistics:
+        - Count: {stats['count']:,}
+        - Mean: {stats['mean']:.4f}
+        - Std Dev: {stats['std_dev']:.4f}
+        - Range: {stats['min_val']:.4f} to {stats['max_val']:.4f}
 
-Distribution Summary:
-- Requested bins: {bins}
-- Calculated bin width: {bin_width:.4f}
-- Note: Use descriptive_statistics and percentile_analysis for detailed distribution analysis
-"""
-                        
+        Distribution Summary:
+        - Requested bins: {bins}
+        - Calculated bin width: {bin_width:.4f}
+        - Note: Use descriptive_statistics and percentile_analysis for detailed distribution analysis
+        """
+                    
                         return [types.TextContent(type="text", text=output)]
                     else:
                         return [types.TextContent(type="text", text="No data found for distribution analysis")]
-                        
+                    
                 except Exception as e:
                     error_msg = f"Failed to analyze distribution: {str(e)}"
                     logger.error(error_msg)
@@ -2800,10 +2800,10 @@ Distribution Summary:
                 y_column = arguments.get("y_column")
                 confidence_level = arguments.get("confidence_level", 0.95)
                 where_clause = arguments.get("where_clause", "")
-                
+            
                 try:
                     where_sql = f" WHERE {where_clause}" if where_clause else ""
-                    
+                
                     # Calculate linear regression using direct approach
                     regression_query = f"""
                     SELECT 
@@ -2842,31 +2842,31 @@ Distribution Summary:
                     WHERE {x_column} IS NOT NULL AND {y_column} IS NOT NULL
                     HAVING COUNT(*) > 2
                     """
-                    
+                
                     result = db._execute_query(regression_query)
-                    
+                
                     if result and len(result) > 0:
                         reg = result[0]
                         r_squared = reg['r_value'] ** 2 if reg['r_value'] is not None else 0
-                        
+                    
                         output = f"""Linear Regression Analysis: {y_column} ~ {x_column}
 
-Sample Size: {reg['n']:,}
-Regression Equation: y = {reg['slope']:.4f}x + {reg['intercept']:.4f}
+        Sample Size: {reg['n']:,}
+        Regression Equation: y = {reg['slope']:.4f}x + {reg['intercept']:.4f}
 
-Coefficients:
-- Slope: {reg['slope']:.4f}
-- Intercept: {reg['intercept']:.4f}
-- Correlation (r): {reg['r_value']:.4f}
-- R-squared: {r_squared:.4f} ({r_squared*100:.1f}% of variance explained)
+        Coefficients:
+        - Slope: {reg['slope']:.4f}
+        - Intercept: {reg['intercept']:.4f}
+        - Correlation (r): {reg['r_value']:.4f}
+        - R-squared: {r_squared:.4f} ({r_squared*100:.1f}% of variance explained)
 
-Interpretation:
-For every 1-unit increase in {x_column}, {y_column} {'increases' if reg['slope'] > 0 else 'decreases'} by {abs(reg['slope']):.4f} units on average."""
-                        
+        Interpretation:
+        For every 1-unit increase in {x_column}, {y_column} {'increases' if reg['slope'] > 0 else 'decreases'} by {abs(reg['slope']):.4f} units on average."""
+                    
                         return [types.TextContent(type="text", text=output)]
                     else:
                         return [types.TextContent(type="text", text="Insufficient data for regression analysis (need >2 points)")]
-                        
+                    
                 except Exception as e:
                     error_msg = f"Failed to perform regression analysis: {str(e)}"
                     logger.error(error_msg)
@@ -2880,10 +2880,10 @@ For every 1-unit increase in {x_column}, {y_column} {'increases' if reg['slope']
                 test_value = arguments.get("test_value", 0)
                 alpha = arguments.get("alpha", 0.05)
                 where_clause = arguments.get("where_clause", "")
-                
+            
                 try:
                     where_sql = f" WHERE {where_clause}" if where_clause else ""
-                    
+                
                     if test_type == "one_sample_t":
                         # First get basic stats
                         basic_query = f"""
@@ -2893,14 +2893,14 @@ For every 1-unit increase in {x_column}, {y_column} {'increases' if reg['slope']
                         FROM {table_name}{where_sql}
                         WHERE {column_name} IS NOT NULL
                         """
-                        
+                    
                         basic_result = db._execute_query(basic_query)
                         if not basic_result or len(basic_result) == 0 or basic_result[0]['n'] <= 1:
                             return [types.TextContent(type="text", text="Insufficient data for t-test (need n > 1)")]
-                        
+                    
                         n = basic_result[0]['n']
                         mean = basic_result[0]['mean']
-                        
+                    
                         # Then calculate std dev and t-statistic
                         test_query = f"""
                         SELECT 
@@ -2917,45 +2917,45 @@ For every 1-unit increase in {x_column}, {y_column} {'increases' if reg['slope']
                         FROM {table_name}{where_sql}
                         WHERE {column_name} IS NOT NULL
                         """
-                        
+                    
                         result = db._execute_query(test_query)
-                        
+                    
                         if result and len(result) > 0:
                             test_result = result[0]
-                            
+                        
                             # Critical t-value approximation (for common cases)
                             df = test_result['n'] - 1
                             critical_t = 2.0  # Rough approximation for 95% confidence
-                            
+                        
                             p_value_approx = "< 0.05" if abs(test_result['t_statistic']) > critical_t else "> 0.05"
                             significant = abs(test_result['t_statistic']) > critical_t
-                            
+                        
                             output = f"""One-Sample t-Test Results:
 
-Null Hypothesis: μ = {test_value}
-Alternative Hypothesis: μ ≠ {test_value}
+        Null Hypothesis: μ = {test_value}
+        Alternative Hypothesis: μ ≠ {test_value}
 
-Sample Statistics:
-- Sample Size: {test_result['n']:,}
-- Sample Mean: {test_result['mean']:.4f}
-- Sample Std Dev: {test_result['std_dev']:.4f}
-- Degrees of Freedom: {df}
+        Sample Statistics:
+        - Sample Size: {test_result['n']:,}
+        - Sample Mean: {test_result['mean']:.4f}
+        - Sample Std Dev: {test_result['std_dev']:.4f}
+        - Degrees of Freedom: {df}
 
-Test Results:
-- t-statistic: {test_result['t_statistic']:.4f}
-- p-value: {p_value_approx} (approximate)
-- Significance Level: {alpha}
+        Test Results:
+        - t-statistic: {test_result['t_statistic']:.4f}
+        - p-value: {p_value_approx} (approximate)
+        - Significance Level: {alpha}
 
-Conclusion: {'Reject' if significant else 'Fail to reject'} the null hypothesis at α = {alpha}
-The sample mean is {'significantly different from' if significant else 'not significantly different from'} {test_value}."""
-                            
+        Conclusion: {'Reject' if significant else 'Fail to reject'} the null hypothesis at α = {alpha}
+        The sample mean is {'significantly different from' if significant else 'not significantly different from'} {test_value}."""
+                        
                             return [types.TextContent(type="text", text=output)]
                         else:
                             return [types.TextContent(type="text", text="Insufficient data for t-test (need >1 observation)")]
-                    
+                
                     else:
                         return [types.TextContent(type="text", text=f"Test type '{test_type}' not yet implemented. Available: one_sample_t")]
-                        
+                    
                 except Exception as e:
                     error_msg = f"Failed to perform hypothesis test: {str(e)}"
                     logger.error(error_msg)
@@ -2972,19 +2972,19 @@ The sample mean is {'significantly different from' if significant else 'not sign
                 await server.request_context.session.send_resource_updated(AnyUrl("memo://insights"))
 
                 return [types.TextContent(type="text", text="Insight added to memo")]
-                
+            
             # Handle diagnostic tools
             elif name == "validate_json":
                 if not arguments or "json_str" not in arguments:
                     raise ValueError("Missing json_str argument")
-                    
+                
                 result = db.diagnostics.validate_json(arguments["json_str"])
                 return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
-                
+            
             elif name == "test_jsonb_conversion":
                 if not arguments or "json_str" not in arguments:
                     raise ValueError("Missing json_str argument")
-                    
+                
                 result = db.diagnostics.test_jsonb_conversion(arguments["json_str"])
                 return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
 
@@ -3020,7 +3020,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                 logger.info("Retrieving database statistics")
                 # Collect multiple statistics
                 stats = {}
-                
+            
                 # Database size and page info
                 page_count = db._execute_query("PRAGMA page_count")
                 page_size = db._execute_query("PRAGMA page_size")
@@ -3028,15 +3028,15 @@ The sample mean is {'significantly different from' if significant else 'not sign
                 stats['page_size'] = page_size[0]['page_size'] if page_size else 0
                 stats['database_size_bytes'] = stats['page_count'] * stats['page_size']
                 stats['database_size_mb'] = round(stats['database_size_bytes'] / (1024 * 1024), 2)
-                
+            
                 # Table count
                 table_count = db._execute_query("SELECT COUNT(*) as count FROM sqlite_master WHERE type='table'")
                 stats['table_count'] = table_count[0]['count'] if table_count else 0
-                
+            
                 # Index count  
                 index_count = db._execute_query("SELECT COUNT(*) as count FROM sqlite_master WHERE type='index'")
                 stats['index_count'] = index_count[0]['count'] if index_count else 0
-                
+            
                 return [types.TextContent(type="text", text=json.dumps(stats, indent=2))]
 
             elif name == "index_usage_stats":
@@ -3048,7 +3048,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                     WHERE type='index' AND sql IS NOT NULL
                     ORDER BY tbl_name, name
                 """)
-                
+            
                 return [types.TextContent(type="text", text=json.dumps(indexes, indent=2))]
 
             # Handle FTS5 tools
@@ -3058,21 +3058,21 @@ The sample mean is {'significantly different from' if significant else 'not sign
                 columns = arguments["columns"]
                 content_table = arguments.get("content_table")
                 tokenizer = arguments.get("tokenizer", "unicode61")
-                
+            
                 # Build FTS5 CREATE statement
                 columns_str = ", ".join(columns)
                 fts_sql = f"CREATE VIRTUAL TABLE {table_name} USING fts5({columns_str}, tokenize='{tokenizer}')"
-                
+            
                 try:
                     db._execute_query(fts_sql)
                     result_msg = f"FTS5 table '{table_name}' created successfully with columns: {columns_str}"
-                    
+                
                     # If content table specified, populate the FTS5 table
                     if content_table:
                         populate_sql = f"INSERT INTO {table_name} SELECT {columns_str} FROM {content_table}"
                         db._execute_query(populate_sql)
                         result_msg += f" and populated from '{content_table}'"
-                    
+                
                     logger.info(result_msg)
                     return [types.TextContent(type="text", text=result_msg)]
                 except Exception as e:
@@ -3083,12 +3083,12 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "rebuild_fts_index":
                 logger.info(f"Rebuilding FTS5 index for table: {arguments.get('table_name')}")
                 table_name = arguments["table_name"]
-                
+            
                 try:
                     # Rebuild the FTS5 index
                     rebuild_sql = f"INSERT INTO {table_name}({table_name}) VALUES('rebuild')"
                     db._execute_query(rebuild_sql)
-                    
+                
                     result_msg = f"FTS5 index for '{table_name}' rebuilt successfully"
                     logger.info(result_msg)
                     return [types.TextContent(type="text", text=result_msg)]
@@ -3103,7 +3103,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                 query = arguments["query"]
                 limit = arguments.get("limit", 10)
                 snippet_length = arguments.get("snippet_length", 32)
-                
+            
                 try:
                     # Enhanced FTS5 search with ranking and snippets
                     search_sql = f"""
@@ -3115,12 +3115,12 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         ORDER BY rank 
                         LIMIT ?
                     """
-                    
+                
                     results = db._execute_query(search_sql, [query, limit])
-                    
+                
                     result_msg = f"Found {len(results)} results for query: '{query}'"
                     logger.info(result_msg)
-                    
+                
                     return [types.TextContent(type="text", text=json.dumps({
                         "query": query,
                         "results_count": len(results),
@@ -3136,37 +3136,37 @@ The sample mean is {'significantly different from' if significant else 'not sign
                 logger.info(f"Creating database backup to: {arguments.get('backup_path')}")
                 backup_path = arguments["backup_path"]
                 overwrite = arguments.get("overwrite", False)
-                
+            
                 import os
                 from pathlib import Path
-                
+            
                 try:
                     # Check if backup file already exists
                     if os.path.exists(backup_path) and not overwrite:
                         error_msg = f"Backup file already exists: {backup_path}. Use overwrite=true to replace it."
                         logger.error(error_msg)
                         return [types.TextContent(type="text", text=error_msg)]
-                    
+                
                     # Create backup directory if it doesn't exist
                     backup_dir = Path(backup_path).parent
                     backup_dir.mkdir(parents=True, exist_ok=True)
-                    
+                
                     # Perform backup using SQLite backup API
                     source_conn = sqlite3.connect(db.db_path)
                     backup_conn = sqlite3.connect(backup_path)
-                    
+                
                     # Copy database using backup API
                     source_conn.backup(backup_conn)
-                    
+                
                     source_conn.close()
                     backup_conn.close()
-                    
+                
                     # Get backup file size for confirmation
                     backup_size = os.path.getsize(backup_path)
                     result_msg = f"Database backup created successfully: {backup_path} ({backup_size} bytes)"
                     logger.info(result_msg)
                     return [types.TextContent(type="text", text=result_msg)]
-                    
+                
                 except Exception as e:
                     error_msg = f"Backup failed: {str(e)}"
                     logger.error(error_msg)
@@ -3176,21 +3176,21 @@ The sample mean is {'significantly different from' if significant else 'not sign
                 logger.info(f"Restoring database from: {arguments.get('backup_path')}")
                 backup_path = arguments["backup_path"]
                 confirm = arguments.get("confirm", False)
-                
+            
                 if not confirm:
                     error_msg = "Restore operation requires explicit confirmation. Set confirm=true to proceed."
                     logger.warning(error_msg)
                     return [types.TextContent(type="text", text=error_msg)]
-                
+            
                 import os
-                
+            
                 try:
                     # Check if backup file exists
                     if not os.path.exists(backup_path):
                         error_msg = f"Backup file not found: {backup_path}"
                         logger.error(error_msg)
                         return [types.TextContent(type="text", text=error_msg)]
-                    
+                
                     # Create a backup of current database before restore
                     current_backup = f"{db.db_path}.pre_restore_backup"
                     if os.path.exists(db.db_path):
@@ -3200,18 +3200,18 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         current_conn.close()
                         backup_conn.close()
                         logger.info(f"Current database backed up to: {current_backup}")
-                    
+                
                     # Perform restore
                     backup_conn = sqlite3.connect(backup_path)
                     target_conn = sqlite3.connect(db.db_path)
                     backup_conn.backup(target_conn)
                     backup_conn.close()
                     target_conn.close()
-                    
+                
                     result_msg = f"Database restored successfully from: {backup_path}"
                     logger.info(result_msg)
                     return [types.TextContent(type="text", text=result_msg)]
-                    
+                
                 except Exception as e:
                     error_msg = f"Restore failed: {str(e)}"
                     logger.error(error_msg)
@@ -3220,37 +3220,37 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "verify_backup":
                 logger.info(f"Verifying backup file: {arguments.get('backup_path')}")
                 backup_path = arguments["backup_path"]
-                
+            
                 import os
-                
+            
                 try:
                     # Check if backup file exists
                     if not os.path.exists(backup_path):
                         error_msg = f"Backup file not found: {backup_path}"
                         logger.error(error_msg)
                         return [types.TextContent(type="text", text=error_msg)]
-                    
+                
                     # Get file size
                     file_size = os.path.getsize(backup_path)
-                    
+                
                     # Test database connection and integrity
                     conn = sqlite3.connect(backup_path)
                     cursor = conn.cursor()
-                    
+                
                     # Run integrity check
                     cursor.execute("PRAGMA integrity_check")
                     integrity_result = cursor.fetchone()[0]
-                    
+                
                     # Get table count
                     cursor.execute("SELECT COUNT(*) FROM sqlite_master WHERE type='table'")
                     table_count = cursor.fetchone()[0]
-                    
+                
                     # Get database info
                     cursor.execute("PRAGMA user_version")
                     user_version = cursor.fetchone()[0]
-                    
+                
                     conn.close()
-                    
+                
                     verification_info = {
                         "file_path": backup_path,
                         "file_size_bytes": file_size,
@@ -3259,11 +3259,11 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         "user_version": user_version,
                         "status": "valid" if integrity_result == "ok" else "corrupted"
                     }
-                    
+                
                     result_msg = f"Backup verification completed"
                     logger.info(result_msg)
                     return [types.TextContent(type="text", text=json.dumps(verification_info, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Backup verification failed: {str(e)}"
                     logger.error(error_msg)
@@ -3274,7 +3274,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                 logger.info(f"PRAGMA operation: {arguments.get('pragma_name')}")
                 pragma_name = arguments["pragma_name"]
                 value = arguments.get("value")
-                
+            
                 try:
                     if value is not None:
                         # Set PRAGMA value
@@ -3294,10 +3294,10 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             result_msg = f"PRAGMA {pragma_name} = {pragma_value}"
                         else:
                             result_msg = f"PRAGMA {pragma_name} returned no value"
-                    
+                
                     logger.info(result_msg)
                     return [types.TextContent(type="text", text=result_msg)]
-                    
+                
                 except Exception as e:
                     error_msg = f"PRAGMA operation failed: {str(e)}"
                     logger.error(error_msg)
@@ -3306,19 +3306,19 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "pragma_optimize":
                 logger.info("Running PRAGMA optimize for query performance")
                 analysis_limit = arguments.get("analysis_limit", 1000)
-                
+            
                 try:
                     # Run PRAGMA optimize with optional analysis limit
                     if analysis_limit != 1000:
                         optimize_sql = f"PRAGMA optimize({analysis_limit})"
                     else:
                         optimize_sql = "PRAGMA optimize"
-                    
+                
                     db._execute_query(optimize_sql)
                     result_msg = f"Database optimization completed (analysis_limit: {analysis_limit})"
                     logger.info(result_msg)
                     return [types.TextContent(type="text", text=result_msg)]
-                    
+                
                 except Exception as e:
                     error_msg = f"PRAGMA optimize failed: {str(e)}"
                     logger.error(error_msg)
@@ -3328,28 +3328,28 @@ The sample mean is {'significantly different from' if significant else 'not sign
                 logger.info(f"Getting table info for: {arguments.get('table_name')}")
                 table_name = arguments["table_name"]
                 include_foreign_keys = arguments.get("include_foreign_keys", True)
-                
+            
                 try:
                     # Get table info
                     table_info = db._execute_query(f"PRAGMA table_info({table_name})")
-                    
+                
                     info_result = {
                         "table_name": table_name,
                         "columns": table_info if table_info else []
                     }
-                    
+                
                     if include_foreign_keys:
                         # Get foreign key info
                         fk_info = db._execute_query(f"PRAGMA foreign_key_list({table_name})")
                         info_result["foreign_keys"] = fk_info if fk_info else []
-                        
+                    
                         # Get index info
                         index_info = db._execute_query(f"PRAGMA index_list({table_name})")
                         info_result["indexes"] = index_info if index_info else []
-                    
+                
                     logger.info(f"Retrieved table info for {table_name}")
                     return [types.TextContent(type="text", text=json.dumps(info_result, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"PRAGMA table_info failed: {str(e)}"
                     logger.error(error_msg)
@@ -3357,19 +3357,19 @@ The sample mean is {'significantly different from' if significant else 'not sign
 
             elif name == "pragma_database_list":
                 logger.info("Getting database list")
-                
+            
                 try:
                     # Get list of attached databases
                     db_list = db._execute_query("PRAGMA database_list")
-                    
+                
                     result_info = {
                         "attached_databases": db_list if db_list else [],
                         "count": len(db_list) if db_list else 0
                     }
-                    
+                
                     logger.info(f"Retrieved {result_info['count']} database(s)")
                     return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"PRAGMA database_list failed: {str(e)}"
                     logger.error(error_msg)
@@ -3377,24 +3377,24 @@ The sample mean is {'significantly different from' if significant else 'not sign
 
             elif name == "pragma_compile_options":
                 logger.info("Getting SQLite compile options")
-                
+            
                 try:
                     # Get compile options
                     compile_options = db._execute_query("PRAGMA compile_options")
-                    
+                
                     options_list = []
                     if compile_options:
                         options_list = [list(row.values())[0] for row in compile_options]
-                    
+                
                     result_info = {
                         "sqlite_version": db.version_info.get('sqlite_version', 'Unknown'),
                         "compile_options": options_list,
                         "options_count": len(options_list)
                     }
-                    
+                
                     logger.info(f"Retrieved {len(options_list)} compile options")
                     return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"PRAGMA compile_options failed: {str(e)}"
                     logger.error(error_msg)
@@ -3404,13 +3404,13 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "create_rtree_table":
                 if not arguments or "table_name" not in arguments:
                     raise ValueError("Missing table_name argument")
-                
+            
                 table_name = arguments["table_name"]
                 dimensions = arguments.get("dimensions", 2)
                 coordinate_type = arguments.get("coordinate_type", "float")
-                
+            
                 logger.info(f"Creating R-Tree virtual table: {table_name}")
-                
+            
                 try:
                     # Build coordinate column definitions based on dimensions
                     if coordinate_type == "int":
@@ -3421,13 +3421,13 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         coord_cols = []
                         for i in range(dimensions):
                             coord_cols.extend([f"min{i}", f"max{i}"])
-                    
+                
                     # Create R-Tree virtual table
                     col_def = ", ".join(coord_cols)
                     create_sql = f"CREATE VIRTUAL TABLE {table_name} USING rtree(id, {col_def})"
-                    
+                
                     db._execute_query(create_sql)
-                    
+                
                     result_info = {
                         "table_name": table_name,
                         "type": "rtree",
@@ -3436,10 +3436,10 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         "columns": ["id"] + coord_cols,
                         "status": "created"
                     }
-                    
+                
                     logger.info(f"R-Tree table '{table_name}' created successfully")
                     return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to create R-Tree table: {str(e)}"
                     logger.error(error_msg)
@@ -3448,27 +3448,27 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "create_csv_table":
                 if not arguments or "table_name" not in arguments or "csv_file_path" not in arguments:
                     raise ValueError("Missing table_name or csv_file_path argument")
-                
+            
                 table_name = arguments["table_name"]
                 csv_file_path = arguments["csv_file_path"]
                 has_header = arguments.get("has_header", True)
                 delimiter = arguments.get("delimiter", ",")
-                
+            
                 logger.info(f"Creating CSV virtual table: {table_name} for file: {csv_file_path}")
-                
+            
                 try:
                     # Check if file exists
                     import os
                     if not os.path.exists(csv_file_path):
                         raise ValueError(f"CSV file not found: {csv_file_path}")
-                    
+                
                     # Create CSV virtual table
                     create_sql = f"""CREATE VIRTUAL TABLE {table_name} USING csv(
                         filename='{csv_file_path}',
                         header={str(has_header).lower()},
                         delimiter='{delimiter}'
                     )"""
-                    
+                
                     # Note: CSV extension may not be available in all SQLite builds
                     # We'll try to create it and provide helpful error if not supported
                     try:
@@ -3482,7 +3482,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             status = "created_as_temp_table"
                         else:
                             raise csv_error
-                    
+                
                     result_info = {
                         "table_name": table_name,
                         "type": "csv",
@@ -3491,10 +3491,10 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         "delimiter": delimiter,
                         "status": status
                     }
-                    
+                
                     logger.info(f"CSV table '{table_name}' created successfully")
                     return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to create CSV table: {str(e)}"
                     logger.error(error_msg)
@@ -3503,14 +3503,14 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "create_series_table":
                 if not arguments or "table_name" not in arguments:
                     raise ValueError("Missing table_name argument")
-                
+            
                 table_name = arguments["table_name"]
                 start_value = arguments.get("start_value", 1)
                 end_value = arguments.get("end_value", 100)
                 step = arguments.get("step", 1)
-                
+            
                 logger.info(f"Creating generate_series virtual table: {table_name}")
-                
+            
                 try:
                     # Create generate_series virtual table
                     create_sql = f"""CREATE VIRTUAL TABLE {table_name} USING generate_series(
@@ -3518,7 +3518,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         stop={end_value},
                         step={step}
                     )"""
-                    
+                
                     # Try to create the table
                     try:
                         db._execute_query(create_sql)
@@ -3538,7 +3538,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             status = "created_as_regular_table"
                         else:
                             raise series_error
-                    
+                
                     result_info = {
                         "table_name": table_name,
                         "type": "generate_series",
@@ -3547,10 +3547,10 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         "step": step,
                         "status": status
                     }
-                    
+                
                     logger.info(f"Series table '{table_name}' created successfully")
                     return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to create series table: {str(e)}"
                     logger.error(error_msg)
@@ -3558,7 +3558,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
 
             elif name == "list_virtual_tables":
                 logger.info("Listing virtual tables")
-                
+            
                 try:
                     # Query for virtual tables
                     virtual_tables_query = """
@@ -3568,9 +3568,9 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         AND sql LIKE '%VIRTUAL TABLE%'
                         ORDER BY name
                     """
-                    
+                
                     results = db._execute_query(virtual_tables_query)
-                    
+                
                     virtual_tables = []
                     if results:
                         for row in results:
@@ -3579,7 +3579,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                 "sql": row["sql"],
                                 "type": "virtual"
                             }
-                            
+                        
                             # Try to determine virtual table type
                             sql_lower = row["sql"].lower()
                             if "using rtree" in sql_lower:
@@ -3592,17 +3592,17 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                 table_info["virtual_type"] = "generate_series"
                             else:
                                 table_info["virtual_type"] = "unknown"
-                            
+                        
                             virtual_tables.append(table_info)
-                    
+                
                     result_info = {
                         "virtual_tables": virtual_tables,
                         "count": len(virtual_tables)
                     }
-                    
+                
                     logger.info(f"Found {len(virtual_tables)} virtual tables")
                     return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to list virtual tables: {str(e)}"
                     logger.error(error_msg)
@@ -3611,40 +3611,40 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "drop_virtual_table":
                 if not arguments or "table_name" not in arguments:
                     raise ValueError("Missing table_name argument")
-                
+            
                 table_name = arguments["table_name"]
                 confirm = arguments.get("confirm", False)
-                
+            
                 if not confirm:
                     return [types.TextContent(type="text", text="Error: confirm=true required to drop virtual table")]
-                
+            
                 logger.info(f"Dropping virtual table: {table_name}")
-                
+            
                 try:
                     # Verify it's a virtual table first
                     check_query = """
                         SELECT sql FROM sqlite_master 
                         WHERE type = 'table' AND name = ? AND sql LIKE '%VIRTUAL TABLE%'
                     """
-                    
+                
                     check_results = db._execute_query(check_query, [table_name])
-                    
+                
                     if not check_results:
                         return [types.TextContent(type="text", text=f"Error: '{table_name}' is not a virtual table or doesn't exist")]
-                    
+                
                     # Drop the virtual table
                     drop_sql = f"DROP TABLE {table_name}"
                     db._execute_query(drop_sql)
-                    
+                
                     result_info = {
                         "table_name": table_name,
                         "status": "dropped",
                         "type": "virtual"
                     }
-                    
+                
                     logger.info(f"Virtual table '{table_name}' dropped successfully")
                     return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to drop virtual table: {str(e)}"
                     logger.error(error_msg)
@@ -3653,11 +3653,11 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "virtual_table_info":
                 if not arguments or "table_name" not in arguments:
                     raise ValueError("Missing table_name argument")
-                
+            
                 table_name = arguments["table_name"]
-                
+            
                 logger.info(f"Getting virtual table info: {table_name}")
-                
+            
                 try:
                     # Get basic table info
                     table_query = """
@@ -3665,17 +3665,17 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         FROM sqlite_master 
                         WHERE type = 'table' AND name = ? AND sql LIKE '%VIRTUAL TABLE%'
                     """
-                    
+                
                     table_results = db._execute_query(table_query, [table_name])
-                    
+                
                     if not table_results:
                         return [types.TextContent(type="text", text=f"Error: '{table_name}' is not a virtual table or doesn't exist")]
-                    
+                
                     table_info = table_results[0]
-                    
+                
                     # Get column information
                     pragma_results = db._execute_query(f"PRAGMA table_info({table_name})")
-                    
+                
                     columns = []
                     if pragma_results:
                         for row in pragma_results:
@@ -3687,7 +3687,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                 "dflt_value": row.get("dflt_value"),
                                 "pk": bool(row.get("pk"))
                             })
-                    
+                
                     # Determine virtual table type
                     sql_lower = table_info["sql"].lower()
                     if "using rtree" in sql_lower:
@@ -3700,7 +3700,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         virtual_type = "generate_series"
                     else:
                         virtual_type = "unknown"
-                    
+                
                     result_info = {
                         "table_name": table_name,
                         "type": "virtual",
@@ -3709,10 +3709,10 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         "columns": columns,
                         "column_count": len(columns)
                     }
-                    
+                
                     logger.info(f"Retrieved info for virtual table '{table_name}'")
                     return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to get virtual table info: {str(e)}"
                     logger.error(error_msg)
@@ -3722,30 +3722,30 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "create_enhanced_csv_table":
                 if not arguments or "table_name" not in arguments or "csv_file_path" not in arguments:
                     raise ValueError("Missing table_name or csv_file_path argument")
-                
+            
                 table_name = arguments["table_name"]
                 csv_file_path = arguments["csv_file_path"]
                 delimiter = arguments.get("delimiter", ",")
                 has_header = arguments.get("has_header", True)
                 sample_rows = arguments.get("sample_rows", 100)
                 null_values = arguments.get("null_values", ["", "NULL", "null", "None", "N/A", "n/a"])
-                
+            
                 logger.info(f"Creating enhanced CSV table: {table_name} from {csv_file_path}")
-                
+            
                 try:
                     import csv
                     import os
                     from collections import Counter, defaultdict
                     import re
-                    
+                
                     # Check if file exists
                     if not os.path.exists(csv_file_path):
                         return [types.TextContent(type="text", text=f"Error: CSV file '{csv_file_path}' not found")]
-                    
+                
                     # Analyze CSV structure and infer types
                     with open(csv_file_path, 'r', encoding='utf-8') as f:
                         reader = csv.reader(f, delimiter=delimiter)
-                        
+                    
                         # Get headers
                         if has_header:
                             headers = next(reader)
@@ -3756,34 +3756,34 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             f.seek(0)  # Reset file pointer
                             if has_header:
                                 next(reader)  # Skip header row again
-                        
+                    
                         # Sample data for type inference
                         sample_data = []
                         for i, row in enumerate(reader):
                             if i >= sample_rows:
                                 break
                             sample_data.append(row)
-                    
+                
                     # Infer column types
                     column_types = {}
                     for col_idx, header in enumerate(headers):
                         col_data = [row[col_idx] if col_idx < len(row) else "" for row in sample_data]
                         # Filter out null values for type inference
                         non_null_data = [val for val in col_data if val not in null_values]
-                        
+                    
                         if not non_null_data:
                             column_types[header] = "TEXT"
                             continue
-                        
+                    
                         # Type inference logic
                         int_count = 0
                         float_count = 0
                         date_count = 0
                         bool_count = 0
-                        
+                    
                         for val in non_null_data:
                             val = val.strip()
-                            
+                        
                             # Check for boolean
                             if val.lower() in ['true', 'false', 'yes', 'no', '1', '0', 't', 'f', 'y', 'n']:
                                 bool_count += 1
@@ -3796,9 +3796,9 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             # Check for date patterns
                             elif re.match(r'^\d{4}-\d{2}-\d{2}', val) or re.match(r'^\d{2}/\d{2}/\d{4}', val):
                                 date_count += 1
-                        
+                    
                         total_non_null = len(non_null_data)
-                        
+                    
                         # Determine type based on majority
                         if int_count / total_non_null > 0.8:
                             column_types[header] = "INTEGER"
@@ -3810,7 +3810,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             column_types[header] = "TEXT"  # SQLite doesn't have DATE type
                         else:
                             column_types[header] = "TEXT"
-                    
+                
                     # Create the enhanced CSV table with proper types
                     columns_def = []
                     for header in headers:
@@ -3818,34 +3818,34 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         clean_header = re.sub(r'[^a-zA-Z0-9_]', '_', header)
                         col_type = column_types.get(header, "TEXT")
                         columns_def.append(f'"{clean_header}" {col_type}')
-                    
+                
                     # Create the table with inferred schema
                     create_sql = f"""
                         CREATE TABLE "{table_name}" (
                             {', '.join(columns_def)}
                         )
                     """
-                    
+                
                     db._execute_query(create_sql)
-                    
+                
                     # Load data with type conversion
                     with open(csv_file_path, 'r', encoding='utf-8') as f:
                         reader = csv.reader(f, delimiter=delimiter)
-                        
+                    
                         if has_header:
                             next(reader)  # Skip header
-                        
+                    
                         # Prepare insert statement
                         placeholders = ', '.join(['?' for _ in headers])
                         insert_sql = f'INSERT INTO "{table_name}" VALUES ({placeholders})'
-                        
+                    
                         # Insert data with type conversion
                         rows_inserted = 0
                         for row in reader:
                             # Pad row if necessary
                             while len(row) < len(headers):
                                 row.append("")
-                            
+                        
                             # Convert values based on inferred types
                             converted_row = []
                             for i, (val, header) in enumerate(zip(row[:len(headers)], headers)):
@@ -3865,10 +3865,10 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                             converted_row.append(None)
                                     else:
                                         converted_row.append(val)
-                            
+                        
                             db._execute_query(insert_sql, converted_row)
                             rows_inserted += 1
-                    
+                
                     # Generate summary
                     result_info = {
                         "table_name": table_name,
@@ -3879,11 +3879,11 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         "sample_rows_analyzed": min(sample_rows, len(sample_data)),
                         "null_values_treated": null_values
                     }
-                    
+                
                     logger.info(f"Enhanced CSV table '{table_name}' created successfully with {rows_inserted} rows")
                     import json as json_module
                     return [types.TextContent(type="text", text=json_module.dumps(result_info, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to create enhanced CSV table: {str(e)}"
                     logger.error(error_msg)
@@ -3892,25 +3892,25 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "create_json_collection_table":
                 if not arguments or "table_name" not in arguments or "json_file_path" not in arguments:
                     raise ValueError("Missing table_name or json_file_path argument")
-                
+            
                 table_name = arguments["table_name"]
                 json_file_path = arguments["json_file_path"]
                 format_type = arguments.get("format_type", "auto")
                 flatten_nested = arguments.get("flatten_nested", True)
                 max_depth = arguments.get("max_depth", 3)
                 sample_records = arguments.get("sample_records", 100)
-                
+            
                 logger.info(f"Creating JSON collection table: {table_name} from {json_file_path}")
-                
+            
                 try:
                     import json
                     import os
                     from collections import defaultdict
-                    
+                
                     # Check if file exists
                     if not os.path.exists(json_file_path):
                         return [types.TextContent(type="text", text=f"Error: JSON file '{json_file_path}' not found")]
-                    
+                
                     # Auto-detect format if needed
                     if format_type == "auto":
                         with open(json_file_path, 'r', encoding='utf-8') as f:
@@ -3919,10 +3919,10 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                 format_type = "json_array"
                             else:
                                 format_type = "jsonl"
-                    
+                
                     # Load sample data for schema inference
                     sample_data = []
-                    
+                
                     with open(json_file_path, 'r', encoding='utf-8') as f:
                         if format_type == "json_array":
                             data = json.load(f)
@@ -3934,7 +3934,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                 if line.strip():
                                     import json as json_module
                                     sample_data.append(json_module.loads(line))
-                    
+                
                     # Flatten nested objects and infer schema
                     def flatten_dict(d, parent_key='', sep='.', depth=0):
                         items = []
@@ -3943,7 +3943,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             import json as json_module
                             items.append((parent_key, json_module.dumps(d) if isinstance(d, (dict, list)) else str(d)))
                             return items
-                        
+                    
                         if isinstance(d, dict):
                             for k, v in d.items():
                                 new_key = f"{parent_key}{sep}{k}" if parent_key else k
@@ -3959,15 +3959,15 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         else:
                             items.append((parent_key, d))
                         return items
-                    
+                
                     # Collect all possible columns from sample data
                     all_columns = set()
                     column_types = defaultdict(lambda: defaultdict(int))
-                    
+                
                     for record in sample_data:
                         flattened = dict(flatten_dict(record) if flatten_nested else record.items())
                         all_columns.update(flattened.keys())
-                        
+                    
                         # Infer types for each column
                         for key, value in flattened.items():
                             if value is None:
@@ -3982,13 +3982,13 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                 column_types[key]['text'] += 1
                             else:
                                 column_types[key]['text'] += 1  # Default for complex types
-                    
+                
                     # Determine final column types
                     final_schema = {}
                     for col in all_columns:
                         type_counts = column_types[col]
                         total = sum(type_counts.values())
-                        
+                    
                         if type_counts['integer'] / total > 0.8:
                             final_schema[col] = 'INTEGER'
                         elif (type_counts['integer'] + type_counts['real']) / total > 0.8:
@@ -3997,7 +3997,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             final_schema[col] = 'INTEGER'
                         else:
                             final_schema[col] = 'TEXT'
-                    
+                
                     # Create table with inferred schema
                     columns_def = []
                     for col in sorted(all_columns):
@@ -4006,21 +4006,21 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         clean_col = re.sub(r'[^a-zA-Z0-9_]', '_', col)
                         col_type = final_schema[col]
                         columns_def.append(f'"{clean_col}" {col_type}')
-                    
+                
                     create_sql = f"""
                         CREATE TABLE "{table_name}" (
                             {', '.join(columns_def)}
                         )
                     """
-                    
+                
                     db._execute_query(create_sql)
-                    
+                
                     # Load all data
                     rows_inserted = 0
                     column_list = sorted(all_columns)
                     placeholders = ', '.join(['?' for _ in column_list])
                     insert_sql = f'INSERT INTO "{table_name}" VALUES ({placeholders})'
-                    
+                
                     with open(json_file_path, 'r', encoding='utf-8') as f:
                         if format_type == "json_array":
                             import json as json_module
@@ -4029,10 +4029,10 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         else:  # jsonl
                             import json as json_module
                             records = [json_module.loads(line) for line in f if line.strip()]
-                    
+                
                     for record in records:
                         flattened = dict(flatten_dict(record) if flatten_nested else record.items())
-                        
+                    
                         # Create row with all columns in order
                         row_data = []
                         for col in column_list:
@@ -4053,10 +4053,10 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                         row_data.append(None)
                                 else:
                                     row_data.append(str(value) if value is not None else None)
-                        
+                    
                         db._execute_query(insert_sql, row_data)
                         rows_inserted += 1
-                    
+                
                     # Generate summary
                     result_info = {
                         "table_name": table_name,
@@ -4069,11 +4069,11 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         "max_depth": max_depth,
                         "sample_records_analyzed": min(sample_records, len(sample_data))
                     }
-                    
+                
                     logger.info(f"JSON collection table '{table_name}' created successfully with {rows_inserted} rows")
                     import json as json_module
                     return [types.TextContent(type="text", text=json_module.dumps(result_info, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to create JSON collection table: {str(e)}"
                     logger.error(error_msg)
@@ -4082,33 +4082,33 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "analyze_csv_schema":
                 if not arguments or "csv_file_path" not in arguments:
                     raise ValueError("Missing csv_file_path argument")
-                
+            
                 csv_file_path = arguments["csv_file_path"]
                 delimiter = arguments.get("delimiter", ",")
                 has_header = arguments.get("has_header", True)
                 sample_rows = arguments.get("sample_rows", 1000)
-                
+            
                 logger.info(f"Analyzing CSV schema: {csv_file_path}")
-                
+            
                 try:
                     import csv
                     import os
                     from collections import Counter
                     import re
-                    
+                
                     if not os.path.exists(csv_file_path):
                         return [types.TextContent(type="text", text=f"Error: CSV file '{csv_file_path}' not found")]
-                    
+                
                     analysis_result = {
                         "file_path": csv_file_path,
                         "file_size": os.path.getsize(csv_file_path),
                         "delimiter": delimiter,
                         "has_header": has_header
                     }
-                    
+                
                     with open(csv_file_path, 'r', encoding='utf-8') as f:
                         reader = csv.reader(f, delimiter=delimiter)
-                        
+                    
                         # Get headers and count total rows
                         if has_header:
                             headers = next(reader)
@@ -4116,47 +4116,47 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             first_row = next(reader)
                             headers = [f"column_{i+1}" for i in range(len(first_row))]
                             f.seek(0)
-                        
+                    
                         # Count total rows
                         total_rows = sum(1 for _ in reader)
                         f.seek(0)
                         if has_header:
                             next(reader)  # Skip header again
-                        
+                    
                         # Sample data for analysis
                         sample_data = []
                         for i, row in enumerate(reader):
                             if i >= sample_rows:
                                 break
                             sample_data.append(row)
-                    
+                
                     analysis_result.update({
                         "total_rows": total_rows,
                         "columns": len(headers),
                         "sample_rows_analyzed": len(sample_data),
                         "column_analysis": {}
                     })
-                    
+                
                     # Analyze each column
                     for col_idx, header in enumerate(headers):
                         col_data = [row[col_idx] if col_idx < len(row) else "" for row in sample_data]
-                        
+                    
                         # Basic statistics
                         non_empty = [val for val in col_data if val.strip()]
                         empty_count = len(col_data) - len(non_empty)
-                        
+                    
                         # Type analysis
                         int_count = sum(1 for val in non_empty if re.match(r'^-?\d+$', val.strip()))
                         float_count = sum(1 for val in non_empty if re.match(r'^-?\d*\.\d+$', val.strip()))
                         date_count = sum(1 for val in non_empty if re.match(r'^\d{4}-\d{2}-\d{2}', val.strip()) or re.match(r'^\d{2}/\d{2}/\d{4}', val.strip()))
-                        
+                    
                         # Unique values
                         unique_values = len(set(col_data))
-                        
+                    
                         # Most common values
                         value_counts = Counter(col_data)
                         most_common = value_counts.most_common(5)
-                        
+                    
                         # Inferred type
                         if int_count / len(non_empty) > 0.8 if non_empty else False:
                             inferred_type = "INTEGER"
@@ -4166,7 +4166,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             inferred_type = "DATE (stored as TEXT)"
                         else:
                             inferred_type = "TEXT"
-                        
+                    
                         analysis_result["column_analysis"][header] = {
                             "index": col_idx,
                             "total_values": len(col_data),
@@ -4182,11 +4182,11 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             "most_common_values": most_common,
                             "sample_values": col_data[:10]
                         }
-                    
+                
                     logger.info(f"CSV schema analysis completed for '{csv_file_path}'")
                     import json as json_module
                     return [types.TextContent(type="text", text=json_module.dumps(analysis_result, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to analyze CSV schema: {str(e)}"
                     logger.error(error_msg)
@@ -4195,7 +4195,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
             # SpatiaLite Geospatial Tools (v2.0.0)
             elif name == "load_spatialite":
                 force_reload = arguments.get("force_reload", False)
-                
+            
                 try:
                     # Check if SpatiaLite is already loaded
                     if not force_reload:
@@ -4209,7 +4209,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                 )]
                         except:
                             pass  # Not loaded, continue with loading
-                    
+                
                     # Try to load SpatiaLite extension
                     try:
                         # Common SpatiaLite extension names/paths
@@ -4217,12 +4217,12 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         script_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
                         local_spatialite_dir = os.path.join(script_dir, "mod_spatialite-5.1.0-win-amd64")
                         local_spatialite = os.path.join(local_spatialite_dir, "mod_spatialite.dll")
-                        
+                    
                         # Add local SpatiaLite directory to PATH for Windows DLL dependencies
                         if os.path.exists(local_spatialite_dir):
                             original_path = os.environ.get('PATH', '')
                             os.environ['PATH'] = local_spatialite_dir + os.pathsep + original_path
-                        
+                    
                         spatialite_paths = [
                             local_spatialite,  # Local installation first
                             "mod_spatialite",
@@ -4231,7 +4231,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             "/usr/lib/x86_64-linux-gnu/mod_spatialite.so",
                             "/usr/local/lib/mod_spatialite.so"
                         ]
-                        
+                    
                         loaded = False
                         last_error = None
                         loaded_path = None
@@ -4251,7 +4251,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             except Exception as e:
                                 last_error = str(e)
                                 continue
-                        
+                    
                         if not loaded:
                             error_msg = f"Failed to load SpatiaLite extension. Please ensure SpatiaLite is installed on your system."
                             if last_error:
@@ -4262,13 +4262,13 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                 type="text",
                                 text=error_msg
                             )]
-                        
+                    
                         # Try to initialize spatial metadata (optional for some SpatiaLite versions)
                         try:
                             db._execute_query("SELECT InitSpatialMetaData(1)")
                         except:
                             pass  # Some versions don't require this
-                        
+                    
                         # Get version info
                         try:
                             result = db._execute_query("SELECT spatialite_version(), proj4_version(), geos_version()")
@@ -4280,64 +4280,64 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                 versions = {"spatialite_version()": result[0].get("spatialite_version()", "Unknown") if result else "Unknown"}
                         except:
                             versions = {"spatialite_version()": "Unknown"}
-                        
+                    
                         return [types.TextContent(
                             type="text",
                             text=f"SpatiaLite loaded successfully!\n\nVersions:\n- SpatiaLite: {versions.get('spatialite_version()', 'Unknown')}\n- PROJ4: {versions.get('proj4_version()', 'Unknown')}\n- GEOS: {versions.get('geos_version()', 'Unknown')}"
                         )]
-                        
+                    
                     except Exception as e:
                         return [types.TextContent(
                             type="text",
                             text=f"Failed to load SpatiaLite: {str(e)}\n\nPlease ensure SpatiaLite is installed on your system."
                         )]
-                        
+                    
                 except Exception as e:
                     return [types.TextContent(
                         type="text",
                         text=f"Error loading SpatiaLite: {str(e)}"
                     )]
-            
+        
             elif name == "create_spatial_table":
                 table_name = arguments.get("table_name")
                 geometry_column = arguments.get("geometry_column", "geom")
                 geometry_type = arguments.get("geometry_type", "POINT")
                 srid = arguments.get("srid", 4326)
                 additional_columns = arguments.get("additional_columns", [])
-                
+            
                 try:
                     # Create the base table
                     columns_sql = []
                     columns_sql.append("id INTEGER PRIMARY KEY AUTOINCREMENT")
-                    
+                
                     for col in additional_columns:
                         columns_sql.append(f'"{col["name"]}" {col["type"]}')
-                    
+                
                     create_sql = f'CREATE TABLE "{table_name}" ({", ".join(columns_sql)})'
                     db._execute_query(create_sql)
-                    
+                
                     # Add geometry column using SpatiaLite
                     add_geom_sql = f"""
                         SELECT AddGeometryColumn('{table_name}', '{geometry_column}', {srid}, '{geometry_type}', 'XY')
                     """
                     db._execute_query(add_geom_sql)
-                    
+                
                     return [types.TextContent(
                         type="text",
                         text=f"Spatial table '{table_name}' created successfully with {geometry_type} geometry column '{geometry_column}' (SRID: {srid})"
                     )]
-                    
+                
                 except Exception as e:
                     return [types.TextContent(
                         type="text",
                         text=f"Failed to create spatial table: {str(e)}"
                     )]
-            
+        
             elif name == "spatial_index":
                 table_name = arguments.get("table_name")
                 geometry_column = arguments.get("geometry_column", "geom")
                 action = arguments.get("action", "create")
-                
+            
                 try:
                     if action == "create":
                         # Create spatial index
@@ -4349,65 +4349,65 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         index_sql = f"SELECT DisableSpatialIndex('{table_name}', '{geometry_column}')"
                         db._execute_query(index_sql)
                         message = f"Spatial index dropped on {table_name}.{geometry_column}"
-                    
+                
                     return [types.TextContent(
                         type="text",
                         text=message
                     )]
-                    
+                
                 except Exception as e:
                     return [types.TextContent(
                         type="text",
                         text=f"Failed to {action} spatial index: {str(e)}"
                     )]
-            
+        
             elif name == "spatial_query":
                 query = arguments.get("query")
                 explain = arguments.get("explain", False)
-                
+            
                 try:
                     if explain:
                         # Show query plan
                         explain_query = f"EXPLAIN QUERY PLAN {query}"
                         plan_results = db._execute_query(explain_query)
-                        
+                    
                         plan_text = "Query Execution Plan:\n"
                         for row in plan_results:
                             plan_text += f"  {' | '.join(str(val) for val in row.values())}\n"
                         plan_text += "\n"
                     else:
                         plan_text = ""
-                    
+                
                     # Execute the spatial query
                     results = db._execute_query(query)
-                    
+                
                     if not results:
                         return [types.TextContent(
                             type="text",
                             text=f"{plan_text}Spatial query executed successfully. No results returned."
                         )]
-                    
+                
                     # Results are already formatted as list of dictionaries
                     formatted_results = results
-                    
+                
                     return [types.TextContent(
                         type="text",
                         text=f"{plan_text}Spatial query results ({len(results)} rows):\n{json.dumps(formatted_results, indent=2, default=str)}"
                     )]
-                    
+                
                 except Exception as e:
                     return [types.TextContent(
                         type="text",
                         text=f"Spatial query failed: {str(e)}"
                     )]
-            
+        
             elif name == "geometry_operations":
                 operation = arguments.get("operation")
                 geometry1 = arguments.get("geometry1")
                 geometry2 = arguments.get("geometry2", "")
                 buffer_distance = arguments.get("buffer_distance", 1.0)
                 table_name = arguments.get("table_name", "")
-                
+            
                 try:
                     # Build the spatial SQL based on operation
                     if operation == "buffer":
@@ -4433,9 +4433,9 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             type="text",
                             text=f"Invalid operation '{operation}' or missing required geometry2 parameter"
                         )]
-                    
+                
                     result_data = db._execute_query(sql)
-                    
+                
                     if result_data and len(result_data) > 0:
                         # Get the first value from the first row
                         first_result = result_data[0]
@@ -4449,28 +4449,28 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             type="text",
                             text=f"Geometry operation '{operation}' returned no result"
                         )]
-                        
+                    
                 except Exception as e:
                     return [types.TextContent(
                         type="text",
                         text=f"Geometry operation failed: {str(e)}"
                     )]
-            
+        
             elif name == "import_shapefile":
                 shapefile_path = arguments.get("shapefile_path")
                 table_name = arguments.get("table_name")
                 encoding = arguments.get("encoding", "UTF-8")
                 srid = arguments.get("srid", 0)
-                
+            
                 try:
                     # Use SpatiaLite's shapefile import functionality
                     # Note: This requires the shapefile to be accessible and properly formatted
                     import_sql = f"""
                         SELECT ImportSHP('{shapefile_path}', '{table_name}', '{encoding}', {srid})
                     """
-                    
+                
                     result = db._execute_query(import_sql)
-                    
+                
                     if result and len(result) > 0:
                         # Check if import was successful (result should be 1)
                         import_success = list(result[0].values())[0] == 1
@@ -4478,7 +4478,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             # Check how many rows were imported
                             count_result = db._execute_query(f"SELECT COUNT(*) FROM {table_name}")
                             count = count_result[0]["COUNT(*)"] if count_result else 0
-                            
+                        
                             return [types.TextContent(
                                 type="text",
                                 text=f"Shapefile imported successfully! {count} features imported into table '{table_name}'"
@@ -4488,13 +4488,13 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             type="text",
                             text=f"Failed to import shapefile. Please check the file path and format."
                         )]
-                        
+                    
                 except Exception as e:
                     return [types.TextContent(
                         type="text",
                         text=f"Shapefile import failed: {str(e)}\n\nNote: Ensure the shapefile exists and SpatiaLite has proper permissions to read it."
                     )]
-            
+        
             elif name == "spatial_analysis":
                 analysis_type = arguments.get("analysis_type")
                 source_table = arguments.get("source_table")
@@ -4502,7 +4502,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                 geometry_column = arguments.get("geometry_column", "geom")
                 max_distance = arguments.get("max_distance", 1000.0)
                 limit = arguments.get("limit", 100)
-                
+            
                 try:
                     if analysis_type == "nearest_neighbor" and target_table:
                         sql = f"""
@@ -4545,23 +4545,23 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             type="text",
                             text=f"Invalid analysis type '{analysis_type}' or missing required target_table parameter"
                         )]
-                    
+                
                     results = db._execute_query(sql)
-                    
+                
                     if not results:
                         return [types.TextContent(
                             type="text",
                             text=f"Spatial analysis '{analysis_type}' completed. No results found."
                         )]
-                    
+                
                     # Results are already formatted as list of dictionaries
                     formatted_results = results
-                    
+                
                     return [types.TextContent(
                         type="text",
                         text=f"Spatial analysis '{analysis_type}' results ({len(results)} rows):\n{json.dumps(formatted_results, indent=2, default=str)}"
                     )]
-                    
+                
                 except Exception as e:
                     return [types.TextContent(
                         type="text",
@@ -4571,26 +4571,26 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "analyze_json_schema":
                 if not arguments or "json_file_path" not in arguments:
                     raise ValueError("Missing json_file_path argument")
-                
+            
                 json_file_path = arguments["json_file_path"]
                 format_type = arguments.get("format_type", "auto")
                 sample_records = arguments.get("sample_records", 1000)
-                
+            
                 logger.info(f"Analyzing JSON schema: {json_file_path}")
-                
+            
                 try:
                     import json
                     import os
                     from collections import defaultdict, Counter
-                    
+                
                     if not os.path.exists(json_file_path):
                         return [types.TextContent(type="text", text=f"Error: JSON file '{json_file_path}' not found")]
-                    
+                
                     analysis_result = {
                         "file_path": json_file_path,
                         "file_size": os.path.getsize(json_file_path)
                     }
-                    
+                
                     # Auto-detect format if needed
                     if format_type == "auto":
                         with open(json_file_path, 'r', encoding='utf-8') as f:
@@ -4599,9 +4599,9 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                 format_type = "json_array"
                             else:
                                 format_type = "jsonl"
-                    
+                
                     analysis_result["detected_format"] = format_type
-                    
+                
                     # Load and analyze data
                     with open(json_file_path, 'r', encoding='utf-8') as f:
                         if format_type == "json_array":
@@ -4618,22 +4618,22 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             total_records = len(all_lines)
                             import json as json_module
                             sample_data = [json_module.loads(line) for line in all_lines[:sample_records]]
-                    
+                
                     analysis_result.update({
                         "total_records": total_records,
                         "sample_records_analyzed": len(sample_data)
                     })
-                    
+                
                     # Analyze schema structure
                     def analyze_structure(obj, path="", depth=0):
                         schema_info = defaultdict(lambda: {"types": Counter(), "depths": [], "examples": []})
-                        
+                    
                         if isinstance(obj, dict):
                             for key, value in obj.items():
                                 current_path = f"{path}.{key}" if path else key
                                 schema_info[current_path]["depths"].append(depth)
                                 schema_info[current_path]["examples"].append(value)
-                                
+                            
                                 if value is None:
                                     schema_info[current_path]["types"]["null"] += 1
                                 elif isinstance(value, bool):
@@ -4660,24 +4660,24 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                         schema_info[k]["types"].update(v["types"])
                                         schema_info[k]["depths"].extend(v["depths"])
                                         schema_info[k]["examples"].extend(v["examples"])
-                        
-                        return schema_info
                     
+                        return schema_info
+                
                     # Aggregate schema from all sample records
                     all_schema_info = defaultdict(lambda: {"types": Counter(), "depths": [], "examples": []})
-                    
+                
                     for record in sample_data:
                         record_schema = analyze_structure(record)
                         for path, info in record_schema.items():
                             all_schema_info[path]["types"].update(info["types"])
                             all_schema_info[path]["depths"].extend(info["depths"])
                             all_schema_info[path]["examples"].extend(info["examples"])
-                    
+                
                     # Process schema information
                     schema_analysis = {}
                     for path, info in all_schema_info.items():
                         most_common_type = info["types"].most_common(1)[0] if info["types"] else ("unknown", 0)
-                        
+                    
                         # Determine SQLite type
                         if most_common_type[0] in ["integer", "boolean"]:
                             sqlite_type = "INTEGER"
@@ -4685,7 +4685,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             sqlite_type = "REAL"
                         else:
                             sqlite_type = "TEXT"
-                        
+                    
                         schema_analysis[path] = {
                             "occurrence_count": sum(info["types"].values()),
                             "occurrence_percentage": sum(info["types"].values()) / len(sample_data) * 100,
@@ -4695,14 +4695,14 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             "average_depth": sum(info["depths"]) / len(info["depths"]) if info["depths"] else 0,
                             "sample_values": [str(x) for x in list(set(str(ex) for ex in info["examples"]))[:5]]
                         }
-                    
+                
                     analysis_result["schema_analysis"] = schema_analysis
                     analysis_result["total_unique_fields"] = len(schema_analysis)
-                    
+                
                     logger.info(f"JSON schema analysis completed for '{json_file_path}'")
                     import json as json_module
                     return [types.TextContent(type="text", text=json_module.dumps(analysis_result, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to analyze JSON schema: {str(e)}"
                     logger.error(error_msg)
@@ -4712,19 +4712,19 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "create_embeddings_table":
                 if not arguments or "table_name" not in arguments:
                     raise ValueError("Missing table_name argument")
-                
+            
                 table_name = arguments["table_name"]
                 embedding_dim = arguments.get("embedding_dim", 1536)
                 metadata_columns = arguments.get("metadata_columns", [])
-                
+            
                 logger.info(f"Creating embeddings table: {table_name}")
-                
+            
                 try:
                     # Create table schema with embedding storage
                     metadata_cols = ""
                     if metadata_columns:
                         metadata_cols = ", " + ", ".join([f"{col} TEXT" for col in metadata_columns])
-                    
+                
                     create_sql = f"""
                     CREATE TABLE {table_name} (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -4735,13 +4735,13 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP{metadata_cols}
                     )
                     """
-                    
+                
                     db._execute_query(create_sql)
-                    
+                
                     # Create index for faster searches
                     index_sql = f"CREATE INDEX idx_{table_name}_embedding_dim ON {table_name}(embedding_dim)"
                     db._execute_query(index_sql)
-                    
+                
                     result_info = {
                         "table_name": table_name,
                         "embedding_dim": embedding_dim,
@@ -4749,10 +4749,10 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         "status": "created",
                         "storage_format": "JSON text (SQLite compatible)"
                     }
-                    
+                
                     logger.info(f"Embeddings table '{table_name}' created successfully")
                     return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to create embeddings table: {str(e)}"
                     logger.error(error_msg)
@@ -4761,39 +4761,39 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "store_embedding":
                 if not arguments or not all(key in arguments for key in ["table_name", "embedding", "content"]):
                     raise ValueError("Missing required arguments: table_name, embedding, content")
-                
+            
                 table_name = arguments["table_name"]
                 embedding = arguments["embedding"]
                 content = arguments["content"]
                 metadata = arguments.get("metadata", {})
-                
+            
                 logger.info(f"Storing embedding in table: {table_name}")
-                
+            
                 try:
                     # Validate embedding is a list of numbers
                     if not isinstance(embedding, list) or not all(isinstance(x, (int, float)) for x in embedding):
                         raise ValueError("Embedding must be an array of numbers")
-                    
+                
                     embedding_dim = len(embedding)
                     embedding_json = json.dumps(embedding)
-                    
+                
                     # Build insert query with metadata
                     columns = ["content", "embedding", "embedding_dim"]
                     values = [content, embedding_json, embedding_dim]
                     placeholders = ["?", "?", "?"]
-                    
+                
                     for key, value in metadata.items():
                         columns.append(key)
                         values.append(str(value))
                         placeholders.append("?")
-                    
+                
                     insert_sql = f"""
                     INSERT INTO {table_name} ({", ".join(columns)})
                     VALUES ({", ".join(placeholders)})
                     """
-                    
+                
                     db._execute_query(insert_sql, values)
-                    
+                
                     result_info = {
                         "table_name": table_name,
                         "content_length": len(content),
@@ -4801,10 +4801,10 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         "metadata_keys": list(metadata.keys()),
                         "status": "stored"
                     }
-                    
+                
                     logger.info(f"Embedding stored successfully in '{table_name}'")
                     return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to store embedding: {str(e)}"
                     logger.error(error_msg)
@@ -4813,37 +4813,37 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "calculate_similarity":
                 if not arguments or not all(key in arguments for key in ["vector1", "vector2"]):
                     raise ValueError("Missing required arguments: vector1, vector2")
-                
+            
                 vector1 = arguments["vector1"]
                 vector2 = arguments["vector2"]
-                
+            
                 try:
                     # Validate vectors
                     if not isinstance(vector1, list) or not isinstance(vector2, list):
                         raise ValueError("Both vectors must be arrays of numbers")
-                    
+                
                     if len(vector1) != len(vector2):
                         raise ValueError(f"Vector dimensions must match: {len(vector1)} vs {len(vector2)}")
-                    
+                
                     if not all(isinstance(x, (int, float)) for x in vector1 + vector2):
                         raise ValueError("All vector elements must be numbers")
-                    
+                
                     # Calculate cosine similarity
                     import math
-                    
+                
                     # Dot product
                     dot_product = sum(a * b for a, b in zip(vector1, vector2))
-                    
+                
                     # Magnitudes
                     magnitude1 = math.sqrt(sum(a * a for a in vector1))
                     magnitude2 = math.sqrt(sum(b * b for b in vector2))
-                    
+                
                     # Avoid division by zero
                     if magnitude1 == 0 or magnitude2 == 0:
                         similarity = 0.0
                     else:
                         similarity = dot_product / (magnitude1 * magnitude2)
-                    
+                
                     result_info = {
                         "cosine_similarity": similarity,
                         "vector1_dim": len(vector1),
@@ -4852,9 +4852,9 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         "magnitude1": magnitude1,
                         "magnitude2": magnitude2
                     }
-                    
+                
                     return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to calculate similarity: {str(e)}"
                     logger.error(error_msg)
@@ -4863,50 +4863,50 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "semantic_search":
                 if not arguments or not all(key in arguments for key in ["table_name", "query_embedding"]):
                     raise ValueError("Missing required arguments: table_name, query_embedding")
-                
+            
                 table_name = arguments["table_name"]
                 query_embedding = arguments["query_embedding"]
                 limit = arguments.get("limit", 10)
                 similarity_threshold = arguments.get("similarity_threshold", 0.0)
-                
+            
                 logger.info(f"Performing semantic search in table: {table_name}")
-                
+            
                 try:
                     # Validate query embedding
                     if not isinstance(query_embedding, list) or not all(isinstance(x, (int, float)) for x in query_embedding):
                         raise ValueError("Query embedding must be an array of numbers")
-                    
+                
                     query_dim = len(query_embedding)
-                    
+                
                     # Get all embeddings from table
                     select_sql = f"SELECT id, content, embedding, embedding_dim FROM {table_name} WHERE embedding_dim = ?"
                     results = db._execute_query(select_sql, [query_dim])
-                    
+                
                     if not results:
                         return [types.TextContent(type="text", text=json.dumps({
                             "results": [],
                             "message": f"No embeddings found with dimension {query_dim}"
                         }, indent=2))]
-                    
+                
                     # Calculate similarities
                     similarities = []
                     import math
-                    
+                
                     # Pre-calculate query vector magnitude
                     query_magnitude = math.sqrt(sum(x * x for x in query_embedding))
-                    
+                
                     for row in results:
                         stored_embedding = json.loads(row["embedding"])
-                        
+                    
                         # Calculate cosine similarity
                         dot_product = sum(a * b for a, b in zip(query_embedding, stored_embedding))
                         stored_magnitude = math.sqrt(sum(x * x for x in stored_embedding))
-                        
+                    
                         if query_magnitude == 0 or stored_magnitude == 0:
                             similarity = 0.0
                         else:
                             similarity = dot_product / (query_magnitude * stored_magnitude)
-                        
+                    
                         if similarity >= similarity_threshold:
                             similarities.append({
                                 "id": row["id"],
@@ -4914,11 +4914,11 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                 "similarity": similarity,
                                 "embedding_dim": row["embedding_dim"]
                             })
-                    
+                
                     # Sort by similarity (descending) and limit
                     similarities.sort(key=lambda x: x["similarity"], reverse=True)
                     top_results = similarities[:limit]
-                    
+                
                     result_info = {
                         "results": top_results,
                         "query_dim": query_dim,
@@ -4926,10 +4926,10 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         "results_returned": len(top_results),
                         "similarity_threshold": similarity_threshold
                     }
-                    
+                
                     logger.info(f"Semantic search completed: {len(top_results)} results returned")
                     return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to perform semantic search: {str(e)}"
                     logger.error(error_msg)
@@ -4938,7 +4938,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "hybrid_search":
                 if not arguments or not all(key in arguments for key in ["embeddings_table", "fts_table", "query_text", "query_embedding"]):
                     raise ValueError("Missing required arguments: embeddings_table, fts_table, query_text, query_embedding")
-                
+            
                 embeddings_table = arguments["embeddings_table"]
                 fts_table = arguments["fts_table"]
                 query_text = arguments["query_text"]
@@ -4946,16 +4946,16 @@ The sample mean is {'significantly different from' if significant else 'not sign
                 keyword_weight = arguments.get("keyword_weight", 0.5)
                 semantic_weight = arguments.get("semantic_weight", 0.5)
                 limit = arguments.get("limit", 10)
-                
+            
                 logger.info(f"Performing hybrid search: FTS({fts_table}) + Semantic({embeddings_table})")
-                
+            
                 try:
                     # Normalize weights
                     total_weight = keyword_weight + semantic_weight
                     if total_weight > 0:
                         keyword_weight = keyword_weight / total_weight
                         semantic_weight = semantic_weight / total_weight
-                    
+                
                     # Get FTS5 results with BM25 scores
                     fts_sql = f"""
                     SELECT *, bm25({fts_table}) as bm25_score
@@ -4964,41 +4964,41 @@ The sample mean is {'significantly different from' if significant else 'not sign
                     ORDER BY bm25_score
                     LIMIT ?
                     """
-                    
+                
                     fts_results = db._execute_query(fts_sql, [query_text, limit * 2])  # Get more for hybrid ranking
-                    
+                
                     # Get semantic search results
                     query_dim = len(query_embedding)
                     semantic_sql = f"SELECT id, content, embedding FROM {embeddings_table} WHERE embedding_dim = ?"
                     semantic_results = db._execute_query(semantic_sql, [query_dim])
-                    
+                
                     # Calculate semantic similarities
                     import math
                     query_magnitude = math.sqrt(sum(x * x for x in query_embedding))
-                    
+                
                     semantic_scores = {}
                     for row in semantic_results:
                         stored_embedding = json.loads(row["embedding"])
                         dot_product = sum(a * b for a, b in zip(query_embedding, stored_embedding))
                         stored_magnitude = math.sqrt(sum(x * x for x in stored_embedding))
-                        
+                    
                         if query_magnitude > 0 and stored_magnitude > 0:
                             similarity = dot_product / (query_magnitude * stored_magnitude)
                             semantic_scores[row["content"]] = similarity
-                    
+                
                     # Combine scores
                     hybrid_results = []
                     for fts_row in fts_results:
                         content = fts_row.get("content", "")
-                        
+                    
                         # Normalize BM25 score (higher is better, but negative)
                         bm25_normalized = max(0, 1 + fts_row.get("bm25_score", 0) / 10)  # Simple normalization
-                        
+                    
                         semantic_score = semantic_scores.get(content, 0.0)
-                        
+                    
                         # Calculate hybrid score
                         hybrid_score = (keyword_weight * bm25_normalized) + (semantic_weight * semantic_score)
-                        
+                    
                         hybrid_results.append({
                             "content": content,
                             "hybrid_score": hybrid_score,
@@ -5007,11 +5007,11 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             "bm25_raw": fts_row.get("bm25_score", 0),
                             **{k: v for k, v in fts_row.items() if k not in ["content", "bm25_score"]}
                         })
-                    
+                
                     # Sort by hybrid score and limit
                     hybrid_results.sort(key=lambda x: x["hybrid_score"], reverse=True)
                     top_results = hybrid_results[:limit]
-                    
+                
                     result_info = {
                         "results": top_results,
                         "search_params": {
@@ -5026,10 +5026,10 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             "final_results": len(top_results)
                         }
                     }
-                    
+                
                     logger.info(f"Hybrid search completed: {len(top_results)} results returned")
                     return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to perform hybrid search: {str(e)}"
                     logger.error(error_msg)
@@ -5038,20 +5038,20 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "batch_similarity_search":
                 if not arguments or not all(key in arguments for key in ["table_name", "query_embeddings"]):
                     raise ValueError("Missing required arguments: table_name, query_embeddings")
-                
+            
                 table_name = arguments["table_name"]
                 query_embeddings = arguments["query_embeddings"]
                 limit = arguments.get("limit", 10)
-                
+            
                 logger.info(f"Performing batch similarity search in table: {table_name}")
-                
+            
                 try:
                     # Validate query embeddings
                     if not isinstance(query_embeddings, list) or not query_embeddings:
                         raise ValueError("Query embeddings must be a non-empty array of vectors")
-                    
+                
                     batch_results = []
-                    
+                
                     for i, query_embedding in enumerate(query_embeddings):
                         if not isinstance(query_embedding, list) or not all(isinstance(x, (int, float)) for x in query_embedding):
                             batch_results.append({
@@ -5060,22 +5060,22 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                 "results": []
                             })
                             continue
-                        
+                    
                         # Perform individual semantic search
                         query_dim = len(query_embedding)
                         select_sql = f"SELECT id, content, embedding FROM {table_name} WHERE embedding_dim = ?"
                         results = db._execute_query(select_sql, [query_dim])
-                        
+                    
                         similarities = []
                         import math
-                        
+                    
                         query_magnitude = math.sqrt(sum(x * x for x in query_embedding))
-                        
+                    
                         for row in results:
                             stored_embedding = json.loads(row["embedding"])
                             dot_product = sum(a * b for a, b in zip(query_embedding, stored_embedding))
                             stored_magnitude = math.sqrt(sum(x * x for x in stored_embedding))
-                            
+                        
                             if query_magnitude > 0 and stored_magnitude > 0:
                                 similarity = dot_product / (query_magnitude * stored_magnitude)
                                 similarities.append({
@@ -5083,26 +5083,26 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                     "content": row["content"],
                                     "similarity": similarity
                                 })
-                        
+                    
                         similarities.sort(key=lambda x: x["similarity"], reverse=True)
                         top_results = similarities[:limit]
-                        
+                    
                         batch_results.append({
                             "query_index": i,
                             "query_dim": query_dim,
                             "results": top_results,
                             "total_candidates": len(results)
                         })
-                    
+                
                     result_info = {
                         "batch_results": batch_results,
                         "total_queries": len(query_embeddings),
                         "limit_per_query": limit
                     }
-                    
+                
                     logger.info(f"Batch similarity search completed: {len(query_embeddings)} queries processed")
                     return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to perform batch similarity search: {str(e)}"
                     logger.error(error_msg)
@@ -5112,20 +5112,20 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "create_vector_index":
                 if not arguments or "table_name" not in arguments:
                     raise ValueError("Missing required argument: table_name")
-                
+            
                 table_name = arguments["table_name"]
                 embedding_column = arguments.get("embedding_column", "embedding")
                 index_type = arguments.get("index_type", "cluster")
                 num_clusters = arguments.get("num_clusters", 100)
                 grid_size = arguments.get("grid_size", 10)
-                
+            
                 logger.info(f"Creating vector index for table: {table_name}, type: {index_type}")
-                
+            
                 try:
                     # Create vector index metadata table if it doesn't exist
                     index_table = f"{table_name}_vector_index"
                     metadata_table = f"{table_name}_index_metadata"
-                    
+                
                     # Create metadata table
                     metadata_sql = f"""
                     CREATE TABLE IF NOT EXISTS {metadata_table} (
@@ -5141,18 +5141,18 @@ The sample mean is {'significantly different from' if significant else 'not sign
                     )
                     """
                     db._execute_query(metadata_sql)
-                    
+                
                     # Get embeddings from source table
                     select_sql = f"SELECT id, {embedding_column} FROM {table_name}"
                     embeddings_data = db._execute_query(select_sql)
-                    
+                
                     if not embeddings_data:
                         return [types.TextContent(type="text", text=f"No embeddings found in table {table_name}")]
-                    
+                
                     import json
                     import math
                     import random
-                    
+                
                     # Parse embeddings
                     vectors = []
                     for row in embeddings_data:
@@ -5161,47 +5161,47 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             vectors.append({"id": row["id"], "embedding": embedding})
                         except:
                             continue
-                    
+                
                     if not vectors:
                         return [types.TextContent(type="text", text=f"No valid embeddings found in table {table_name}")]
-                    
+                
                     # Create index based on type
                     if index_type == "cluster":
                         # K-means clustering for approximate search
                         # Simple k-means implementation
                         embedding_dim = len(vectors[0]["embedding"])
-                        
+                    
                         # Initialize centroids randomly
                         centroids = []
                         for _ in range(min(num_clusters, len(vectors))):
                             centroid = [random.uniform(-1, 1) for _ in range(embedding_dim)]
                             centroids.append(centroid)
-                        
+                    
                         # Simple k-means (3 iterations for performance)
                         for iteration in range(3):
                             clusters = [[] for _ in range(len(centroids))]
-                            
+                        
                             # Assign vectors to closest centroids
                             for vector in vectors:
                                 embedding = vector["embedding"]
                                 best_cluster = 0
                                 best_distance = float('inf')
-                                
+                            
                                 for i, centroid in enumerate(centroids):
                                     distance = sum((a - b) ** 2 for a, b in zip(embedding, centroid))
                                     if distance < best_distance:
                                         best_distance = distance
                                         best_cluster = i
-                                
-                                clusters[best_cluster].append(vector["id"])
                             
+                                clusters[best_cluster].append(vector["id"])
+                        
                             # Update centroids
                             for i, cluster in enumerate(clusters):
                                 if cluster:
                                     cluster_vectors = [v["embedding"] for v in vectors if v["id"] in cluster]
                                     if cluster_vectors:
                                         centroids[i] = [sum(dim) / len(cluster_vectors) for dim in zip(*cluster_vectors)]
-                        
+                    
                         # Create index table
                         index_sql = f"""
                         CREATE TABLE IF NOT EXISTS {index_table} (
@@ -5212,10 +5212,10 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         )
                         """
                         db._execute_query(index_sql)
-                        
+                    
                         # Clear existing index
                         db._execute_query(f"DELETE FROM {index_table}")
-                        
+                    
                         # Insert cluster assignments
                         for cluster_id, cluster in enumerate(clusters):
                             if cluster:
@@ -5223,22 +5223,22 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                 for vector_id in cluster:
                                     insert_sql = f"INSERT INTO {index_table} (cluster_id, vector_id, centroid_embedding) VALUES (?, ?, ?)"
                                     db._execute_query(insert_sql, [cluster_id, vector_id, centroid_json])
-                    
+                
                     elif index_type == "grid":
                         # Spatial grid indexing
                         # Create grid-based index for faster spatial queries
                         embedding_dim = len(vectors[0]["embedding"])
-                        
+                    
                         # Calculate min/max bounds
                         min_vals = [float('inf')] * embedding_dim
                         max_vals = [float('-inf')] * embedding_dim
-                        
+                    
                         for vector in vectors:
                             embedding = vector["embedding"]
                             for i, val in enumerate(embedding):
                                 min_vals[i] = min(min_vals[i], val)
                                 max_vals[i] = max(max_vals[i], val)
-                        
+                    
                         # Create grid index table
                         index_sql = f"""
                         CREATE TABLE IF NOT EXISTS {index_table} (
@@ -5249,15 +5249,15 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         )
                         """
                         db._execute_query(index_sql)
-                        
+                    
                         # Clear existing index
                         db._execute_query(f"DELETE FROM {index_table}")
-                        
+                    
                         # Assign vectors to grid cells
                         for vector in vectors:
                             embedding = vector["embedding"]
                             grid_coords = []
-                            
+                        
                             for i, val in enumerate(embedding):
                                 if max_vals[i] > min_vals[i]:
                                     normalized = (val - min_vals[i]) / (max_vals[i] - min_vals[i])
@@ -5265,13 +5265,13 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                 else:
                                     grid_coord = 0
                                 grid_coords.append(grid_coord)
-                            
+                        
                             grid_id = "_".join(map(str, grid_coords))
                             grid_coords_json = json.dumps(grid_coords)
-                            
+                        
                             insert_sql = f"INSERT INTO {index_table} (grid_id, vector_id, grid_coords) VALUES (?, ?, ?)"
                             db._execute_query(insert_sql, [grid_id, vector["id"], grid_coords_json])
-                    
+                
                     # Update metadata
                     metadata_insert = f"""
                     INSERT OR REPLACE INTO {metadata_table} 
@@ -5279,7 +5279,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                     VALUES (1, ?, ?, ?, ?, ?, 'ready')
                     """
                     db._execute_query(metadata_insert, [index_type, embedding_column, num_clusters, grid_size, len(vectors)])
-                    
+                
                     result = {
                         "table_name": table_name,
                         "index_type": index_type,
@@ -5292,10 +5292,10 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         },
                         "status": "ready"
                     }
-                    
+                
                     logger.info(f"Vector index created successfully for {table_name}: {len(vectors)} vectors indexed")
                     return [types.TextContent(type="text", text=json.dumps(result, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to create vector index: {str(e)}"
                     logger.error(error_msg)
@@ -5304,23 +5304,23 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "optimize_vector_search":
                 if not arguments or not all(key in arguments for key in ["table_name", "query_embedding"]):
                     raise ValueError("Missing required arguments: table_name, query_embedding")
-                
+            
                 table_name = arguments["table_name"]
                 query_embedding = arguments["query_embedding"]
                 limit = arguments.get("limit", 10)
                 search_k = arguments.get("search_k", 5)
                 similarity_threshold = arguments.get("similarity_threshold", 0.0)
-                
+            
                 logger.info(f"Performing optimized vector search in table: {table_name}")
-                
+            
                 try:
                     import json
                     import math
-                    
+                
                     # Check if vector index exists
                     index_table = f"{table_name}_vector_index"
                     metadata_table = f"{table_name}_index_metadata"
-                    
+                
                     # Get index metadata
                     metadata_sql = f"SELECT * FROM {metadata_table} WHERE id = 1"
                     try:
@@ -5328,31 +5328,31 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         if not metadata:
                             # Fallback to regular semantic search
                             return [types.TextContent(type="text", text="No vector index found. Use create_vector_index first or use regular semantic_search.")]
-                        
+                    
                         index_info = metadata[0]
                         index_type = index_info["index_type"]
-                        
+                    
                     except:
                         return [types.TextContent(type="text", text="No vector index found. Use create_vector_index first.")]
-                    
+                
                     query_magnitude = math.sqrt(sum(x * x for x in query_embedding))
                     candidates = []
-                    
+                
                     if index_type == "cluster":
                         # Find closest clusters
                         cluster_sql = f"SELECT DISTINCT cluster_id, centroid_embedding FROM {index_table}"
                         clusters = db._execute_query(cluster_sql)
-                        
+                    
                         cluster_distances = []
                         for cluster in clusters:
                             centroid = json.loads(cluster["centroid_embedding"])
                             distance = sum((a - b) ** 2 for a, b in zip(query_embedding, centroid))
                             cluster_distances.append((cluster["cluster_id"], distance))
-                        
+                    
                         # Sort by distance and take top search_k clusters
                         cluster_distances.sort(key=lambda x: x[1])
                         top_clusters = [c[0] for c in cluster_distances[:search_k]]
-                        
+                    
                         # Get candidate vectors from top clusters
                         placeholders = ",".join("?" for _ in top_clusters)
                         candidates_sql = f"""
@@ -5362,29 +5362,29 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         WHERE vi.cluster_id IN ({placeholders})
                         """
                         candidates = db._execute_query(candidates_sql, top_clusters)
-                        
+                    
                     elif index_type == "grid":
                         # Find nearby grid cells
                         embedding_dim = len(query_embedding)
-                        
+                    
                         # Get grid parameters from a sample
                         sample_sql = f"SELECT grid_coords FROM {index_table} LIMIT 1"
                         sample = db._execute_query(sample_sql)
                         if sample:
                             sample_coords = json.loads(sample[0]["grid_coords"])
                             grid_size = max(sample_coords) + 1
-                            
+                        
                             # Calculate query's grid position
                             # This is simplified - in practice, you'd need the original bounds
                             query_grid = [min(int(abs(x) * grid_size) % grid_size, grid_size - 1) for x in query_embedding]
-                            
+                        
                             # Search nearby cells
                             search_cells = []
                             for offset in range(-1, 2):  # Search 3x3x... neighborhood
                                 cell_coords = [max(0, min(grid_size - 1, coord + offset)) for coord in query_grid]
                                 cell_id = "_".join(map(str, cell_coords))
                                 search_cells.append(cell_id)
-                            
+                        
                             # Get candidates from nearby cells
                             placeholders = ",".join("?" for _ in search_cells)
                             candidates_sql = f"""
@@ -5394,14 +5394,14 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             WHERE vi.grid_id IN ({placeholders})
                             """
                             candidates = db._execute_query(candidates_sql, search_cells)
-                    
+                
                     # Calculate similarities for candidates
                     similarities = []
                     for row in candidates:
                         stored_embedding = json.loads(row["embedding"])
                         dot_product = sum(a * b for a, b in zip(query_embedding, stored_embedding))
                         stored_magnitude = math.sqrt(sum(x * x for x in stored_embedding))
-                        
+                    
                         if query_magnitude > 0 and stored_magnitude > 0:
                             similarity = dot_product / (query_magnitude * stored_magnitude)
                             if similarity >= similarity_threshold:
@@ -5410,11 +5410,11 @@ The sample mean is {'significantly different from' if significant else 'not sign
                                     "content": row["content"],
                                     "similarity": similarity
                                 })
-                    
+                
                     # Sort by similarity and limit results
                     similarities.sort(key=lambda x: x["similarity"], reverse=True)
                     results = similarities[:limit]
-                    
+                
                     result_info = {
                         "table_name": table_name,
                         "index_type": index_type,
@@ -5428,10 +5428,10 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         },
                         "results": results
                     }
-                    
+                
                     logger.info(f"Optimized vector search completed: {len(candidates)} candidates, {len(results)} results")
                     return [types.TextContent(type="text", text=json.dumps(result_info, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to perform optimized vector search: {str(e)}"
                     logger.error(error_msg)
@@ -5440,29 +5440,29 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "analyze_vector_index":
                 if not arguments or "table_name" not in arguments:
                     raise ValueError("Missing required argument: table_name")
-                
+            
                 table_name = arguments["table_name"]
-                
+            
                 try:
                     import json
-                    
+                
                     index_table = f"{table_name}_vector_index"
                     metadata_table = f"{table_name}_index_metadata"
-                    
+                
                     # Get index metadata
                     metadata_sql = f"SELECT * FROM {metadata_table} WHERE id = 1"
                     metadata = db._execute_query(metadata_sql)
-                    
+                
                     if not metadata:
                         return [types.TextContent(type="text", text=f"No vector index found for table {table_name}")]
-                    
+                
                     index_info = metadata[0]
-                    
+                
                     # Get index statistics
                     stats_sql = f"SELECT COUNT(*) as total_entries FROM {index_table}"
                     stats = db._execute_query(stats_sql)
                     total_entries = stats[0]["total_entries"] if stats else 0
-                    
+                
                     # Get distribution statistics based on index type
                     distribution = {}
                     if index_info["index_type"] == "cluster":
@@ -5480,7 +5480,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             "grid_cells": len(db._execute_query(f"SELECT DISTINCT grid_id FROM {index_table}")),
                             "top_cells": [{"grid_id": row["grid_id"], "size": row["count"]} for row in grid_stats]
                         }
-                    
+                
                     analysis = {
                         "table_name": table_name,
                         "index_metadata": {
@@ -5500,9 +5500,9 @@ The sample mean is {'significantly different from' if significant else 'not sign
                             "memory_overhead": f"{total_entries * 50} bytes (approximate)"
                         }
                     }
-                    
+                
                     return [types.TextContent(type="text", text=json.dumps(analysis, indent=2))]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to analyze vector index: {str(e)}"
                     logger.error(error_msg)
@@ -5511,31 +5511,31 @@ The sample mean is {'significantly different from' if significant else 'not sign
             elif name == "rebuild_vector_index":
                 if not arguments or "table_name" not in arguments:
                     raise ValueError("Missing required argument: table_name")
-                
+            
                 table_name = arguments["table_name"]
                 force = arguments.get("force", False)
-                
+            
                 try:
                     metadata_table = f"{table_name}_index_metadata"
-                    
+                
                     # Get existing index metadata
                     metadata_sql = f"SELECT * FROM {metadata_table} WHERE id = 1"
                     metadata = db._execute_query(metadata_sql)
-                    
+                
                     if not metadata:
                         return [types.TextContent(type="text", text=f"No vector index found for table {table_name}. Use create_vector_index first.")]
-                    
+                
                     index_info = metadata[0]
-                    
+                
                     # Check if rebuild is needed (unless forced)
                     if not force:
                         # Simple heuristic: check if source table has more rows than indexed
                         source_count_sql = f"SELECT COUNT(*) as count FROM {table_name}"
                         source_count = db._execute_query(source_count_sql)[0]["count"]
-                        
+                    
                         if source_count <= index_info["total_vectors"]:
                             return [types.TextContent(type="text", text="Index appears current. Use force=true to rebuild anyway.")]
-                    
+                
                     # Rebuild by calling create_vector_index with same parameters
                     rebuild_args = {
                         "table_name": table_name,
@@ -5544,16 +5544,16 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         "num_clusters": index_info["num_clusters"],
                         "grid_size": index_info["grid_size"]
                     }
-                    
+                
                     # Remove None values
                     rebuild_args = {k: v for k, v in rebuild_args.items() if v is not None}
-                    
+                
                     logger.info(f"Rebuilding vector index for {table_name}")
-                    
+                
                     # Temporarily call create_vector_index logic
                     # This is a simplified approach - in production, you'd refactor to avoid duplication
                     return [types.TextContent(type="text", text=f"Index rebuild initiated for {table_name}. Use create_vector_index with same parameters to complete rebuild.")]
-                    
+                
                 except Exception as e:
                     error_msg = f"Failed to rebuild vector index: {str(e)}"
                     logger.error(error_msg)
@@ -5566,21 +5566,21 @@ The sample mean is {'significantly different from' if significant else 'not sign
             if name == "read_query":
                 if not arguments["query"].strip().upper().startswith("SELECT"):
                     raise ValueError("Only SELECT queries are allowed for read_query")
-                    
+                
                 results = db._execute_query(arguments["query"])
                 return [types.TextContent(type="text", text=str(results))]
 
             elif name == "write_query":
                 if arguments["query"].strip().upper().startswith("SELECT"):
                     raise ValueError("SELECT queries are not allowed for write_query")
-                    
+                
                 results = db._execute_query(arguments["query"])
                 return [types.TextContent(type="text", text=str(results))]
 
             elif name == "create_table":
                 if not arguments["query"].strip().upper().startswith("CREATE TABLE"):
                     raise ValueError("Only CREATE TABLE statements are allowed")
-                    
+                
                 db._execute_query(arguments["query"])
                 return [types.TextContent(type="text", text="Table created successfully")]
 
@@ -5611,26 +5611,26 @@ The sample mean is {'significantly different from' if significant else 'not sign
                 arguments.get("query", "") if arguments else "")
             error_analysis = SqliteErrorHandler.analyze_sqlite_error(e, 
                 arguments.get("query", "") if arguments else "")
-                
+            
             # Format a helpful error message
             if error_analysis["is_json_related"] and error_analysis["suggestions"]:
                 error_msg = f"Database error: {str(e)}\nSuggestion: {error_analysis['suggestions'][0]}"
             else:
                 error_msg = f"Database error: {str(e)}"
-                
+            
             # Log the error
             db.json_logger.log_error(e, {
                 "tool": name,
                 "arguments": arguments,
                 "error_analysis": error_analysis
             })
-            
+        
             return [types.TextContent(type="text", text=error_msg)]
-            
+        
         except Exception as e:
             # General error handling
             error_msg = f"Error: {str(e)}"
-            
+        
             # Log the error
             logger.error(f"Tool execution error: {e}")
             if hasattr(db, 'json_logger'):
@@ -5638,7 +5638,7 @@ The sample mean is {'significantly different from' if significant else 'not sign
                     "tool": name,
                     "arguments": arguments
                 })
-                
+            
             return [types.TextContent(type="text", text=error_msg)]
 
     # Text Processing Function Implementations
@@ -5646,25 +5646,25 @@ The sample mean is {'significantly different from' if significant else 'not sign
         """Extract text using PCRE-style regular expressions."""
         if not all(key in arguments for key in ["table_name", "column_name", "pattern"]):
             raise ValueError("Missing required arguments: table_name, column_name, pattern")
-        
+    
         table_name = arguments["table_name"]
         column_name = arguments["column_name"]
         pattern = arguments["pattern"]
         flags = arguments.get("flags", "")
         limit = arguments.get("limit", 100)
         where_clause = arguments.get("where_clause", "")
-        
+    
         try:
             # Compile regex with flags
             regex_flags = 0
             if 'i' in flags.lower(): regex_flags |= re.IGNORECASE
             if 'm' in flags.lower(): regex_flags |= re.MULTILINE
             if 's' in flags.lower(): regex_flags |= re.DOTALL
-            
+        
             compiled_pattern = re.compile(pattern, regex_flags)
-            
+        
             where_sql = f" WHERE {where_clause}" if where_clause else ""
-            
+        
             # Use the global db instance
             query = f"""
             SELECT {column_name}, rowid
@@ -5672,12 +5672,12 @@ The sample mean is {'significantly different from' if significant else 'not sign
             WHERE {column_name} IS NOT NULL
             LIMIT {limit}
             """
-                
+            
             result = self._execute_query(query)
-                
+            
             if not result:
                 return [types.TextContent(type="text", text="No data found for regex extraction")]
-                
+            
             matches = []
             for row in result:
                 text = str(row[column_name])
@@ -5692,15 +5692,15 @@ The sample mean is {'significantly different from' if significant else 'not sign
                         "start": match_result.start(),
                         "end": match_result.end()
                     })
-                
+            
             output = f"""Regex Extraction Results for {table_name}.{column_name}:
-Pattern: {pattern}
-Flags: {flags if flags else 'None'}
+        Pattern: {pattern}
+        Flags: {flags if flags else 'None'}
 
-Found {len(matches)} matches:
+        Found {len(matches)} matches:
 
-"""
-                
+        """
+            
             for i, match in enumerate(matches[:20], 1):  # Show first 20 matches
                 output += f"Match {i} (Row {match['rowid']}):\n"
                 output += f"  Text: {match['original_text'][:100]}{'...' if len(match['original_text']) > 100 else ''}\n"
@@ -5708,12 +5708,12 @@ Found {len(matches)} matches:
                 if len(match['groups']) > 1:
                     output += f"  Groups: {match['groups']}\n"
                 output += "\n"
-                
+            
             if len(matches) > 20:
                 output += f"... and {len(matches) - 20} more matches\n"
-                
+            
             return [types.TextContent(type="text", text=output)]
-                
+            
         except re.error as e:
             error_msg = f"Invalid regex pattern: {str(e)}"
             logger.error(error_msg)
@@ -5727,7 +5727,7 @@ Found {len(matches)} matches:
         """Replace text using PCRE-style regular expressions."""
         if not all(key in arguments for key in ["table_name", "column_name", "pattern", "replacement"]):
             raise ValueError("Missing required arguments: table_name, column_name, pattern, replacement")
-        
+    
         table_name = arguments["table_name"]
         column_name = arguments["column_name"]
         pattern = arguments["pattern"]
@@ -5736,18 +5736,18 @@ Found {len(matches)} matches:
         max_replacements = arguments.get("max_replacements", 0)  # 0 = all
         where_clause = arguments.get("where_clause", "")
         preview_only = arguments.get("preview_only", True)  # Safe default
-        
+    
         try:
             # Compile regex with flags
             regex_flags = 0
             if 'i' in flags.lower(): regex_flags |= re.IGNORECASE
             if 'm' in flags.lower(): regex_flags |= re.MULTILINE
             if 's' in flags.lower(): regex_flags |= re.DOTALL
-            
+        
             compiled_pattern = re.compile(pattern, regex_flags)
-            
+        
             where_sql = f" WHERE {where_clause}" if where_clause else ""
-            
+        
             # Use the global db instance
             query = f"""
             SELECT {column_name}, rowid
@@ -5755,12 +5755,12 @@ Found {len(matches)} matches:
             WHERE {column_name} IS NOT NULL
             LIMIT 100
             """
-                
+            
             result = self._execute_query(query)
-                
+            
             if not result:
                 return [types.TextContent(type="text", text="No data found for regex replacement")]
-                
+            
             replacements = []
             for row in result:
                 original_text = str(row[column_name])
@@ -5768,7 +5768,7 @@ Found {len(matches)} matches:
                     new_text = compiled_pattern.sub(replacement, original_text, count=max_replacements)
                 else:
                     new_text = compiled_pattern.sub(replacement, original_text)
-                    
+                
                 if new_text != original_text:
                     replacements.append({
                         "rowid": row["rowid"],
@@ -5776,25 +5776,25 @@ Found {len(matches)} matches:
                         "new": new_text,
                         "changes": len(compiled_pattern.findall(original_text))
                     })
-                
+            
             output = f"""Regex Replacement {'Preview' if preview_only else 'Results'} for {table_name}.{column_name}:
-Pattern: {pattern}
-Replacement: {replacement}
-Flags: {flags if flags else 'None'}
-Max Replacements: {'All' if max_replacements == 0 else max_replacements}
+        Pattern: {pattern}
+        Replacement: {replacement}
+        Flags: {flags if flags else 'None'}
+        Max Replacements: {'All' if max_replacements == 0 else max_replacements}
 
-Found {len(replacements)} rows with changes:
+        Found {len(replacements)} rows with changes:
 
-"""
-                
+        """
+            
             for i, repl in enumerate(replacements[:10], 1):  # Show first 10
                 output += f"Row {repl['rowid']} ({repl['changes']} changes):\n"
                 output += f"  Before: {repl['original'][:100]}{'...' if len(repl['original']) > 100 else ''}\n"
                 output += f"  After:  {repl['new'][:100]}{'...' if len(repl['new']) > 100 else ''}\n\n"
-                
+            
             if len(replacements) > 10:
                 output += f"... and {len(replacements) - 10} more rows\n"
-                
+            
             if preview_only:
                 output += "\nTo execute these changes, set preview_only=false"
             else:
@@ -5806,11 +5806,11 @@ Found {len(replacements)} rows with changes:
                     WHERE rowid = ?
                     """
                     self._execute_query(update_query, (repl['new'], repl['rowid']))
-                    
+                
                 output += f"\n✅ Successfully updated {len(replacements)} rows"
-                
+            
             return [types.TextContent(type="text", text=output)]
-                
+            
         except re.error as e:
             error_msg = f"Invalid regex pattern: {str(e)}"
             logger.error(error_msg)
@@ -5824,17 +5824,17 @@ Found {len(replacements)} rows with changes:
         """Find fuzzy matches using Levenshtein distance and sequence matching."""
         if not all(key in arguments for key in ["table_name", "column_name", "search_term"]):
             raise ValueError("Missing required arguments: table_name, column_name, search_term")
-        
+    
         table_name = arguments["table_name"]
         column_name = arguments["column_name"]
         search_term = arguments["search_term"]
         threshold = arguments.get("threshold", 0.6)  # Similarity threshold (0-1)
         limit = arguments.get("limit", 50)
         where_clause = arguments.get("where_clause", "")
-        
+    
         try:
             where_sql = f" WHERE {where_clause}" if where_clause else ""
-            
+        
             # Use the global db instance
             query = f"""
             SELECT {column_name}, rowid
@@ -5842,27 +5842,27 @@ Found {len(replacements)} rows with changes:
             WHERE {column_name} IS NOT NULL
             LIMIT {limit * 2}
             """
-                
+            
             result = self._execute_query(query)
-                
+            
             if not result:
                 return [types.TextContent(type="text", text="No data found for fuzzy matching")]
-                
+            
             matches = []
             search_lower = search_term.lower()
-                
+            
             for row in result:
                 text = str(row[column_name])
                 text_lower = text.lower()
-                    
+                
                 # Calculate similarity using difflib
                 similarity = difflib.SequenceMatcher(None, search_lower, text_lower).ratio()
-                    
+                
                 if similarity >= threshold:
                     # Also calculate Levenshtein-like distance
                     max_len = max(len(search_term), len(text))
                     distance = max_len - (similarity * max_len)
-                        
+                    
                     matches.append({
                         "rowid": row["rowid"],
                         "text": text,
@@ -5870,30 +5870,30 @@ Found {len(replacements)} rows with changes:
                         "distance": int(distance),
                         "exact_match": search_lower == text_lower
                     })
-                
+            
             # Sort by similarity (highest first)
             matches.sort(key=lambda x: (-x["similarity"], x["distance"]))
             matches = matches[:limit]
-                
+            
             output = f"""Fuzzy Match Results for {table_name}.{column_name}:
-Search Term: "{search_term}"
-Threshold: {threshold:.2f} (similarity)
-Found {len(matches)} matches:
+        Search Term: "{search_term}"
+        Threshold: {threshold:.2f} (similarity)
+        Found {len(matches)} matches:
 
-"""
-                
+        """
+            
             for i, match in enumerate(matches, 1):
                 match_type = "🎯 EXACT" if match["exact_match"] else "🔍 FUZZY"
                 output += f"{i}. {match_type} (Row {match['rowid']})\n"
                 output += f"   Text: {match['text']}\n"
                 output += f"   Similarity: {match['similarity']:.3f} | Distance: {match['distance']}\n\n"
-                
+            
             if not matches:
                 output += f"No matches found above threshold {threshold:.2f}\n"
                 output += "Try lowering the threshold or using a different search term."
-                
+            
             return [types.TextContent(type="text", text=output)]
-                
+            
         except Exception as e:
             error_msg = f"Failed to perform fuzzy matching: {str(e)}"
             logger.error(error_msg)
@@ -5903,22 +5903,22 @@ Found {len(matches)} matches:
         """Find phonetic matches using Soundex and Metaphone-like algorithms."""
         if not all(key in arguments for key in ["table_name", "column_name", "search_term"]):
             raise ValueError("Missing required arguments: table_name, column_name, search_term")
-        
+    
         table_name = arguments["table_name"]
         column_name = arguments["column_name"]
         search_term = arguments["search_term"]
         algorithm = arguments.get("algorithm", "soundex")  # soundex, double_metaphone
         limit = arguments.get("limit", 50)
         where_clause = arguments.get("where_clause", "")
-        
+    
         def soundex(word):
             """Simple Soundex implementation."""
             if not word:
                 return "0000"
-            
+        
             word = word.upper()
             soundex_code = word[0]
-            
+        
             # Mapping for consonants
             mapping = {
             'B': '1', 'F': '1', 'P': '1', 'V': '1',
@@ -5928,47 +5928,47 @@ Found {len(matches)} matches:
             'M': '5', 'N': '5',
             'R': '6'
             }
-            
+        
             for char in word[1:]:
                 if char in mapping:
                     code = mapping[char]
                     if soundex_code[-1] != code:  # Avoid consecutive duplicates
                         soundex_code += code
-                        
+                    
             # Pad with zeros or truncate to 4 characters
             soundex_code = (soundex_code + "0000")[:4]
             return soundex_code
-        
+    
         def simple_metaphone(word):
             """Simplified Metaphone-like algorithm."""
             if not word:
                 return ""
-            
+        
             word = word.upper()
             metaphone = ""
-            
+        
             # Simple phonetic transformations
             transformations = [
             ('PH', 'F'), ('GH', 'F'), ('CK', 'K'), ('SCH', 'SK'),
             ('QU', 'KW'), ('WH', 'W'), ('TH', 'T'), ('SH', 'S'),
             ('CH', 'K'), ('C', 'K'), ('G', 'J'), ('Y', 'I')
             ]
-            
+        
             for old, new in transformations:
                 word = word.replace(old, new)
-            
+        
             # Remove vowels except at the beginning
             if word:
                 metaphone = word[0]
                 for char in word[1:]:
                     if char not in 'AEIOU':
                         metaphone += char
-            
-            return metaphone[:6]  # Limit length
         
+            return metaphone[:6]  # Limit length
+    
         try:
             where_sql = f" WHERE {where_clause}" if where_clause else ""
-            
+        
             # Use the global db instance
             query = f"""
             SELECT {column_name}, rowid
@@ -5976,12 +5976,12 @@ Found {len(matches)} matches:
             WHERE {column_name} IS NOT NULL
             LIMIT {limit * 2}
             """
-                
+            
             result = self._execute_query(query)
-                
+            
             if not result:
                 return [types.TextContent(type="text", text="No data found for phonetic matching")]
-                
+            
             # Calculate phonetic code for search term
             if algorithm.lower() == "soundex":
                 search_code = soundex(search_term)
@@ -5989,59 +5989,59 @@ Found {len(matches)} matches:
             else:
                 search_code = simple_metaphone(search_term)
                 algo_name = "Metaphone"
-                
+            
             matches = []
-                
+            
             for row in result:
                 text = str(row[column_name])
-                    
+                
                 # Handle multi-word text by checking each word
                 words = text.split()
                 best_match = False
-                    
+                
                 for word in words:
                     # Clean word (remove punctuation)
                     clean_word = re.sub(r'[^A-Za-z]', '', word)
                     if not clean_word:
                         continue
-                            
+                        
                     if algorithm.lower() == "soundex":
                         word_code = soundex(clean_word)
                     else:
                         word_code = simple_metaphone(clean_word)
-                        
+                    
                     if word_code == search_code:
                         best_match = True
                         break
-                    
+                
                 if best_match:
                     matches.append({
                         "rowid": row["rowid"],
                         "text": text,
                         "phonetic_code": search_code
                     })
-                
+            
             matches = matches[:limit]
-                
+            
             output = f"""Phonetic Match Results for {table_name}.{column_name}:
-Search Term: "{search_term}"
-Algorithm: {algo_name}
-Phonetic Code: {search_code}
-Found {len(matches)} matches:
+        Search Term: "{search_term}"
+        Algorithm: {algo_name}
+        Phonetic Code: {search_code}
+        Found {len(matches)} matches:
 
-"""
-                
+        """
+            
             for i, match in enumerate(matches, 1):
                 output += f"{i}. Row {match['rowid']}\n"
                 output += f"   Text: {match['text']}\n"
                 output += f"   Phonetic Code: {match['phonetic_code']}\n\n"
-                
+            
             if not matches:
                 output += f"No phonetic matches found for '{search_term}' (code: {search_code})\n"
                 output += f"Try a different search term or algorithm."
-                
+            
             return [types.TextContent(type="text", text=output)]
-                
+            
         except Exception as e:
             error_msg = f"Failed to perform phonetic matching: {str(e)}"
             logger.error(error_msg)
@@ -6051,7 +6051,7 @@ Found {len(matches)} matches:
         """Calculate text similarity between columns or against a reference text."""
         if not all(key in arguments for key in ["table_name", "column_name"]):
             raise ValueError("Missing required arguments: table_name, column_name")
-        
+    
         table_name = arguments["table_name"]
         column_name = arguments["column_name"]
         reference_text = arguments.get("reference_text")
@@ -6059,10 +6059,10 @@ Found {len(matches)} matches:
         method = arguments.get("method", "cosine")  # cosine, jaccard, levenshtein
         limit = arguments.get("limit", 50)
         where_clause = arguments.get("where_clause", "")
-        
+    
         if not reference_text and not compare_column:
             raise ValueError("Must provide either reference_text or compare_column")
-        
+    
         def jaccard_similarity(text1, text2):
             """Calculate Jaccard similarity between two texts."""
             set1 = set(text1.lower().split())
@@ -6070,34 +6070,34 @@ Found {len(matches)} matches:
             intersection = set1.intersection(set2)
             union = set1.union(set2)
             return len(intersection) / len(union) if union else 0
-        
+    
         def cosine_similarity(text1, text2):
             """Simple cosine similarity using word frequency."""
             words1 = text1.lower().split()
             words2 = text2.lower().split()
-            
+        
             # Create word frequency vectors
             all_words = set(words1 + words2)
             vec1 = [words1.count(word) for word in all_words]
             vec2 = [words2.count(word) for word in all_words]
-            
+        
             # Calculate cosine similarity
             dot_product = sum(a * b for a, b in zip(vec1, vec2))
             magnitude1 = math.sqrt(sum(a * a for a in vec1))
             magnitude2 = math.sqrt(sum(a * a for a in vec2))
-            
+        
             if magnitude1 == 0 or magnitude2 == 0:
                 return 0
-            
-            return dot_product / (magnitude1 * magnitude2)
         
+            return dot_product / (magnitude1 * magnitude2)
+    
         def levenshtein_similarity(text1, text2):
             """Calculate normalized Levenshtein similarity."""
             return difflib.SequenceMatcher(None, text1.lower(), text2.lower()).ratio()
-        
+    
         try:
             where_sql = f" WHERE {where_clause}" if where_clause else ""
-            
+        
             # Use the global db instance
             if compare_column:
                 query = f"""
@@ -6113,24 +6113,24 @@ Found {len(matches)} matches:
                 WHERE {column_name} IS NOT NULL
                 LIMIT {limit}
                 """
-                
+            
             result = self._execute_query(query)
-                
+            
             if not result:
                 return [types.TextContent(type="text", text="No data found for similarity calculation")]
-                
+            
             similarities = []
-                
+            
             for row in result:
                 text1 = str(row[column_name])
-                    
+                
                 if compare_column:
                     text2 = str(row[compare_column])
                     comparison_text = text2
                 else:
                     text2 = reference_text
                     comparison_text = reference_text
-                    
+                
                 # Calculate similarity based on method
                 if method.lower() == "jaccard":
                     similarity = jaccard_similarity(text1, text2)
@@ -6138,47 +6138,47 @@ Found {len(matches)} matches:
                     similarity = cosine_similarity(text1, text2)
                 else:  # levenshtein
                     similarity = levenshtein_similarity(text1, text2)
-                    
+                
                 similarities.append({
                     "rowid": row["rowid"],
                     "text1": text1,
                     "text2": comparison_text if not compare_column else text2,
                     "similarity": similarity
                 })
-                
+            
             # Sort by similarity (highest first)
             similarities.sort(key=lambda x: -x["similarity"])
-                
+            
             method_name = method.title()
             comparison_type = f"column '{compare_column}'" if compare_column else f"reference text"
-                
+            
             output = f"""Text Similarity Analysis for {table_name}.{column_name}:
-Method: {method_name}
-Comparison: {comparison_type}
-{"Reference: " + reference_text[:100] + ("..." if len(reference_text) > 100 else "") if reference_text else ""}
+        Method: {method_name}
+        Comparison: {comparison_type}
+        {"Reference: " + reference_text[:100] + ("..." if len(reference_text) > 100 else "") if reference_text else ""}
 
-Similarity Results (sorted by score):
+        Similarity Results (sorted by score):
 
-"""
-                
+        """
+            
             for i, sim in enumerate(similarities[:20], 1):
                 output += f"{i}. Row {sim['rowid']} (Similarity: {sim['similarity']:.3f})\n"
                 output += f"   Text 1: {sim['text1'][:80]}{'...' if len(sim['text1']) > 80 else ''}\n"
                 if compare_column:
                     output += f"   Text 2: {sim['text2'][:80]}{'...' if len(sim['text2']) > 80 else ''}\n"
                 output += "\n"
-                
+            
             if len(similarities) > 20:
                 output += f"... and {len(similarities) - 20} more results\n"
-                
+            
             # Add statistics
             scores = [s["similarity"] for s in similarities]
             output += f"\nStatistics:\n"
             output += f"Average Similarity: {sum(scores) / len(scores):.3f}\n"
             output += f"Highest: {max(scores):.3f} | Lowest: {min(scores):.3f}\n"
-                
+            
             return [types.TextContent(type="text", text=output)]
-                
+            
         except Exception as e:
             error_msg = f"Failed to calculate text similarity: {str(e)}"
             logger.error(error_msg)
@@ -6188,18 +6188,18 @@ Similarity Results (sorted by score):
         """Normalize text with various transformations."""
         if not all(key in arguments for key in ["table_name", "column_name"]):
             raise ValueError("Missing required arguments: table_name, column_name")
-        
+    
         table_name = arguments["table_name"]
         column_name = arguments["column_name"]
         operations = arguments.get("operations", ["lowercase", "trim", "normalize_unicode"])
         preview_only = arguments.get("preview_only", True)
         limit = arguments.get("limit", 50)
         where_clause = arguments.get("where_clause", "")
-        
+    
         def normalize_text(text, ops):
             """Apply normalization operations to text."""
             result = text
-            
+        
             for op in ops:
                 if op == "lowercase":
                     result = result.lower()
@@ -6224,12 +6224,12 @@ Similarity Results (sorted by score):
                     result = re.sub(r'\d+', '', result)
                 elif op == "squeeze_spaces":
                     result = re.sub(r'\s+', ' ', result)
-            
-            return result
         
+            return result
+    
         try:
             where_sql = f" WHERE {where_clause}" if where_clause else ""
-            
+        
             # Use the global db instance
             query = f"""
             SELECT {column_name}, rowid
@@ -6237,41 +6237,41 @@ Similarity Results (sorted by score):
             WHERE {column_name} IS NOT NULL
             LIMIT {limit}
             """
-                
+            
             result = self._execute_query(query)
-                
+            
             if not result:
                 return [types.TextContent(type="text", text="No data found for text normalization")]
-                
+            
             normalizations = []
-                
+            
             for row in result:
                 original_text = str(row[column_name])
                 normalized_text = normalize_text(original_text, operations)
-                    
+                
                 if original_text != normalized_text:
                     normalizations.append({
                         "rowid": row["rowid"],
                         "original": original_text,
                         "normalized": normalized_text
                     })
-                
+            
             operations_str = ", ".join(operations)
             output = f"""Text Normalization {'Preview' if preview_only else 'Results'} for {table_name}.{column_name}:
-Operations: {operations_str}
+        Operations: {operations_str}
 
-Found {len(normalizations)} rows requiring normalization:
+        Found {len(normalizations)} rows requiring normalization:
 
-"""
-                
+        """
+            
             for i, norm in enumerate(normalizations[:15], 1):
                 output += f"{i}. Row {norm['rowid']}\n"
                 output += f"   Before: {norm['original'][:100]}{'...' if len(norm['original']) > 100 else ''}\n"
                 output += f"   After:  {norm['normalized'][:100]}{'...' if len(norm['normalized']) > 100 else ''}\n\n"
-                
+            
             if len(normalizations) > 15:
                 output += f"... and {len(normalizations) - 15} more rows\n"
-                
+            
             if preview_only:
                 output += "\nTo execute these normalizations, set preview_only=false"
             else:
@@ -6283,11 +6283,11 @@ Found {len(normalizations)} rows requiring normalization:
                     WHERE rowid = ?
                     """
                     self._execute_query(update_query, (norm['normalized'], norm['rowid']))
-                    
+                
                 output += f"\n✅ Successfully normalized {len(normalizations)} rows"
-                
+            
             return [types.TextContent(type="text", text=output)]
-                
+            
         except Exception as e:
             error_msg = f"Failed to normalize text: {str(e)}"
             logger.error(error_msg)
@@ -6297,7 +6297,7 @@ Found {len(normalizations)} rows requiring normalization:
         """Advanced search combining multiple text processing techniques."""
         if not all(key in arguments for key in ["table_name", "column_name", "search_term"]):
             raise ValueError("Missing required arguments: table_name, column_name, search_term")
-        
+    
         table_name = arguments["table_name"]
         column_name = arguments["column_name"]
         search_term = arguments["search_term"]
@@ -6305,10 +6305,10 @@ Found {len(normalizations)} rows requiring normalization:
         fuzzy_threshold = arguments.get("fuzzy_threshold", 0.6)
         limit = arguments.get("limit", 50)
         where_clause = arguments.get("where_clause", "")
-        
+    
         try:
             where_sql = f" WHERE {where_clause}" if where_clause else ""
-            
+        
             # Use the global db instance
             query = f"""
             SELECT {column_name}, rowid
@@ -6316,34 +6316,34 @@ Found {len(normalizations)} rows requiring normalization:
             WHERE {column_name} IS NOT NULL
             LIMIT {limit * 2}
             """
-                
+            
             result = self._execute_query(query)
-                
+            
             if not result:
                 return [types.TextContent(type="text", text="No data found for advanced search")]
-                
+            
             all_matches = []
             search_lower = search_term.lower()
-                
+            
             for row in result:
                 text = str(row[column_name])
                 text_lower = text.lower()
                 match_types = []
                 scores = {}
-                    
+                
                 # Exact match
                 if "exact" in methods:
                     if search_lower in text_lower:
                         match_types.append("EXACT")
                         scores["exact"] = 1.0
-                    
+                
                 # Fuzzy match
                 if "fuzzy" in methods:
                     similarity = difflib.SequenceMatcher(None, search_lower, text_lower).ratio()
                     if similarity >= fuzzy_threshold:
                         match_types.append("FUZZY")
                         scores["fuzzy"] = similarity
-                    
+                
                 # Regex match (treat search term as potential regex)
                 if "regex" in methods:
                     try:
@@ -6352,14 +6352,14 @@ Found {len(normalizations)} rows requiring normalization:
                             scores["regex"] = 1.0
                     except re.error:
                         pass  # Invalid regex, skip
-                    
+                
                 # Word boundary match
                 if "word" in methods:
                     word_pattern = r'\b' + re.escape(search_term) + r'\b'
                     if re.search(word_pattern, text, re.IGNORECASE):
                         match_types.append("WORD")
                         scores["word"] = 1.0
-                    
+                
                 # Phonetic match
                 if "phonetic" in methods:
                     # Simple soundex check
@@ -6372,7 +6372,7 @@ Found {len(normalizations)} rows requiring normalization:
                             if char in mapping and (not code or code[-1] != mapping[char]):
                                 code += mapping[char]
                         return (code + "0000")[:4]
-                        
+                    
                     search_soundex = simple_soundex(search_term)
                     text_words = re.findall(r'\w+', text)
                     for word in text_words:
@@ -6380,11 +6380,11 @@ Found {len(normalizations)} rows requiring normalization:
                             match_types.append("PHONETIC")
                             scores["phonetic"] = 0.8
                             break
-                    
+                
                 if match_types:
                     # Calculate composite score
                     composite_score = max(scores.values()) if scores else 0
-                        
+                    
                     all_matches.append({
                         "rowid": row["rowid"],
                         "text": text,
@@ -6392,37 +6392,37 @@ Found {len(normalizations)} rows requiring normalization:
                         "scores": scores,
                         "composite_score": composite_score
                     })
-                
+            
             # Sort by composite score (highest first), then by number of match types
             all_matches.sort(key=lambda x: (-x["composite_score"], -len(x["match_types"])))
             all_matches = all_matches[:limit]
-                
+            
             methods_str = ", ".join(methods)
             output = f"""Advanced Search Results for {table_name}.{column_name}:
-Search Term: "{search_term}"
-Methods: {methods_str}
-Found {len(all_matches)} matches:
+        Search Term: "{search_term}"
+        Methods: {methods_str}
+        Found {len(all_matches)} matches:
 
-"""
-                
+        """
+            
             for i, match in enumerate(all_matches, 1):
                 types_str = " + ".join(match["match_types"])
                 output += f"{i}. {types_str} (Row {match['rowid']}) - Score: {match['composite_score']:.3f}\n"
                 output += f"   Text: {match['text'][:120]}{'...' if len(match['text']) > 120 else ''}\n"
-                    
+                
                 # Show individual scores
                 if len(match["scores"]) > 1:
                     score_details = ", ".join([f"{k}: {v:.3f}" for k, v in match["scores"].items()])
                     output += f"   Scores: {score_details}\n"
-                    
-                output += "\n"
                 
+                output += "\n"
+            
             if not all_matches:
                 output += f"No matches found using methods: {methods_str}\n"
                 output += "Try different search methods or adjust the fuzzy threshold."
-                
+            
             return [types.TextContent(type="text", text=output)]
-                
+            
         except Exception as e:
             error_msg = f"Failed to perform advanced search: {str(e)}"
             logger.error(error_msg)
@@ -6432,14 +6432,14 @@ Found {len(all_matches)} matches:
         """Validate text against various patterns and rules."""
         if not all(key in arguments for key in ["table_name", "column_name"]):
             raise ValueError("Missing required arguments: table_name, column_name")
-        
+    
         table_name = arguments["table_name"]
         column_name = arguments["column_name"]
         validation_type = arguments.get("validation_type", "email")
         custom_pattern = arguments.get("custom_pattern")
         limit = arguments.get("limit", 100)
         where_clause = arguments.get("where_clause", "")
-        
+    
         # Predefined validation patterns
         patterns = {
             "email": r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
@@ -6454,7 +6454,7 @@ Found {len(all_matches)} matches:
             "numeric_only": r'^\d+$',
             "no_special_chars": r'^[a-zA-Z0-9\s]+$'
         }
-        
+    
         try:
             # Get validation pattern
             if custom_pattern:
@@ -6466,11 +6466,11 @@ Found {len(all_matches)} matches:
             else:
                 available = ", ".join(patterns.keys())
                 raise ValueError(f"Unknown validation type: {validation_type}. Available: {available}")
-            
+        
             compiled_pattern = re.compile(pattern)
-            
+        
             where_sql = f" WHERE {where_clause}" if where_clause else ""
-            
+        
             # Use the global db instance
             query = f"""
             SELECT {column_name}, rowid
@@ -6478,18 +6478,18 @@ Found {len(all_matches)} matches:
             WHERE {column_name} IS NOT NULL
             LIMIT {limit}
             """
-                
+            
             result = self._execute_query(query)
-                
+            
             if not result:
                 return [types.TextContent(type="text", text="No data found for text validation")]
-                
+            
             valid_entries = []
             invalid_entries = []
-                
+            
             for row in result:
                 text = str(row[column_name]).strip()
-                    
+                
                 if compiled_pattern.match(text):
                     valid_entries.append({
                         "rowid": row["rowid"],
@@ -6500,38 +6500,38 @@ Found {len(all_matches)} matches:
                         "rowid": row["rowid"],
                         "text": text
                     })
-                
+            
             total_checked = len(valid_entries) + len(invalid_entries)
             valid_percent = (len(valid_entries) / total_checked * 100) if total_checked > 0 else 0
-                
+            
             output = f"""Text Validation Results for {table_name}.{column_name}:
-Validation Type: {pattern_name}
-Pattern: {pattern}
+        Validation Type: {pattern_name}
+        Pattern: {pattern}
 
-Summary:
-✅ Valid: {len(valid_entries)} ({valid_percent:.1f}%)
-❌ Invalid: {len(invalid_entries)} ({100-valid_percent:.1f}%)
-Total Checked: {total_checked}
+        Summary:
+        ✅ Valid: {len(valid_entries)} ({valid_percent:.1f}%)
+        ❌ Invalid: {len(invalid_entries)} ({100-valid_percent:.1f}%)
+        Total Checked: {total_checked}
 
-"""
-                
+        """
+            
             if invalid_entries:
                 output += "Invalid Entries:\n"
                 for i, entry in enumerate(invalid_entries[:20], 1):
                     output += f"{i}. Row {entry['rowid']}: {entry['text']}\n"
-                    
+                
                 if len(invalid_entries) > 20:
                     output += f"... and {len(invalid_entries) - 20} more invalid entries\n"
-                    
-                output += "\n"
                 
+                output += "\n"
+            
             if valid_entries and len(valid_entries) <= 10:
                 output += "Valid Entries:\n"
                 for i, entry in enumerate(valid_entries, 1):
                     output += f"{i}. Row {entry['rowid']}: {entry['text']}\n"
-                
+            
             return [types.TextContent(type="text", text=output)]
-                
+            
         except re.error as e:
             error_msg = f"Invalid regex pattern: {str(e)}"
             logger.error(error_msg)
@@ -6541,17 +6541,17 @@ Total Checked: {total_checked}
             logger.error(error_msg)
             return [types.TextContent(type="text", text=error_msg)]
 
-    async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
-        logger.info("Server running with stdio transport")
-        await server.run(
-            read_stream,
-            write_stream,
-            InitializationOptions(
-            server_name="sqlite-custom",
-            server_version="2.2.0",
-            capabilities=server.get_capabilities(
-                notification_options=NotificationOptions(),
-                experimental_capabilities={},
-            ),
-            ),
-        )
+        async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
+            logger.info("Server running with stdio transport")
+            await server.run(
+                read_stream,
+                write_stream,
+                InitializationOptions(
+                server_name="sqlite-custom",
+                server_version="2.2.0",
+                capabilities=server.get_capabilities(
+                    notification_options=NotificationOptions(),
+                    experimental_capabilities={},
+                ),
+                ),
+            )
