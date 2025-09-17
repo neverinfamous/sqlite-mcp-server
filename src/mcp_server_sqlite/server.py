@@ -999,12 +999,15 @@ class EnhancedSqliteDatabase:
         where_clause = arguments.get("where_clause", "")
     
         try:
-            where_sql = f" WHERE {where_clause}" if where_clause else ""
+            # Build WHERE clause properly to avoid duplicates
+            if where_clause:
+                where_sql = f" WHERE ({where_clause}) AND {column_name} IS NOT NULL"
+            else:
+                where_sql = f" WHERE {column_name} IS NOT NULL"
         
             query = f"""
             SELECT {column_name}, rowid
             FROM {table_name}{where_sql}
-            WHERE {column_name} IS NOT NULL
             LIMIT 100
             """
             
@@ -1014,7 +1017,7 @@ class EnhancedSqliteDatabase:
                 return [types.TextContent(type="text", text="No data found for text normalization")]
             
             normalizations = []
-            for row in result:
+            for i, row in enumerate(result):
                 original_text = str(row[column_name])
                 normalized_text = original_text
                 
@@ -1036,8 +1039,14 @@ class EnhancedSqliteDatabase:
                         normalized_text = unicodedata.normalize('NFKD', normalized_text)
                 
                 if normalized_text != original_text:
+                    # Try to get rowid, fallback to row number
+                    try:
+                        row_id = row.get("rowid", row.get("id", i + 1))
+                    except:
+                        row_id = i + 1
+                    
                     normalizations.append({
-                        "rowid": row["rowid"],
+                        "rowid": row_id,
                         "original": original_text,
                         "normalized": normalized_text
                     })
@@ -1060,14 +1069,14 @@ class EnhancedSqliteDatabase:
             if preview_only:
                 output += "\nTo execute these changes, set preview_only=false"
             else:
-                # Execute the normalizations
+                # Execute the normalizations - use original content matching for safety
                 for norm in normalizations:
                     update_query = f"""
                     UPDATE {table_name} 
                     SET {column_name} = ? 
-                    WHERE rowid = ?
+                    WHERE {column_name} = ?
                     """
-                    self._execute_query(update_query, (norm['normalized'], norm['rowid']))
+                    self._execute_query(update_query, (norm['normalized'], norm['original']))
                 
                 output += f"\n✅ Successfully normalized {len(normalizations)} rows"
             
