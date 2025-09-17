@@ -1,0 +1,94 @@
+# Smithery configuration for SQLite MCP Server
+# Advanced SQLite database operations with JSONB support, statistical analysis, and more
+
+name: "SQLite MCP Server"
+description: "Advanced SQLite MCP server with comprehensive database operations, JSONB support, statistical analysis, text processing, semantic search, and SpatiaLite geospatial analytics. Features 67+ tools for complete database management and business intelligence."
+version: "2.2.0"
+author: "neverinfamous"
+license: "MIT"
+tags: ["sqlite", "database", "sql", "jsonb", "statistics", "text-processing", "semantic-search", "geospatial", "business-intelligence"]
+
+runtime: "container"
+
+startCommand:
+  type: "http"
+  configSchema:
+    type: "object"
+    properties:
+      dbPath:
+        type: "string"
+        title: "Database Path"
+        description: "Path to the SQLite database file (will be created if it doesn't exist)"
+        default: "/app/data/sqlite_mcp.db"
+      logLevel:
+        type: "string"
+        title: "Log Level"
+        description: "Logging verbosity level"
+        enum: ["debug", "info", "warning", "error"]
+        default: "info"
+      enableFTS:
+        type: "boolean"
+        title: "Enable Full-Text Search"
+        description: "Enable FTS5 full-text search capabilities"
+        default: true
+      enableSemanticSearch:
+        type: "boolean"
+        title: "Enable Semantic Search"
+        description: "Enable vector similarity search for semantic queries"
+        default: false
+      enableSpatiaLite:
+        type: "boolean"
+        title: "Enable SpatiaLite"
+        description: "Enable geospatial analytics with SpatiaLite extension"
+        default: false
+      enableStatistics:
+        type: "boolean"
+        title: "Enable Statistical Analysis"
+        description: "Enable comprehensive statistical analysis functions"
+        default: true
+      enableTextProcessing:
+        type: "boolean"
+        title: "Enable Text Processing"
+        description: "Enable advanced text processing and pattern matching"
+        default: true
+      cacheSize:
+        type: "integer"
+        title: "Cache Size (MB)"
+        description: "SQLite cache size in megabytes"
+        default: 64
+        minimum: 8
+        maximum: 512
+    required: []
+  exampleConfig:
+    dbPath: "/app/data/sqlite_mcp.db"
+    logLevel: "info"
+    enableFTS: true
+    enableSemanticSearch: false
+    enableSpatiaLite: false
+    enableStatistics: true
+    enableTextProcessing: true
+    cacheSize: 64
+  testConfig:
+    dbPath: "/app/data/test_database.db"
+    logLevel: "debug"
+    enableFTS: true
+    enableSemanticSearch: false
+    enableSpatiaLite: false
+    enableStatistics: true
+    enableTextProcessing: true
+    cacheSize: 32
+
+build:
+  dockerfile: "Dockerfile.smithery"
+  dockerBuildPath: "."
+
+# Additional metadata for Smithery validation
+homepage: "https://github.com/neverinfamous/mcp_server_sqlite"
+repository: "https://github.com/neverinfamous/mcp_server_sqlite"
+documentation: "https://github.com/neverinfamous/mcp_server_sqlite#readme"
+
+env:
+  PYTHONPATH: "/app"
+  DB_PATH: "/app/data/sqlite_mcp.db"
+  PYTHONUNBUFFERED: "1"
+  SQLITE_JSONB_ENABLED: "true"

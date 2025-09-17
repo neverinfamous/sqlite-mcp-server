@@ -804,6 +804,75 @@ The server automatically detects project structure and creates appropriate datab
 
 **For most users**: You only need Python requirements. The JavaScript utilities are optional helpers for advanced use cases.
 
+## 🚀 Deployment Options
+
+### Option 1: Smithery (Recommended - One-Click Deploy)
+
+Deploy instantly via Smithery's MCP marketplace with zero setup required:
+
+🌐 **One-Click Deploy:** [Deploy to Smithery](https://smithery.ai/new)
+
+```json
+{
+  "mcpServers": {
+    "sqlite-mcp-server": {
+      "command": "smithery",
+      "args": ["serve", "neverinfamous/sqlite-mcp-server"]
+    }
+  }
+}
+```
+
+**Features:**
+- ✅ **Instant deployment** - no Docker or setup required
+- ✅ **HTTP MCP protocol** - streamable connection for real-time updates
+- ✅ **Configurable database** - set custom database paths and options
+- ✅ **Full feature set** - all 67+ tools including JSONB, statistics, text processing
+- ✅ **Auto-scaling** - handles load automatically
+- ✅ **Global edge deployment** - sub-100ms response times worldwide
+
+**Configuration Options:**
+- **Database Path**: Custom SQLite database location
+- **Log Level**: Debug, info, warning, error
+- **Feature Toggles**: Enable/disable FTS5, semantic search, SpatiaLite, statistics
+- **Performance**: Configurable cache size (8-512 MB)
+
+### Option 2: Local Installation
+
+For local development and testing:
+
+```bash
+# Clone and install
+git clone https://github.com/neverinfamous/mcp_server_sqlite.git
+cd mcp_server_sqlite
+pip install -r requirements.txt
+
+# Run locally
+python start_sqlite_mcp.py
+```
+
+**Local MCP Configuration:**
+```json
+{
+  "mcpServers": {
+    "sqlite-mcp-server": {
+      "command": "python",
+      "args": ["/path/to/sqlite-mcp-server/start_sqlite_mcp.py"]
+    }
+  }
+}
+```
+
+### Option 3: Docker Deployment
+
+For containerized deployments:
+
+```bash
+# Build and run
+docker build -t sqlite-mcp-server .
+docker run -p 8000:8000 -v ./data:/app/data sqlite-mcp-server
+```
+
 ## Database Configuration
 
 The SQLite MCP Server provides flexible database configuration with **automatic database creation** - no manual setup required!
