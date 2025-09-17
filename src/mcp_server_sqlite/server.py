@@ -2156,6 +2156,162 @@ async def main(db_path: str = "sqlite_mcp.db"):
                     "required": ["test_type", "table_name", "column_name"]
                 }
             ),
+            
+            # Text Processing Tools
+            types.Tool(
+                name="regex_extract",
+                description="Extract text using PCRE-style regular expressions",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {"type": "string", "description": "Name of the table"},
+                        "column_name": {"type": "string", "description": "Name of the column to search"},
+                        "pattern": {"type": "string", "description": "Regular expression pattern"},
+                        "flags": {"type": "string", "description": "Regex flags (i=ignorecase, m=multiline, s=dotall)", "default": ""},
+                        "limit": {"type": "integer", "description": "Maximum number of rows to process", "default": 100},
+                        "where_clause": {"type": "string", "description": "Optional WHERE clause to filter data", "default": ""}
+                    },
+                    "required": ["table_name", "column_name", "pattern"]
+                }
+            ),
+            
+            types.Tool(
+                name="regex_replace",
+                description="Replace text using PCRE-style regular expressions",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {"type": "string", "description": "Name of the table"},
+                        "column_name": {"type": "string", "description": "Name of the column to modify"},
+                        "pattern": {"type": "string", "description": "Regular expression pattern"},
+                        "replacement": {"type": "string", "description": "Replacement text"},
+                        "flags": {"type": "string", "description": "Regex flags (i=ignorecase, m=multiline, s=dotall)", "default": ""},
+                        "max_replacements": {"type": "integer", "description": "Maximum replacements per row (0=all)", "default": 0},
+                        "preview_only": {"type": "boolean", "description": "Preview changes without executing", "default": true},
+                        "where_clause": {"type": "string", "description": "Optional WHERE clause to filter data", "default": ""}
+                    },
+                    "required": ["table_name", "column_name", "pattern", "replacement"]
+                }
+            ),
+            
+            types.Tool(
+                name="fuzzy_match",
+                description="Find fuzzy matches using Levenshtein distance and sequence matching",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {"type": "string", "description": "Name of the table"},
+                        "column_name": {"type": "string", "description": "Name of the column to search"},
+                        "search_term": {"type": "string", "description": "Text to search for"},
+                        "threshold": {"type": "number", "description": "Similarity threshold (0-1)", "default": 0.6},
+                        "limit": {"type": "integer", "description": "Maximum number of results", "default": 50},
+                        "where_clause": {"type": "string", "description": "Optional WHERE clause to filter data", "default": ""}
+                    },
+                    "required": ["table_name", "column_name", "search_term"]
+                }
+            ),
+            
+            types.Tool(
+                name="phonetic_match",
+                description="Find phonetic matches using Soundex and Metaphone algorithms",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {"type": "string", "description": "Name of the table"},
+                        "column_name": {"type": "string", "description": "Name of the column to search"},
+                        "search_term": {"type": "string", "description": "Text to search for phonetically"},
+                        "algorithm": {"type": "string", "enum": ["soundex", "metaphone"], "description": "Phonetic algorithm to use", "default": "soundex"},
+                        "limit": {"type": "integer", "description": "Maximum number of results", "default": 50},
+                        "where_clause": {"type": "string", "description": "Optional WHERE clause to filter data", "default": ""}
+                    },
+                    "required": ["table_name", "column_name", "search_term"]
+                }
+            ),
+            
+            types.Tool(
+                name="text_similarity",
+                description="Calculate text similarity between columns or against reference text",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {"type": "string", "description": "Name of the table"},
+                        "column_name": {"type": "string", "description": "Name of the column to analyze"},
+                        "reference_text": {"type": "string", "description": "Reference text for comparison"},
+                        "compare_column": {"type": "string", "description": "Column to compare against (alternative to reference_text)"},
+                        "method": {"type": "string", "enum": ["cosine", "jaccard", "levenshtein"], "description": "Similarity method", "default": "cosine"},
+                        "limit": {"type": "integer", "description": "Maximum number of results", "default": 50},
+                        "where_clause": {"type": "string", "description": "Optional WHERE clause to filter data", "default": ""}
+                    },
+                    "required": ["table_name", "column_name"]
+                }
+            ),
+            
+            types.Tool(
+                name="text_normalize",
+                description="Normalize text with various transformations",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {"type": "string", "description": "Name of the table"},
+                        "column_name": {"type": "string", "description": "Name of the column to normalize"},
+                        "operations": {
+                            "type": "array",
+                            "items": {"type": "string", "enum": ["lowercase", "uppercase", "title_case", "trim", "normalize_unicode", "remove_accents", "remove_extra_spaces", "remove_punctuation", "alphanumeric_only", "remove_numbers", "squeeze_spaces"]},
+                            "description": "List of normalization operations",
+                            "default": ["lowercase", "trim", "normalize_unicode"]
+                        },
+                        "preview_only": {"type": "boolean", "description": "Preview changes without executing", "default": true},
+                        "limit": {"type": "integer", "description": "Maximum number of rows to process", "default": 50},
+                        "where_clause": {"type": "string", "description": "Optional WHERE clause to filter data", "default": ""}
+                    },
+                    "required": ["table_name", "column_name"]
+                }
+            ),
+            
+            types.Tool(
+                name="advanced_search",
+                description="Advanced search combining multiple text processing techniques",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {"type": "string", "description": "Name of the table"},
+                        "column_name": {"type": "string", "description": "Name of the column to search"},
+                        "search_term": {"type": "string", "description": "Text to search for"},
+                        "methods": {
+                            "type": "array",
+                            "items": {"type": "string", "enum": ["exact", "fuzzy", "regex", "word", "phonetic"]},
+                            "description": "Search methods to use",
+                            "default": ["exact", "fuzzy", "regex"]
+                        },
+                        "fuzzy_threshold": {"type": "number", "description": "Fuzzy matching threshold", "default": 0.6},
+                        "limit": {"type": "integer", "description": "Maximum number of results", "default": 50},
+                        "where_clause": {"type": "string", "description": "Optional WHERE clause to filter data", "default": ""}
+                    },
+                    "required": ["table_name", "column_name", "search_term"]
+                }
+            ),
+            
+            types.Tool(
+                name="text_validation",
+                description="Validate text against various patterns and rules",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {"type": "string", "description": "Name of the table"},
+                        "column_name": {"type": "string", "description": "Name of the column to validate"},
+                        "validation_type": {
+                            "type": "string",
+                            "enum": ["email", "phone", "url", "credit_card", "ssn", "zip_code", "ip_address", "alphanumeric", "alpha_only", "numeric_only", "no_special_chars"],
+                            "description": "Type of validation to perform",
+                            "default": "email"
+                        },
+                        "custom_pattern": {"type": "string", "description": "Custom regex pattern (overrides validation_type)"},
+                        "limit": {"type": "integer", "description": "Maximum number of rows to validate", "default": 100},
+                        "where_clause": {"type": "string", "description": "Optional WHERE clause to filter data", "default": ""}
+                    },
+                    "required": ["table_name", "column_name"]
+                }
+            ),
         ]
         
         # Add diagnostic tools if JSONB is supported
