@@ -3150,11 +3150,15 @@ async def main(db_path: str = "sqlite_mcp.db"):
                         loaded = False
                         for path in spatialite_paths:
                             try:
-                                db.enable_load_extension(True)
-                                db.load_extension(path)
-                                db.enable_load_extension(False)
-                                loaded = True
-                                break
+                                # Create direct connection for extension loading
+                                import sqlite3
+                                from contextlib import closing
+                                with closing(sqlite3.connect(db.db_path)) as conn:
+                                    conn.enable_load_extension(True)
+                                    conn.load_extension(path)
+                                    conn.enable_load_extension(False)
+                                    loaded = True
+                                    break
                             except Exception as e:
                                 continue
                         
