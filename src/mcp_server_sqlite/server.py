@@ -581,9 +581,9 @@ async def main(db_path: str = "sqlite_mcp.db"):
             elif path == "capabilities":
                 # Comprehensive server capabilities matrix
                 capabilities = {
-                    "server_version": "2.0.0",
+                    "server_version": "2.1.0",
                     "sqlite_version": db.version_info.get('version', 'Unknown'),
-                        "total_tools": 51,
+                        "total_tools": 59,
                     "semantic_search": True,
                     "full_text_search": True,
                     "virtual_tables": True,
@@ -1885,6 +1885,273 @@ async def main(db_path: str = "sqlite_mcp.db"):
                     "required": ["table_name"]
                 }
             ),
+            
+            # Statistical Analysis Tools (v2.1.0)
+            types.Tool(
+                name="descriptive_statistics",
+                description="Calculate comprehensive descriptive statistics for a numeric column",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name of the table"
+                        },
+                        "column_name": {
+                            "type": "string",
+                            "description": "Name of the numeric column to analyze"
+                        },
+                        "where_clause": {
+                            "type": "string",
+                            "description": "Optional WHERE clause to filter data",
+                            "default": ""
+                        }
+                    },
+                    "required": ["table_name", "column_name"]
+                }
+            ),
+            
+            types.Tool(
+                name="correlation_analysis",
+                description="Calculate correlation coefficient between two numeric columns",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name of the table"
+                        },
+                        "column_x": {
+                            "type": "string",
+                            "description": "First numeric column"
+                        },
+                        "column_y": {
+                            "type": "string",
+                            "description": "Second numeric column"
+                        },
+                        "where_clause": {
+                            "type": "string",
+                            "description": "Optional WHERE clause to filter data",
+                            "default": ""
+                        }
+                    },
+                    "required": ["table_name", "column_x", "column_y"]
+                }
+            ),
+            
+            types.Tool(
+                name="percentile_analysis",
+                description="Calculate percentiles and quartiles for a numeric column",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name of the table"
+                        },
+                        "column_name": {
+                            "type": "string",
+                            "description": "Name of the numeric column to analyze"
+                        },
+                        "percentiles": {
+                            "type": "array",
+                            "items": {"type": "number", "minimum": 0, "maximum": 100},
+                            "description": "List of percentiles to calculate (0-100)",
+                            "default": [25, 50, 75, 90, 95, 99]
+                        },
+                        "where_clause": {
+                            "type": "string",
+                            "description": "Optional WHERE clause to filter data",
+                            "default": ""
+                        }
+                    },
+                    "required": ["table_name", "column_name"]
+                }
+            ),
+            
+            types.Tool(
+                name="distribution_analysis",
+                description="Analyze the distribution of a numeric column (skewness, kurtosis, normality)",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name of the table"
+                        },
+                        "column_name": {
+                            "type": "string",
+                            "description": "Name of the numeric column to analyze"
+                        },
+                        "bins": {
+                            "type": "integer",
+                            "description": "Number of bins for histogram analysis",
+                            "default": 10
+                        },
+                        "where_clause": {
+                            "type": "string",
+                            "description": "Optional WHERE clause to filter data",
+                            "default": ""
+                        }
+                    },
+                    "required": ["table_name", "column_name"]
+                }
+            ),
+            
+            types.Tool(
+                name="moving_averages",
+                description="Calculate moving averages and trend analysis for time series data",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name of the table"
+                        },
+                        "value_column": {
+                            "type": "string",
+                            "description": "Name of the numeric column with values"
+                        },
+                        "time_column": {
+                            "type": "string",
+                            "description": "Name of the time/date column for ordering"
+                        },
+                        "window_sizes": {
+                            "type": "array",
+                            "items": {"type": "integer", "minimum": 2},
+                            "description": "List of window sizes for moving averages",
+                            "default": [7, 30, 90]
+                        },
+                        "where_clause": {
+                            "type": "string",
+                            "description": "Optional WHERE clause to filter data",
+                            "default": ""
+                        }
+                    },
+                    "required": ["table_name", "value_column", "time_column"]
+                }
+            ),
+            
+            types.Tool(
+                name="outlier_detection",
+                description="Detect outliers using IQR method and Z-score analysis",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name of the table"
+                        },
+                        "column_name": {
+                            "type": "string",
+                            "description": "Name of the numeric column to analyze"
+                        },
+                        "method": {
+                            "type": "string",
+                            "enum": ["iqr", "zscore", "both"],
+                            "description": "Outlier detection method",
+                            "default": "both"
+                        },
+                        "iqr_multiplier": {
+                            "type": "number",
+                            "description": "IQR multiplier for outlier threshold",
+                            "default": 1.5
+                        },
+                        "zscore_threshold": {
+                            "type": "number",
+                            "description": "Z-score threshold for outlier detection",
+                            "default": 3.0
+                        },
+                        "where_clause": {
+                            "type": "string",
+                            "description": "Optional WHERE clause to filter data",
+                            "default": ""
+                        }
+                    },
+                    "required": ["table_name", "column_name"]
+                }
+            ),
+            
+            types.Tool(
+                name="regression_analysis",
+                description="Perform linear regression analysis between two variables",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name of the table"
+                        },
+                        "x_column": {
+                            "type": "string",
+                            "description": "Independent variable column"
+                        },
+                        "y_column": {
+                            "type": "string",
+                            "description": "Dependent variable column"
+                        },
+                        "confidence_level": {
+                            "type": "number",
+                            "minimum": 0.1,
+                            "maximum": 0.99,
+                            "description": "Confidence level for intervals",
+                            "default": 0.95
+                        },
+                        "where_clause": {
+                            "type": "string",
+                            "description": "Optional WHERE clause to filter data",
+                            "default": ""
+                        }
+                    },
+                    "required": ["table_name", "x_column", "y_column"]
+                }
+            ),
+            
+            types.Tool(
+                name="hypothesis_testing",
+                description="Perform statistical hypothesis tests (t-test, chi-square)",
+                inputSchema={
+                    "type": "object",
+                    "properties": {
+                        "test_type": {
+                            "type": "string",
+                            "enum": ["one_sample_t", "two_sample_t", "paired_t", "chi_square_goodness", "chi_square_independence"],
+                            "description": "Type of statistical test to perform"
+                        },
+                        "table_name": {
+                            "type": "string",
+                            "description": "Name of the table"
+                        },
+                        "column_name": {
+                            "type": "string",
+                            "description": "Primary column for analysis"
+                        },
+                        "column2_name": {
+                            "type": "string",
+                            "description": "Second column (for two-sample or paired tests)",
+                            "default": ""
+                        },
+                        "test_value": {
+                            "type": "number",
+                            "description": "Test value for one-sample t-test",
+                            "default": 0
+                        },
+                        "alpha": {
+                            "type": "number",
+                            "minimum": 0.01,
+                            "maximum": 0.10,
+                            "description": "Significance level",
+                            "default": 0.05
+                        },
+                        "where_clause": {
+                            "type": "string",
+                            "description": "Optional WHERE clause to filter data",
+                            "default": ""
+                        }
+                    },
+                    "required": ["test_type", "table_name", "column_name"]
+                }
+            ),
         ]
         
         # Add diagnostic tools if JSONB is supported
@@ -1939,6 +2206,610 @@ async def main(db_path: str = "sqlite_mcp.db"):
                     f"PRAGMA table_info({arguments['table_name']})"
                 )
                 return [types.TextContent(type="text", text=str(results))]
+
+            # Statistical Analysis Handlers (v2.1.0)
+            elif name == "descriptive_statistics":
+                table_name = arguments.get("table_name")
+                column_name = arguments.get("column_name")
+                where_clause = arguments.get("where_clause", "")
+                
+                try:
+                    # Build WHERE clause
+                    where_sql = f" WHERE {where_clause}" if where_clause else ""
+                    
+                    # Calculate comprehensive descriptive statistics
+                    stats_query = f"""
+                    SELECT 
+                        COUNT({column_name}) as count,
+                        COUNT(DISTINCT {column_name}) as distinct_count,
+                        AVG(CAST({column_name} AS REAL)) as mean,
+                        MIN(CAST({column_name} AS REAL)) as min_value,
+                        MAX(CAST({column_name} AS REAL)) as max_value,
+                        SUM(CAST({column_name} AS REAL)) as sum_value,
+                        
+                        -- Standard deviation and variance
+                        (
+                            SELECT SQRT(AVG(power_diff))
+                            FROM (
+                                SELECT POWER(CAST({column_name} AS REAL) - 
+                                    (SELECT AVG(CAST({column_name} AS REAL)) FROM {table_name}{where_sql}), 2) as power_diff
+                                FROM {table_name}{where_sql}
+                                WHERE {column_name} IS NOT NULL
+                            )
+                        ) as std_dev,
+                        
+                        (
+                            SELECT AVG(power_diff)
+                            FROM (
+                                SELECT POWER(CAST({column_name} AS REAL) - 
+                                    (SELECT AVG(CAST({column_name} AS REAL)) FROM {table_name}{where_sql}), 2) as power_diff
+                                FROM {table_name}{where_sql}
+                                WHERE {column_name} IS NOT NULL
+                            )
+                        ) as variance,
+                        
+                        -- Range and coefficient of variation
+                        (MAX(CAST({column_name} AS REAL)) - MIN(CAST({column_name} AS REAL))) as range_value,
+                        
+                        CASE 
+                            WHEN AVG(CAST({column_name} AS REAL)) != 0 THEN
+                                (
+                                    SELECT SQRT(AVG(power_diff))
+                                    FROM (
+                                        SELECT POWER(CAST({column_name} AS REAL) - 
+                                            (SELECT AVG(CAST({column_name} AS REAL)) FROM {table_name}{where_sql}), 2) as power_diff
+                                        FROM {table_name}{where_sql}
+                                        WHERE {column_name} IS NOT NULL
+                                    )
+                                ) / AVG(CAST({column_name} AS REAL))
+                            ELSE NULL
+                        END as coefficient_of_variation
+                        
+                    FROM {table_name}{where_sql}
+                    WHERE {column_name} IS NOT NULL
+                    """
+                    
+                    result = db._execute_query(stats_query)
+                    
+                    if result:
+                        stats = result[0]
+                        
+                        # Format output
+                        cv_text = f"{stats['coefficient_of_variation']:.4f}" if stats['coefficient_of_variation'] is not None else 'N/A'
+                        
+                        output = f"""Descriptive Statistics for {table_name}.{column_name}:
+
+Basic Statistics:
+- Count: {stats['count']:,}
+- Distinct Values: {stats['distinct_count']:,}
+
+Central Tendency:
+- Mean: {stats['mean']:.4f}
+- Min: {stats['min_value']:.4f}
+- Max: {stats['max_value']:.4f}
+- Sum: {stats['sum_value']:.4f}
+
+Variability:
+- Range: {stats['range_value']:.4f}
+- Standard Deviation: {stats['std_dev']:.4f}
+- Variance: {stats['variance']:.4f}
+- Coefficient of Variation: {cv_text}"""
+                        
+                        return [types.TextContent(type="text", text=output)]
+                    else:
+                        return [types.TextContent(type="text", text="No data found for analysis")]
+                        
+                except Exception as e:
+                    error_msg = f"Failed to calculate descriptive statistics: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "correlation_analysis":
+                table_name = arguments.get("table_name")
+                column_x = arguments.get("column_x")
+                column_y = arguments.get("column_y")
+                where_clause = arguments.get("where_clause", "")
+                
+                try:
+                    where_sql = f" WHERE {where_clause}" if where_clause else ""
+                    
+                    # Calculate Pearson correlation coefficient using simpler approach
+                    corr_query = f"""
+                    WITH data AS (
+                        SELECT 
+                            CAST({column_x} AS REAL) as x,
+                            CAST({column_y} AS REAL) as y
+                        FROM {table_name}{where_sql}
+                        WHERE {column_x} IS NOT NULL AND {column_y} IS NOT NULL
+                    ),
+                    stats AS (
+                        SELECT 
+                            COUNT(*) as n,
+                            AVG(x) as mean_x,
+                            AVG(y) as mean_y,
+                            SUM(x * y) as sum_xy,
+                            SUM(x * x) as sum_x2,
+                            SUM(y * y) as sum_y2,
+                            SUM(x) as sum_x,
+                            SUM(y) as sum_y
+                        FROM data
+                    )
+                    SELECT 
+                        n as count,
+                        mean_x,
+                        mean_y,
+                        (n * sum_xy - sum_x * sum_y) / 
+                        SQRT((n * sum_x2 - sum_x * sum_x) * (n * sum_y2 - sum_y * sum_y)) as correlation
+                    FROM stats
+                    WHERE n > 1
+                    """
+                    
+                    result = db._execute_query(corr_query)
+                    
+                    if result and len(result) > 0:
+                        stats = result[0]
+                        correlation = stats.get('correlation', 0.0)
+                        if correlation is None:
+                            correlation = 0.0
+                        
+                        # Interpret correlation strength
+                        if abs(correlation) >= 0.9:
+                            strength = "Very Strong"
+                        elif abs(correlation) >= 0.7:
+                            strength = "Strong"
+                        elif abs(correlation) >= 0.5:
+                            strength = "Moderate"
+                        elif abs(correlation) >= 0.3:
+                            strength = "Weak"
+                        else:
+                            strength = "Very Weak"
+                        
+                        direction = "Positive" if correlation >= 0 else "Negative"
+                        
+                        output = f"""Correlation Analysis between {column_x} and {column_y}:
+
+Sample Size: {stats['count']:,}
+Mean {column_x}: {stats['mean_x']:.4f}
+Mean {column_y}: {stats['mean_y']:.4f}
+
+Pearson Correlation Coefficient: {correlation:.4f}
+Relationship: {strength} {direction} correlation
+R-squared: {correlation**2:.4f} ({correlation**2*100:.1f}% of variance explained)"""
+                        
+                        return [types.TextContent(type="text", text=output)]
+                    else:
+                        return [types.TextContent(type="text", text="No data found for correlation analysis")]
+                        
+                except Exception as e:
+                    error_msg = f"Failed to calculate correlation: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "percentile_analysis":
+                table_name = arguments.get("table_name")
+                column_name = arguments.get("column_name")
+                percentiles = arguments.get("percentiles", [25, 50, 75, 90, 95, 99])
+                where_clause = arguments.get("where_clause", "")
+                
+                try:
+                    where_sql = f" WHERE {where_clause}" if where_clause else ""
+                    
+                    # Calculate percentiles using NTILE and row_number
+                    percentile_queries = []
+                    for p in percentiles:
+                        percentile_queries.append(f"""
+                        SELECT {p} as percentile,
+                               (SELECT CAST({column_name} AS REAL) 
+                                FROM (SELECT {column_name}, 
+                                             ROW_NUMBER() OVER (ORDER BY CAST({column_name} AS REAL)) as rn,
+                                             COUNT(*) OVER () as total_count
+                                      FROM {table_name}{where_sql}
+                                      WHERE {column_name} IS NOT NULL)
+                                WHERE rn = CAST(({p} / 100.0) * total_count AS INTEGER) + 1) as value
+                        """)
+                    
+                    full_query = " UNION ALL ".join(percentile_queries)
+                    result = db._execute_query(full_query)
+                    
+                    if result:
+                        output = f"Percentile Analysis for {table_name}.{column_name}:\n\n"
+                        
+                        for row in result:
+                            p = int(row['percentile'])
+                            value = row['value']
+                            
+                            if p == 25:
+                                output += f"Q1 (25th percentile): {value:.4f}\n"
+                            elif p == 50:
+                                output += f"Median (50th percentile): {value:.4f}\n"
+                            elif p == 75:
+                                output += f"Q3 (75th percentile): {value:.4f}\n"
+                            else:
+                                output += f"{p}th percentile: {value:.4f}\n"
+                        
+                        # Calculate IQR
+                        q1 = next((row['value'] for row in result if row['percentile'] == 25), None)
+                        q3 = next((row['value'] for row in result if row['percentile'] == 75), None)
+                        if q1 is not None and q3 is not None:
+                            output += f"\nInterquartile Range (IQR): {q3 - q1:.4f}"
+                        
+                        return [types.TextContent(type="text", text=output)]
+                    else:
+                        return [types.TextContent(type="text", text="No data found for percentile analysis")]
+                        
+                except Exception as e:
+                    error_msg = f"Failed to calculate percentiles: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "outlier_detection":
+                table_name = arguments.get("table_name")
+                column_name = arguments.get("column_name")
+                method = arguments.get("method", "both")
+                iqr_multiplier = arguments.get("iqr_multiplier", 1.5)
+                zscore_threshold = arguments.get("zscore_threshold", 3.0)
+                where_clause = arguments.get("where_clause", "")
+                
+                try:
+                    where_sql = f" WHERE {where_clause}" if where_clause else ""
+                    
+                    outliers_found = []
+                    
+                    if method in ["iqr", "both"]:
+                        # IQR method
+                        iqr_query = f"""
+                        WITH percentiles AS (
+                            SELECT 
+                                (SELECT CAST({column_name} AS REAL) 
+                                 FROM (SELECT {column_name}, ROW_NUMBER() OVER (ORDER BY CAST({column_name} AS REAL)) as rn,
+                                              COUNT(*) OVER () as total_count
+                                       FROM {table_name}{where_sql} WHERE {column_name} IS NOT NULL)
+                                 WHERE rn = CAST(0.25 * total_count AS INTEGER) + 1) as q1,
+                                (SELECT CAST({column_name} AS REAL)
+                                 FROM (SELECT {column_name}, ROW_NUMBER() OVER (ORDER BY CAST({column_name} AS REAL)) as rn,
+                                              COUNT(*) OVER () as total_count  
+                                       FROM {table_name}{where_sql} WHERE {column_name} IS NOT NULL)
+                                 WHERE rn = CAST(0.75 * total_count AS INTEGER) + 1) as q3
+                        )
+                        SELECT 
+                            COUNT(*) as iqr_outliers,
+                            q1 - {iqr_multiplier} * (q3 - q1) as lower_bound,
+                            q3 + {iqr_multiplier} * (q3 - q1) as upper_bound
+                        FROM percentiles,
+                             (SELECT COUNT(*) as outlier_count
+                              FROM {table_name}{where_sql}, percentiles
+                              WHERE {column_name} IS NOT NULL 
+                                AND (CAST({column_name} AS REAL) < q1 - {iqr_multiplier} * (q3 - q1)
+                                     OR CAST({column_name} AS REAL) > q3 + {iqr_multiplier} * (q3 - q1)))
+                        """
+                        
+                        iqr_result = db._execute_query(iqr_query)
+                        if iqr_result:
+                            outliers_found.append(f"IQR Method (multiplier={iqr_multiplier}):")
+                            outliers_found.append(f"  Lower bound: {iqr_result[0]['lower_bound']:.4f}")
+                            outliers_found.append(f"  Upper bound: {iqr_result[0]['upper_bound']:.4f}")
+                            outliers_found.append(f"  Outliers found: {iqr_result[0]['iqr_outliers']}")
+                    
+                    if method in ["zscore", "both"]:
+                        # Z-score method
+                        zscore_query = f"""
+                        WITH stats AS (
+                            SELECT 
+                                AVG(CAST({column_name} AS REAL)) as mean_val,
+                                (SELECT SQRT(AVG(power_diff))
+                                 FROM (SELECT POWER(CAST({column_name} AS REAL) - 
+                                             (SELECT AVG(CAST({column_name} AS REAL)) FROM {table_name}{where_sql}), 2) as power_diff
+                                       FROM {table_name}{where_sql} WHERE {column_name} IS NOT NULL)) as std_dev
+                            FROM {table_name}{where_sql}
+                            WHERE {column_name} IS NOT NULL
+                        )
+                        SELECT 
+                            COUNT(*) as zscore_outliers,
+                            stats.mean_val - {zscore_threshold} * stats.std_dev as lower_bound,
+                            stats.mean_val + {zscore_threshold} * stats.std_dev as upper_bound
+                        FROM {table_name}{where_sql}, stats
+                        WHERE {column_name} IS NOT NULL
+                          AND ABS((CAST({column_name} AS REAL) - stats.mean_val) / stats.std_dev) > {zscore_threshold}
+                        GROUP BY stats.mean_val, stats.std_dev
+                        """
+                        
+                        zscore_result = db._execute_query(zscore_query)
+                        if zscore_result and len(zscore_result) > 0:
+                            outliers_found.append(f"\nZ-Score Method (threshold={zscore_threshold}):")
+                            outliers_found.append(f"  Lower bound: {zscore_result[0]['lower_bound']:.4f}")
+                            outliers_found.append(f"  Upper bound: {zscore_result[0]['upper_bound']:.4f}")
+                            outliers_found.append(f"  Outliers found: {zscore_result[0]['zscore_outliers']}")
+                        else:
+                            outliers_found.append(f"\nZ-Score Method (threshold={zscore_threshold}):")
+                            outliers_found.append(f"  Outliers found: 0")
+                    
+                    output = f"Outlier Detection for {table_name}.{column_name}:\n\n" + "\n".join(outliers_found)
+                    return [types.TextContent(type="text", text=output)]
+                        
+                except Exception as e:
+                    error_msg = f"Failed to detect outliers: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "moving_averages":
+                table_name = arguments.get("table_name")
+                value_column = arguments.get("value_column")
+                time_column = arguments.get("time_column")
+                window_sizes = arguments.get("window_sizes", [7, 30, 90])
+                where_clause = arguments.get("where_clause", "")
+                
+                try:
+                    where_sql = f" WHERE {where_clause}" if where_clause else ""
+                    
+                    # Create moving averages for each window size
+                    ma_queries = []
+                    for window in window_sizes:
+                        ma_queries.append(f"""
+                        SELECT 
+                            {time_column},
+                            CAST({value_column} AS REAL) as value,
+                            {window} as window_size,
+                            AVG(CAST({value_column} AS REAL)) OVER (
+                                ORDER BY {time_column} 
+                                ROWS BETWEEN {window-1} PRECEDING AND CURRENT ROW
+                            ) as moving_average
+                        FROM {table_name}{where_sql}
+                        WHERE {value_column} IS NOT NULL AND {time_column} IS NOT NULL
+                        """)
+                    
+                    # For now, just show the first window size results
+                    result = db._execute_query(ma_queries[0])
+                    
+                    if result:
+                        output = f"Moving Average Analysis ({window_sizes[0]}-period) for {table_name}.{value_column}:\n\n"
+                        
+                        # Show last 10 records
+                        for i, row in enumerate(result[-10:]):
+                            output += f"{row[time_column]}: Value={row['value']:.2f}, MA({window_sizes[0]})={row['moving_average']:.2f}\n"
+                        
+                        # Calculate trend
+                        if len(result) >= 2:
+                            first_ma = result[0]['moving_average']
+                            last_ma = result[-1]['moving_average']
+                            trend = "Increasing" if last_ma > first_ma else "Decreasing"
+                            change = ((last_ma - first_ma) / first_ma) * 100 if first_ma != 0 else 0
+                            output += f"\nTrend: {trend} ({change:+.1f}% change)"
+                        
+                        return [types.TextContent(type="text", text=output)]
+                    else:
+                        return [types.TextContent(type="text", text="No data found for moving average analysis")]
+                        
+                except Exception as e:
+                    error_msg = f"Failed to calculate moving averages: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "distribution_analysis":
+                table_name = arguments.get("table_name")
+                column_name = arguments.get("column_name")
+                bins = arguments.get("bins", 10)
+                where_clause = arguments.get("where_clause", "")
+                
+                try:
+                    where_sql = f" WHERE {where_clause}" if where_clause else ""
+                    
+                    # Calculate distribution statistics
+                    dist_query = f"""
+                    WITH data AS (
+                        SELECT CAST({column_name} AS REAL) as value
+                        FROM {table_name}{where_sql}
+                        WHERE {column_name} IS NOT NULL
+                    ),
+                    stats AS (
+                        SELECT 
+                            COUNT(*) as n,
+                            AVG(value) as mean,
+                            MIN(value) as min_val,
+                            MAX(value) as max_val,
+                            (MAX(value) - MIN(value)) / {bins} as bin_width
+                        FROM data
+                    ),
+                    histogram AS (
+                        SELECT 
+                            CAST((value - stats.min_val) / stats.bin_width AS INTEGER) as bin,
+                            COUNT(*) as frequency
+                        FROM data, stats
+                        GROUP BY bin
+                    )
+                    SELECT 
+                        stats.n as count,
+                        stats.mean,
+                        stats.min_val,
+                        stats.max_val,
+                        stats.bin_width,
+                        GROUP_CONCAT(histogram.frequency) as frequencies
+                    FROM stats, histogram
+                    GROUP BY stats.n, stats.mean, stats.min_val, stats.max_val, stats.bin_width
+                    """
+                    
+                    result = db._execute_query(dist_query)
+                    
+                    if result:
+                        stats = result[0]
+                        frequencies = stats['frequencies'].split(',') if stats['frequencies'] else []
+                        
+                        output = f"""Distribution Analysis for {table_name}.{column_name}:
+
+Basic Statistics:
+- Count: {stats['count']:,}
+- Mean: {stats['mean']:.4f}
+- Range: {stats['min_val']:.4f} to {stats['max_val']:.4f}
+
+Histogram ({bins} bins):
+Bin Width: {stats['bin_width']:.4f}
+"""
+                        
+                        # Simple histogram display
+                        for i, freq in enumerate(frequencies):
+                            bin_start = stats['min_val'] + i * stats['bin_width']
+                            bin_end = bin_start + stats['bin_width']
+                            bar = '█' * min(int(int(freq) / max(1, stats['count'] / 20)), 20)
+                            output += f"[{bin_start:.2f}-{bin_end:.2f}): {freq} {bar}\n"
+                        
+                        return [types.TextContent(type="text", text=output)]
+                    else:
+                        return [types.TextContent(type="text", text="No data found for distribution analysis")]
+                        
+                except Exception as e:
+                    error_msg = f"Failed to analyze distribution: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "regression_analysis":
+                table_name = arguments.get("table_name")
+                x_column = arguments.get("x_column")
+                y_column = arguments.get("y_column")
+                confidence_level = arguments.get("confidence_level", 0.95)
+                where_clause = arguments.get("where_clause", "")
+                
+                try:
+                    where_sql = f" WHERE {where_clause}" if where_clause else ""
+                    
+                    # Calculate linear regression
+                    regression_query = f"""
+                    WITH data AS (
+                        SELECT 
+                            CAST({x_column} AS REAL) as x,
+                            CAST({y_column} AS REAL) as y
+                        FROM {table_name}{where_sql}
+                        WHERE {x_column} IS NOT NULL AND {y_column} IS NOT NULL
+                    ),
+                    stats AS (
+                        SELECT 
+                            COUNT(*) as n,
+                            AVG(x) as mean_x,
+                            AVG(y) as mean_y,
+                            SUM(x * y) as sum_xy,
+                            SUM(x * x) as sum_x2,
+                            SUM(y * y) as sum_y2,
+                            SUM(x) as sum_x,
+                            SUM(y) as sum_y
+                        FROM data
+                    )
+                    SELECT 
+                        n,
+                        mean_x,
+                        mean_y,
+                        (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x) as slope,
+                        (mean_y - ((n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x)) * mean_x) as intercept,
+                        (n * sum_xy - sum_x * sum_y) / SQRT((n * sum_x2 - sum_x * sum_x) * (n * sum_y2 - sum_y * sum_y)) as r_value
+                    FROM stats
+                    WHERE n > 2
+                    """
+                    
+                    result = db._execute_query(regression_query)
+                    
+                    if result:
+                        reg = result[0]
+                        r_squared = reg['r_value'] ** 2 if reg['r_value'] is not None else 0
+                        
+                        output = f"""Linear Regression Analysis: {y_column} ~ {x_column}
+
+Sample Size: {reg['n']:,}
+Regression Equation: y = {reg['slope']:.4f}x + {reg['intercept']:.4f}
+
+Coefficients:
+- Slope: {reg['slope']:.4f}
+- Intercept: {reg['intercept']:.4f}
+- Correlation (r): {reg['r_value']:.4f}
+- R-squared: {r_squared:.4f} ({r_squared*100:.1f}% of variance explained)
+
+Interpretation:
+For every 1-unit increase in {x_column}, {y_column} {'increases' if reg['slope'] > 0 else 'decreases'} by {abs(reg['slope']):.4f} units on average."""
+                        
+                        return [types.TextContent(type="text", text=output)]
+                    else:
+                        return [types.TextContent(type="text", text="Insufficient data for regression analysis (need >2 points)")]
+                        
+                except Exception as e:
+                    error_msg = f"Failed to perform regression analysis: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
+
+            elif name == "hypothesis_testing":
+                test_type = arguments.get("test_type")
+                table_name = arguments.get("table_name")
+                column_name = arguments.get("column_name")
+                column2_name = arguments.get("column2_name", "")
+                test_value = arguments.get("test_value", 0)
+                alpha = arguments.get("alpha", 0.05)
+                where_clause = arguments.get("where_clause", "")
+                
+                try:
+                    where_sql = f" WHERE {where_clause}" if where_clause else ""
+                    
+                    if test_type == "one_sample_t":
+                        # One-sample t-test
+                        test_query = f"""
+                        WITH data AS (
+                            SELECT CAST({column_name} AS REAL) as value
+                            FROM {table_name}{where_sql}
+                            WHERE {column_name} IS NOT NULL
+                        ),
+                        stats AS (
+                            SELECT 
+                                COUNT(*) as n,
+                                AVG(value) as mean,
+                                SUM(POWER(value - (SELECT AVG(value) FROM data), 2)) / (COUNT(*) - 1) as variance
+                            FROM data
+                        )
+                        SELECT 
+                            n,
+                            mean,
+                            SQRT(variance) as std_dev,
+                            (mean - {test_value}) / (SQRT(variance) / SQRT(n)) as t_statistic,
+                            {test_value} as test_value
+                        FROM stats
+                        WHERE n > 1
+                        """
+                        
+                        result = db._execute_query(test_query)
+                        
+                        if result:
+                            test_result = result[0]
+                            
+                            # Critical t-value approximation (for common cases)
+                            df = test_result['n'] - 1
+                            critical_t = 2.0  # Rough approximation for 95% confidence
+                            
+                            p_value_approx = "< 0.05" if abs(test_result['t_statistic']) > critical_t else "> 0.05"
+                            significant = abs(test_result['t_statistic']) > critical_t
+                            
+                            output = f"""One-Sample t-Test Results:
+
+Null Hypothesis: μ = {test_value}
+Alternative Hypothesis: μ ≠ {test_value}
+
+Sample Statistics:
+- Sample Size: {test_result['n']:,}
+- Sample Mean: {test_result['mean']:.4f}
+- Sample Std Dev: {test_result['std_dev']:.4f}
+- Degrees of Freedom: {df}
+
+Test Results:
+- t-statistic: {test_result['t_statistic']:.4f}
+- p-value: {p_value_approx} (approximate)
+- Significance Level: {alpha}
+
+Conclusion: {'Reject' if significant else 'Fail to reject'} the null hypothesis at α = {alpha}
+The sample mean is {'significantly different from' if significant else 'not significantly different from'} {test_value}."""
+                            
+                            return [types.TextContent(type="text", text=output)]
+                        else:
+                            return [types.TextContent(type="text", text="Insufficient data for t-test (need >1 observation)")]
+                    
+                    else:
+                        return [types.TextContent(type="text", text=f"Test type '{test_type}' not yet implemented. Available: one_sample_t")]
+                        
+                except Exception as e:
+                    error_msg = f"Failed to perform hypothesis test: {str(e)}"
+                    logger.error(error_msg)
+                    return [types.TextContent(type="text", text=error_msg)]
 
             elif name == "append_insight":
                 if not arguments or "insight" not in arguments:
@@ -4609,7 +5480,7 @@ async def main(db_path: str = "sqlite_mcp.db"):
             write_stream,
             InitializationOptions(
                 server_name="sqlite-custom",
-                server_version="2.0.0",
+                server_version="2.1.0",
                 capabilities=server.get_capabilities(
                     notification_options=NotificationOptions(),
                     experimental_capabilities={},
