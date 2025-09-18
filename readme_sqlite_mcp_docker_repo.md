@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated: September 18, 2025 5:11 PM EST – v2.2.0*
+*Last Updated: January 18, 2025 – v2.3.0*
 
 The SQLite MCP Server transforms SQLite into a powerful, AI-ready database engine. It combines standard relational operations with advanced analytics, text and vector search, geospatial capabilities, and intelligent workflow automation. By layering business intelligence tools, semantic resources, and guided prompts on top of SQLite, it enables both developers and AI assistants to interact with data more naturally and effectively.
 
@@ -24,7 +24,7 @@ docker run -i --rm \
 docker pull writenotenow/sqlite-mcp-server:latest
 
 # Or pull specific version
-docker pull writenotenow/sqlite-mcp-server:v2.2.0
+docker pull writenotenow/sqlite-mcp-server:v2.3.0
 
 # Run with volume mount
 docker run -i --rm \
@@ -71,22 +71,22 @@ docker run -i --rm \
 
 ## ✅ Quick Test - Verify Everything Works
 
-**Test all 67 tools in 30 seconds:**
+**NEW in v2.3.0: Test all 67 tools in 30 seconds!**
 
 ```bash
-# Quick smoke test
-python test_runner.py --quick
+# Run comprehensive test in Docker
+docker run -i --rm \
+  -v $(pwd):/workspace \
+  writenotenow/sqlite-mcp-server:v2.3.0 \
+  --test --quick
 
-# Standard comprehensive test (recommended)
-python test_runner.py --standard
-
-# Full test suite with edge cases
-python test_runner.py --full
+# Or test specific installation
+docker run -i --rm writenotenow/sqlite-mcp-server:v2.3.0 --test --standard
 ```
 
 **Expected output:**
 ```
-🚀 SQLite MCP Server Comprehensive Test Suite v2.2.0
+🚀 SQLite MCP Server Comprehensive Test Suite v2.3.0
 ================================================================
 
 🔍 Environment Detection:
@@ -102,8 +102,21 @@ python test_runner.py --full
 🎉 SUCCESS: 63/67 tools tested successfully!
 ```
 
+**Test Levels:**
+- `--test --quick` - 30-second validation
+- `--test --standard` - 2-3 minute comprehensive test  
+- `--test --full` - 5-10 minute full validation
+
 ## Key Features
 
+### 🆕 **NEW in v2.3.0: Comprehensive Testing & Validation**
+* **67 Tools Tested**: Complete validation of all database, text, vector, and geospatial capabilities
+* **Smart Environment Detection**: Auto-detects SQLite version, JSONB support, optional dependencies
+* **Multi-Level Testing**: Quick (30s), Standard (2-3min), Full (5-10min) validation options
+* **CI/CD Ready**: Professional testing infrastructure with proper exit codes
+* **Docker Integration**: Run tests directly in containerized environment
+
+### **Core Database Capabilities**
 * **Advanced Text Processing**: Comprehensive text analysis toolkit with 8 specialized tools: PCRE regex extraction/replacement, fuzzy matching with Levenshtein distance, phonetic matching (Soundex/Metaphone), text similarity analysis (Cosine/Jaccard), normalization operations, pattern validation, advanced multi-method search, and comprehensive text validation
 * **Statistical Analysis Library**: Comprehensive statistical functions for data analysis including descriptive statistics, percentile analysis, and time series analysis
 * **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements
@@ -182,8 +195,9 @@ moving_averages({ table_name: "monthly_sales", value_column: "revenue", time_col
 
 ## Available Tags
 
-* `latest` – latest stable release
-* `v2.2.0` – pinned version
+* `latest` – latest stable release (v2.3.0)
+* `v2.3.0` – latest version with comprehensive testing
+* `v2.2.0` – previous version
 
 ---
 
@@ -211,10 +225,16 @@ docker run -i --rm \
 **CI/CD Testing**
 
 ```bash
+# Validate server functionality in CI/CD
+docker run -i --rm \
+  writenotenow/sqlite-mcp-server:v2.3.0 \
+  --test --quick
+
+# Full validation with test data
 docker run -i --rm \
   -v /tmp/test-data:/workspace \
-  writenotenow/sqlite-mcp-server:latest \
-  --db-path :memory:
+  writenotenow/sqlite-mcp-server:v2.3.0 \
+  --test --standard --db-path /workspace/test.db
 ```
 
 ---
