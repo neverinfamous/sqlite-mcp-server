@@ -751,20 +751,11 @@ If you encounter JSON-related errors:
    - Use parameter binding for complex JSON data
    - Check for proper escaping in JSON strings
 
-## Database Maintenance
-
-The SQLite MCP Server includes basic database maintenance capabilities:
-
-- **Integrity Checks**: Basic SQLite PRAGMA integrity_check support
-- **JSON Validation**: Automatic validation of JSON data during INSERT/UPDATE operations
-- **Transaction Safety**: Automatic rollback on errors to prevent data corruption
-
 ## Database Configuration
 
 - **Auto-creates** `sqlite_mcp.db` in your project root if none exists because **MCP operations require persistent storage** between tool calls
 - **Connects to existing databases** - works with any SQLite file you specify
-
-The server automatically detects project structure and creates appropriate database locations, supporting both relative and absolute paths for maximum flexibility.
+- **Supports both relative and absolute paths** for maximum flexibility.
 
 ### Database Location Best Practices
 
@@ -1561,7 +1552,7 @@ rebuild_vector_index({
 
 ### Performance Benefits
 
-- **100x Faster Search**: Sub-linear O(log n) performance vs O(n) linear search
+- **Faster Search**: Sub-linear O(log n) performance vs O(n) linear search
 - **Massive Scalability**: Handle millions of embeddings efficiently
 - **Intelligent Clustering**: K-means partitioning reduces candidates by 90%+
 - **Configurable Accuracy**: Balance speed vs precision with search_k parameter

@@ -89,8 +89,7 @@ The SQLite MCP Server exposes 67 tools by default. MCP clients such as Cursor ty
 
 - **Auto-creates** `sqlite_mcp.db` in your project root if none exists because **MCP operations require persistent storage** between tool calls
 - **Connects to existing databases** - works with any SQLite file you specify
-
-The server automatically detects project structure and creates appropriate database locations, supporting both relative and absolute paths for maximum flexibility.
+- **Supports both relative and absolute paths** for maximum flexibility.
 
 ### Statistical Analysis Workflow
 
@@ -210,24 +209,6 @@ docker run -i --rm \
 **Permission Issues**: Ensure volume mount paths have proper permissions
 **Database Not Found**: Check volume mount and file paths
 **Connection Issues**: Verify MCP client configuration
-
-## Docker Hub Authentication (For Contributors)
-
-If you need to push updates to the Docker Hub repository, authenticate using a Personal Access Token:
-
-```bash
-# Interactive login (recommended)
-docker login -u writenotenow
-# Enter your Docker Hub Personal Access Token when prompted
-
-# Command line login
-echo "YOUR_DOCKER_HUB_PAT_TOKEN" | docker login -u writenotenow --password-stdin
-```
-
-**Authentication Notes:**
-- Use Docker Hub Personal Access Token, not password
-- Create PAT at: https://hub.docker.com/settings/security
-- Required permissions: Read, Write, Delete
 
 ## Links
 
