@@ -12,6 +12,11 @@
 - **Connects to any existing** SQLite database
 - **Works immediately** - mount your data directory and go!
 
+⚠️ Tool Count Consideration
+The SQLite MCP Server exposes 67 tools by default. MCP clients such as Cursor typically start warning users around 80 tools total, and stability issues can appear above ~100–120 tools depending on your setup.
+
+👉 To keep your workspace responsive, you can disable any tools you don’t need directly in your MCP client settings. This makes it easy to slim down the server for your specific use case (e.g., only enabling query, JSON, or vector tools).
+
 ## Quick Start
 
 ### Pull and Run
@@ -67,7 +72,7 @@ docker run -i --rm \
 
 - **Advanced Text Processing**: Comprehensive text analysis toolkit with 8 specialized tools: PCRE regex extraction/replacement, fuzzy matching with Levenshtein distance, phonetic matching (Soundex/Metaphone), text similarity analysis (Cosine/Jaccard), normalization operations, pattern validation, advanced multi-method search, and comprehensive text validation
 - **Statistical Analysis Library**: Comprehensive statistical functions for data analysis including descriptive statistics, percentile analysis, and time series analysis
-- **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements (~15% space savings)
+- **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements
 - **Transaction Safety**: All write operations automatically wrapped in transactions with proper rollback on errors
 - **Foreign Key Enforcement**: Automatic enforcement of foreign key constraints across all connections
 - **Advanced SQL Support**: Complex queries including window functions, subqueries, and advanced filtering
@@ -89,6 +94,7 @@ docker run -i --rm \
 - **Intelligent MCP Resources**: Dynamic database meta-awareness with real-time schema, capabilities, statistics, search indexes, and performance insights
 - **Guided MCP Prompts**: Intelligent workflow automation with semantic query translation, table summarization, database optimization, and hybrid search recipes
 - **Advanced SQLite Engine**: Upgraded to SQLite 3.50.4 with significant performance enhancements
+- **WAL Mode Compatible**: Works alongside the existing Write-Ahead Logging (WAL) journal mode
 
 ### Statistical Analysis Workflow
 

@@ -15,7 +15,7 @@ The SQLite MCP Server exposes 67 tools by default. MCP clients such as Cursor ty
 
 - **Advanced Text Processing**: Comprehensive text analysis toolkit with 8 specialized tools: PCRE regex extraction/replacement, fuzzy matching with Levenshtein distance, phonetic matching (Soundex/Metaphone), text similarity analysis (Cosine/Jaccard), normalization operations, pattern validation, advanced multi-method search, and comprehensive text validation
 - **Statistical Analysis Library**: Comprehensive statistical functions for data analysis including descriptive statistics, percentile analysis, and time series analysis
-- **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements (~15% space savings)
+- **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements
 - **Transaction Safety**: All write operations automatically wrapped in transactions with proper rollback on errors
 - **Foreign Key Enforcement**: Automatic enforcement of foreign key constraints across all connections
 - **Advanced SQL Support**: Complex queries including window functions, subqueries, and advanced filtering
@@ -58,38 +58,6 @@ docker pull writenotenow/sqlite-mcp-server:latest
 
 # Pull specific version
 docker pull writenotenow/sqlite-mcp-server:v2.2.0
-```
-
-### Docker Hub Authentication for Contributors
-
-If you need to push updates to the Docker Hub repository, you'll need to authenticate using a Personal Access Token (PAT):
-
-```bash
-# Method 1: Interactive login (recommended)
-docker login -u writenotenow
-# Enter your Docker Hub Personal Access Token when prompted
-
-# Method 2: Using token from command line
-echo "YOUR_DOCKER_HUB_PAT_TOKEN" | docker login -u writenotenow --password-stdin
-```
-
-**Important Notes:**
-- Use your Docker Hub Personal Access Token, not your regular password
-- Create a PAT at: https://hub.docker.com/settings/security
-- Required permissions: Read, Write, Delete for repository access
-- Store your token securely and never commit it to version control
-
-**Example Push Workflow:**
-```bash
-# Build image locally
-docker build -t writenotenow/sqlite-mcp-server:v2.2.0 .
-
-# Tag with latest
-docker tag writenotenow/sqlite-mcp-server:v2.2.0 writenotenow/sqlite-mcp-server:latest
-
-# Push both tags
-docker push writenotenow/sqlite-mcp-server:v2.2.0
-docker push writenotenow/sqlite-mcp-server:latest
 ```
 
 ## Advanced Text Processing
@@ -531,7 +499,7 @@ The server exposes dynamic resources:
 
 The SQLite MCP Server implements SQLite 3.45's JSONB binary storage format for all JSON data, providing significant advantages:
 
-- **Reduced Storage Size**: 15% space savings across migrated tables
+- **Reduced Storage Size**: Estimated 15% space savings across migrated tables
 - **Faster Parsing**: No need to re-parse JSON text for each operation
 - **Type Preservation**: Binary format preserves data types without text conversion
 - **Elimination of Escaping Issues**: No complex character escaping needed
@@ -726,10 +694,6 @@ describe_table({
 ```
 
 ## Troubleshooting
-
-### System Status
-
-**Last Comprehensive Test**: September 16, 2025 - All core database operations, JSONB support, transaction safety, and business intelligence features verified functional.
 
 ### JSONB-Specific Troubleshooting
 
@@ -949,13 +913,6 @@ The SQLite MCP Server includes comprehensive JSON validation capabilities:
    - Records repair attempts in maintenance logs
 
 ### JSONB Binary Storage Migration
-
-All JSON columns have been migrated to the JSONB binary storage format, providing:
-
-- Improved storage efficiency (~15% smaller)
-- Better query performance for JSON operations
-- Enhanced validation during data changes
-- Improved type preservation
 
 The migration to JSONB is transparent to users - simply continue using standard JSON operations as shown in the examples.
 
@@ -1689,7 +1646,7 @@ MCP Resources provide dynamic "knowledge hooks" that give the AI model instant a
 **`database://capabilities`** - Comprehensive server capabilities matrix
 ```javascript
 // Provides real-time information about:
-// - Available tools (51 total)
+// - Available tools (67 total)
 // - Feature support (FTS5, semantic search, virtual tables)
 // - Advanced features and limitations
 // - Server and SQLite versions
@@ -1763,7 +1720,7 @@ MCP Prompts provide intelligent workflow automation, acting as "recipes" that gu
 
 ## Planned Future Enhancements
 
-#### **1. Advanced Data Connectors - MEDIUM PRIORITY**
+#### **1. Advanced Data Connectors - LOW PRIORITY**
 - **Planned**: Direct database connectors (PostgreSQL, MySQL, MongoDB)
 - **Examples**: Cross-database queries, data synchronization
 
