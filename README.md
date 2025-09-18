@@ -6,6 +6,11 @@
 
 The SQLite MCP Server provides advanced database interaction and business intelligence capabilities featuring **Advanced Text Processing**, **Statistical Analysis Library**, **SpatiaLite Geospatial Analytics**, Enhanced Virtual Tables with Smart Type Inference, Vector Index Optimization with ANN search, Intelligent MCP Resources and Prompts, Semantic/Vector Search, Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
 
+⚠️ Tool Count Consideration
+The SQLite MCP Server exposes 67 tools by default. MCP clients such as Cursor typically start warning users around 80 tools total, and stability issues can appear above ~100–120 tools depending on your setup.
+
+👉 To keep your workspace responsive, you can disable any tools you don’t need directly in your MCP client settings. This makes it easy to slim down the server for your specific use case (e.g., only enabling query, JSON, or vector tools).
+
 ## Key Features
 
 - **Advanced Text Processing**: Comprehensive text analysis toolkit with 8 specialized tools: PCRE regex extraction/replacement, fuzzy matching with Levenshtein distance, phonetic matching (Soundex/Metaphone), text similarity analysis (Cosine/Jaccard), normalization operations, pattern validation, advanced multi-method search, and comprehensive text validation
@@ -1758,16 +1763,11 @@ MCP Prompts provide intelligent workflow automation, acting as "recipes" that gu
 
 ## Planned Future Enhancements
 
-#### **1. Advanced Vector Search with sqlite-vss - HIGH PRIORITY**
-- **Planned**: Industry-standard HNSW and IVF vector indexing
-- **Examples**: 10-100x faster semantic search, large-scale embedding storage
-- **Impact**: Replace custom vector optimization with proven ANN algorithms
-
-#### **2. Advanced Data Connectors - MEDIUM PRIORITY**
+#### **1. Advanced Data Connectors - MEDIUM PRIORITY**
 - **Planned**: Direct database connectors (PostgreSQL, MySQL, MongoDB)
 - **Examples**: Cross-database queries, data synchronization
 
-#### **3. Real-time Data Streaming - LOW PRIORITY**
+#### **2. Real-time Data Streaming - LOW PRIORITY**
 - **Planned**: Live data ingestion from streaming sources
 - **Examples**: Kafka, WebSocket, API polling integration
 
