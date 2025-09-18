@@ -1,15 +1,10 @@
 # SQLite MCP Server
 
-*Last Updated September 18, 2025 2:30 PM EST - v2.2.0*
+*Last Updated September 18, 2025 3:26 PM EST - v2.2.0*
 
 ## Overview
 
 The SQLite MCP Server provides advanced database interaction and business intelligence capabilities featuring **Advanced Text Processing**, **Statistical Analysis Library**, **SpatiaLite Geospatial Analytics**, Enhanced Virtual Tables with Smart Type Inference, Vector Index Optimization with ANN search, Intelligent MCP Resources and Prompts, Semantic/Vector Search, Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
-
-⚠️ Tool Count Consideration
-The SQLite MCP Server exposes 67 tools by default. MCP clients such as Cursor typically start warning users around 80 tools total, and stability issues can appear above ~100–120 tools depending on your setup.
-
-👉 To keep your workspace responsive, you can disable any tools you don’t need directly in your MCP client settings. This makes it easy to slim down the server for your specific use case (e.g., only enabling query, JSON, or vector tools).
 
 ## Key Features
 
@@ -37,6 +32,9 @@ The SQLite MCP Server exposes 67 tools by default. MCP clients such as Cursor ty
 - **Intelligent MCP Resources**: Dynamic database meta-awareness with real-time schema, capabilities, statistics, search indexes, and performance insights
 - **Guided MCP Prompts**: Intelligent workflow automation with semantic query translation, table summarization, database optimization, and hybrid search recipes
 - **Advanced SQLite Engine**: Upgraded to SQLite 3.50.4 with significant performance enhancements
+
+⚠️ Tool Count Consideration
+The SQLite MCP Server exposes 67 tools by default. MCP clients such as Cursor typically start warning users around 80 tools total, and stability issues can appear above ~100–120 tools depending on your setup. To keep your workspace responsive, you can disable any tools you don’t need directly in your MCP client settings. This makes it easy to slim down the server for your specific use case (e.g., only enabling query, JSON, or vector tools).
 
 ## Attribution
 
@@ -493,11 +491,9 @@ The server exposes dynamic resources:
   })
   ```
 
-## Major Enhancements
+### JSONB Binary Storage
 
-### 1. JSONB Binary Storage
-
-The SQLite MCP Server implements SQLite 3.45's JSONB binary storage format for all JSON data, providing significant advantages:
+The SQLite MCP Server implements SQLite JSONB binary storage format for all JSON data, providing significant advantages:
 
 - **Reduced Storage Size**: Estimated 15% space savings across migrated tables
 - **Faster Parsing**: No need to re-parse JSON text for each operation
@@ -529,7 +525,7 @@ read_query({
 
 Note: The explicit `jsonb()` function should only be used in specific advanced cases or when required for parameter binding pattern. For direct SQL statements, standard JSON strings work efficiently.
 
-### 2. Transaction Safety
+### Transaction Safety
 
 All write operations are now automatically wrapped in transactions with proper rollback on error:
 
@@ -546,7 +542,7 @@ All write operations are now automatically wrapped in transactions with proper r
 - **Thread Length Protection**: Mitigates risks associated with conversation length limits
 - **Message Interruption Protection**: Handles cases where operations are cut off mid-execution
 
-### 3. Foreign Key Constraint Enforcement
+### Foreign Key Constraint Enforcement
 
 The server now automatically enables foreign key constraints for all database connections:
 
@@ -765,7 +761,17 @@ The SQLite MCP Server includes basic database maintenance capabilities:
 
 ## Database Configuration
 
-The SQLite MCP Server supports flexible database configuration to work with any SQLite database file:
+- **Auto-creates** `sqlite_mcp.db` in your project root if none exists because **MCP operations require persistent storage** between tool calls
+- **Connects to existing databases** - works with any SQLite file you specify
+
+The server automatically detects project structure and creates appropriate database locations, supporting both relative and absolute paths for maximum flexibility.
+
+### Database Location Best Practices
+
+- **`./data/sqlite_mcp.db`** - Recommended for projects (organized, version-control friendly)
+- **`./sqlite_mcp.db`** - Simple option for small projects  
+- **Existing databases** - Use `--db-path` to connect to any SQLite database
+- **`:memory:`** - Temporary database for testing (data not persisted)
 
 ### Quick Start Options
 
@@ -799,8 +805,6 @@ python start_sqlite_mcp.py --db-path :memory:
 }
 ```
 
-The server automatically detects project structure and creates appropriate database locations, supporting both relative and absolute paths for maximum flexibility.
-
 ### Known Minor Issues (Non-Critical)
 - **JSON Formatting**: Standard JSON formatting resolves any escaping issues
 - **Complex Queries**: Advanced parameterized queries supported with proper parameter binding
@@ -818,18 +822,6 @@ The server automatically detects project structure and creates appropriate datab
 - **Note**: The main MCP server is Python-based and works perfectly without any JavaScript dependencies
 
 **For most users**: You only need Python requirements. The JavaScript utilities are optional helpers for advanced use cases.
-
-## Database Configuration
-
-The SQLite MCP Server provides flexible database configuration with **automatic database creation** - no manual setup required!
-
-### **🚀 Zero-Configuration Start**
-The server automatically creates and manages a persistent SQLite database **because MCP operations require persistent storage** between tool calls:
-- **Auto-creates** `sqlite_mcp.db` in your project root if none exists
-- **Why create a file?** MCP tool calls need shared, persistent data storage (tables, indexes, etc.)
-- **Persists all data** between sessions and MCP tool calls  
-- **Works immediately** - no database setup or file creation needed
-- **Connects to existing databases** - works with any SQLite file you specify
 
 ### Quick Start Options
 
@@ -883,13 +875,6 @@ python start_sqlite_mcp.py --create-data-dir
   }
 }
 ```
-
-### Database Location Best Practices
-
-- **`./data/sqlite_mcp.db`** - Recommended for projects (organized, version-control friendly)
-- **`./sqlite_mcp.db`** - Simple option for small projects  
-- **Existing databases** - Use `--db-path` to connect to any SQLite database
-- **`:memory:`** - Temporary database for testing (data not persisted)
 
 ## JSON Validation and JSONB Support
 

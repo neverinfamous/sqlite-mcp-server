@@ -2,21 +2,6 @@
 
 *Last Updated September 17, 2025 7:35 AM EST - v2.2.0*
 
-*Lightweight, containerized SQLite database server with AI-native features, advanced text processing, and statistical analysis*
-
-## 🚀 Zero-Configuration Database
-**No database setup required!** The server automatically creates and manages persistent SQLite databases **because MCP operations need persistent storage**:
-- **Auto-creates** `sqlite_mcp.db` files as needed (MCP tools require shared data storage)
-- **Why create a file?** Tables, indexes, and data must persist between MCP tool calls
-- **Persists all data** between container runs
-- **Connects to any existing** SQLite database
-- **Works immediately** - mount your data directory and go!
-
-⚠️ Tool Count Consideration
-The SQLite MCP Server exposes 67 tools by default. MCP clients such as Cursor typically start warning users around 80 tools total, and stability issues can appear above ~100–120 tools depending on your setup.
-
-👉 To keep your workspace responsive, you can disable any tools you don’t need directly in your MCP client settings. This makes it easy to slim down the server for your specific use case (e.g., only enabling query, JSON, or vector tools).
-
 ## Quick Start
 
 ### Pull and Run
@@ -95,6 +80,17 @@ docker run -i --rm \
 - **Guided MCP Prompts**: Intelligent workflow automation with semantic query translation, table summarization, database optimization, and hybrid search recipes
 - **Advanced SQLite Engine**: Upgraded to SQLite 3.50.4 with significant performance enhancements
 - **WAL Mode Compatible**: Works alongside the existing Write-Ahead Logging (WAL) journal mode
+<br><br>
+
+⚠️ Tool Count Consideration<br><br>
+The SQLite MCP Server exposes 67 tools by default. MCP clients such as Cursor typically start warning users around 80 tools total, and stability issues can appear above ~100–120 tools depending on your setup. To keep your workspace responsive, you can disable any tools you don’t need directly in your MCP client settings. This makes it easy to slim down the server for your specific use case (e.g., only enabling query, JSON, or vector tools).
+
+## Database Configuration
+
+- **Auto-creates** `sqlite_mcp.db` in your project root if none exists because **MCP operations require persistent storage** between tool calls
+- **Connects to existing databases** - works with any SQLite file you specify
+
+The server automatically detects project structure and creates appropriate database locations, supporting both relative and absolute paths for maximum flexibility.
 
 ### Statistical Analysis Workflow
 
@@ -154,8 +150,7 @@ moving_averages({
 ## Available Tags
 
 - `latest` - Latest stable release
-- `v1.8.0` - Specific version
-- `main` - Development build
+- `v2.2.0` - Specific version
 
 ## Examples
 
@@ -239,7 +234,3 @@ echo "YOUR_DOCKER_HUB_PAT_TOKEN" | docker login -u writenotenow --password-stdin
 - **GitHub**: https://github.com/neverinfamous/sqlite-mcp-server
 - **Docker Hub**: https://hub.docker.com/r/writenotenow/sqlite-mcp-server
 - **Full Documentation**: See main README.md for complete feature documentation
-
----
-
-*SQLite MCP Server v2.2.0 - Transform your database into an intelligent, self-aware assistant with advanced text processing and comprehensive analytics*
