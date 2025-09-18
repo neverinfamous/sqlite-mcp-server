@@ -94,16 +94,27 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
+    - name: Extract version from pyproject.toml
+      id: version
+      run: |
+        VERSION=$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Extracted version: $VERSION"
+
     - name: Extract metadata
       id: meta
       uses: docker/metadata-action@v5
       with:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         flavor: |
-          latest=false
+          latest=auto
         tags: |
-          type=raw,value=${{ matrix.variant.name }}
-          type=semver,pattern={{version}}-${{ matrix.variant.name }}
+          # Always create latest tag for main branch pushes
+          type=raw,value=latest,enable={{is_default_branch}}
+          # Create version tags (v2.2.0) when pushing git tags
+          type=semver,pattern={{version}}
+          # Create version tags from pyproject.toml on main branch pushes
+          type=raw,value=v${{ steps.version.outputs.version }},enable={{is_default_branch}}
 
     # Build locally first for security scanning (single platform)
     - name: Build Docker image for scanning

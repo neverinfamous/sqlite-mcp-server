@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated September 17, 2025 4:49 PM EST - v2.2.0*
+*Last Updated September 18, 2025 2:30 PM EST - v2.2.0*
 
 ## Overview
 
