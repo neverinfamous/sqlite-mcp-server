@@ -1,10 +1,10 @@
 # SQLite MCP Server
 
-*Last Updated: September 18, 2025 5:11 PM EST – v2.2.0*
+*Last Updated: January 18, 2025 – v2.3.0*
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/writenotenow/sqlite-mcp-server)](https://hub.docker.com/r/writenotenow/sqlite-mcp-server)
 ![License](https://img.shields.io/badge/license-MIT-blue)
-![Version](https://img.shields.io/badge/version-v2.2.0-green)
+![Version](https://img.shields.io/badge/version-v2.3.0-green)
 
 ## 🚀 Quick Try
 
@@ -65,6 +65,39 @@ This project is based on the original SQLite MCP Server from the [Model Context 
 **Original Authors**: Model Context Protocol Team
 **Original Repository**: [https://github.com/modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers)
 **License**: MIT License
+
+## ✅ Quick Test - Verify Everything Works
+
+**Test all 67 tools in 30 seconds:**
+
+```bash
+# Quick smoke test
+python test_runner.py --quick
+
+# Standard comprehensive test (recommended)
+python test_runner.py --standard
+
+# Full test suite with edge cases
+python test_runner.py --full
+```
+
+**Expected output:**
+```
+🚀 SQLite MCP Server Comprehensive Test Suite v2.3.0
+================================================================
+
+🔍 Environment Detection:
+  ✅ SQLite 3.50.2 (JSONB supported)
+  ✅ Python 3.12.11  
+  ✅ MCP 1.14.0
+
+📊 Testing 67 Tools across 13 categories...
+
+✅ Core Database Operations (8/8 passed)
+✅ JSON Operations (12/12 passed)  
+✅ Text Processing (8/8 passed)
+🎉 SUCCESS: 63/67 tools tested successfully!
+```
 
 ## Getting Started
 
@@ -146,12 +179,12 @@ Available on Docker Hub at [`writenotenow/sqlite-mcp-server`](https://hub.docker
 docker pull writenotenow/sqlite-mcp-server:latest
 
 # Pull specific version
-docker pull writenotenow/sqlite-mcp-server:v2.2.0
+docker pull writenotenow/sqlite-mcp-server:v2.3.0
 ```
 
 ## Advanced Text Processing
 
-The SQLite MCP Server v2.2.0 introduces a comprehensive text processing toolkit with 8 specialized functions for advanced text analysis, pattern matching, and data cleaning. This brings the total server capabilities to **67 tools** for complete database and text processing operations.
+The SQLite MCP Server v2.3.0 includes a comprehensive text processing toolkit with 8 specialized functions for advanced text analysis, pattern matching, and data cleaning. This brings the total server capabilities to **67 tools** for complete database and text processing operations.
 
 ### Available Text Processing Functions
 
@@ -249,7 +282,7 @@ The SQLite MCP Server v2.2.0 introduces a comprehensive text processing toolkit 
 
 ## Statistical Analysis Library
 
-The SQLite MCP Server v2.2.0 includes a comprehensive statistical analysis library with 8 specialized functions for data analysis and business intelligence.
+The SQLite MCP Server v2.3.0 includes a comprehensive statistical analysis library with 8 specialized functions for data analysis and business intelligence.
 
 ### Available Statistical Functions
 

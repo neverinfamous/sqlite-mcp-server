@@ -69,7 +69,38 @@ docker run -i --rm \
 }
 ```
 
----
+## ✅ Quick Test - Verify Everything Works
+
+**Test all 67 tools in 30 seconds:**
+
+```bash
+# Quick smoke test
+python test_runner.py --quick
+
+# Standard comprehensive test (recommended)
+python test_runner.py --standard
+
+# Full test suite with edge cases
+python test_runner.py --full
+```
+
+**Expected output:**
+```
+🚀 SQLite MCP Server Comprehensive Test Suite v2.2.0
+================================================================
+
+🔍 Environment Detection:
+  ✅ SQLite 3.50.2 (JSONB supported)
+  ✅ Python 3.12.11  
+  ✅ MCP 1.14.0
+
+📊 Testing 67 Tools across 13 categories...
+
+✅ Core Database Operations (8/8 passed)
+✅ JSON Operations (12/12 passed)  
+✅ Text Processing (8/8 passed)
+🎉 SUCCESS: 63/67 tools tested successfully!
+```
 
 ## Key Features
 

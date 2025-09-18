@@ -16,3 +16,8 @@ flake8>=7.0.0
 # Security testing
 safety>=3.0.0
 bandit>=1.7.0
+
+# Comprehensive testing dependencies
+numpy>=1.24.0  # For vector operations testing
+requests>=2.31.0  # For external API testing (optional)
+Pillow>=10.0.0  # For spatial data testing (optional)

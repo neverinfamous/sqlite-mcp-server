@@ -1,6 +1,6 @@
 [project]
 name = "mcp-server-sqlite"
-version = "2.2.0"
+version = "2.3.0"
 description = "A SQLite MCP server with JSONB support, database administration tools, and advanced database operations"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -50,6 +50,7 @@ dev-dependencies = [
 
 [project.scripts]
 mcp-server-sqlite = "mcp_server_sqlite:main"
+sqlite-mcp-test = "test_runner:main"
 
 [tool.black]
 line-length = 88
