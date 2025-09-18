@@ -1,54 +1,145 @@
 # SQLite MCP Server
 
-*Last Updated September 18, 2025 3:26 PM EST - v2.2.0*
+*Last Updated: September 18, 2025 5:11 PM EST – v2.2.0*
+
+[![Docker Pulls](https://img.shields.io/docker/pulls/writenotenow/sqlite-mcp-server)](https://hub.docker.com/r/writenotenow/sqlite-mcp-server)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Version](https://img.shields.io/badge/version-v2.2.0-green)
+
+## 🚀 Quick Try
+
+Run instantly with Docker (creates a project-local database):
+
+```bash
+docker run -i --rm \
+  -v $(pwd):/workspace \
+  writenotenow/sqlite-mcp-server:latest \
+  --db-path /workspace/sqlite_mcp.db
+```
 
 ## Overview
 
-The SQLite MCP Server provides advanced database interaction and business intelligence capabilities featuring **Advanced Text Processing**, **Statistical Analysis Library**, **SpatiaLite Geospatial Analytics**, Enhanced Virtual Tables with Smart Type Inference, Vector Index Optimization with ANN search, Intelligent MCP Resources and Prompts, Semantic/Vector Search, Virtual Table Management, Advanced PRAGMA Operations, Backup/Restore operations, Full-Text Search (FTS5), enhanced JSONB support for improved JSON storage efficiency, transaction safety for all database operations, foreign key constraint enforcement, enhanced error handling, and detailed diagnostics.
+The SQLite MCP Server transforms SQLite into a powerful, AI-ready database engine. It extends standard relational operations with:
+
+* **Advanced analytics** (statistics, business intelligence)
+* **Rich data operations** (text processing, JSONB, validation, caching)
+* **Specialized domains** (vector search, SpatiaLite geospatial analysis)
+* **AI-native capabilities** (intelligent MCP resources & guided prompts)
+
+This makes it not just a database interface, but a **workflow-aware assistant** for developers and AI systems.
 
 ## Key Features
 
-- **Advanced Text Processing**: Comprehensive text analysis toolkit with 8 specialized tools: PCRE regex extraction/replacement, fuzzy matching with Levenshtein distance, phonetic matching (Soundex/Metaphone), text similarity analysis (Cosine/Jaccard), normalization operations, pattern validation, advanced multi-method search, and comprehensive text validation
-- **Statistical Analysis Library**: Comprehensive statistical functions for data analysis including descriptive statistics, percentile analysis, and time series analysis
-- **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements
-- **Transaction Safety**: All write operations automatically wrapped in transactions with proper rollback on errors
-- **Foreign Key Enforcement**: Automatic enforcement of foreign key constraints across all connections
-- **Advanced SQL Support**: Complex queries including window functions, subqueries, and advanced filtering
-- **Business Intelligence**: Integrated memo resource for capturing business insights during analysis
-- **Enhanced Error Handling**: Detailed diagnostics for JSON-related errors with specific suggestions for fixing issues
-- **Multi-Level Caching**: Hierarchical caching for optimal performance
-- **Pattern Recognition**: Automatic optimization of frequently executed queries
-- **JSON Validation**: Prevents invalid JSON from being stored in the database
-- **Comprehensive Schema Tools**: Enhanced tools for exploring and documenting database structure
-- **Database Administration Tools**: Complete suite of maintenance tools including VACUUM, ANALYZE, integrity checks, performance statistics, and index usage analysis
-- **Full-Text Search (FTS5)**: Comprehensive FTS5 implementation with table creation, index management, and enhanced search with BM25 ranking and snippets
-- **Backup/Restore Operations**: Enterprise-grade backup and restore capabilities with SQLite backup API, integrity verification, and safety confirmations
-- **Advanced PRAGMA Operations**: Comprehensive SQLite configuration management, performance optimization, and database introspection tools
-- **Virtual Table Management**: Complete virtual table lifecycle management for R-Tree spatial indexing, CSV file access, and sequence generation
-- **SpatiaLite Geospatial Analytics**: Enterprise-grade GIS capabilities with spatial indexing, geometric operations, and comprehensive spatial analysis
-- **Enhanced Virtual Tables**: Smart CSV/JSON import with automatic data type inference, nested object flattening, and schema analysis
-- **Semantic/Vector Search**: AI-native semantic search with embedding storage, cosine similarity, and hybrid keyword+semantic ranking
-- **Vector Index Optimization**: Approximate Nearest Neighbor (ANN) search with k-means clustering and spatial indexing for sub-linear O(log n) performance
-- **Intelligent MCP Resources**: Dynamic database meta-awareness with real-time schema, capabilities, statistics, search indexes, and performance insights
-- **Guided MCP Prompts**: Intelligent workflow automation with semantic query translation, table summarization, database optimization, and hybrid search recipes
-- **Advanced SQLite Engine**: Upgraded to SQLite 3.50.4 with significant performance enhancements
+* **Advanced Text Processing**: Comprehensive text analysis toolkit with 8 specialized tools: PCRE regex extraction/replacement, fuzzy matching with Levenshtein distance, phonetic matching (Soundex/Metaphone), text similarity analysis (Cosine/Jaccard), normalization operations, pattern validation, advanced multi-method search, and comprehensive text validation
+* **Statistical Analysis Library**: Comprehensive statistical functions for data analysis including descriptive statistics, percentile analysis, and time series analysis
+* **JSONB Binary Storage**: Efficient binary JSON storage for improved performance and reduced storage requirements
+* **Transaction Safety**: All write operations automatically wrapped in transactions with proper rollback on errors
+* **Foreign Key Enforcement**: Automatic enforcement of foreign key constraints across all connections
+* **Advanced SQL Support**: Complex queries including window functions, subqueries, and advanced filtering
+* **Business Intelligence**: Integrated memo resource for capturing business insights during analysis
+* **Enhanced Error Handling**: Detailed diagnostics for JSON-related errors with specific suggestions for fixing issues
+* **Multi-Level Caching**: Hierarchical caching for optimal performance
+* **Pattern Recognition**: Automatic optimization of frequently executed queries
+* **JSON Validation**: Prevents invalid JSON from being stored in the database
+* **WAL Mode Compatible**: Works alongside the existing Write-Ahead Logging (WAL) journal mode
+* **Comprehensive Schema Tools**: Enhanced tools for exploring and documenting database structure
+* **Database Administration Tools**: Complete suite of maintenance tools including VACUUM, ANALYZE, integrity checks, performance statistics, and index usage analysis
+* **Full-Text Search (FTS5)**: Comprehensive FTS5 implementation with table creation, index management, and enhanced search with BM25 ranking and snippets
+* **Backup/Restore Operations**: Enterprise-grade backup and restore capabilities with SQLite backup API, integrity verification, and safety confirmations
+* **Advanced PRAGMA Operations**: Comprehensive SQLite configuration management, performance optimization, and database introspection tools
+* **Virtual Table Management**: Complete virtual table lifecycle management for R-Tree spatial indexing, CSV file access, and sequence generation
+* **SpatiaLite Geospatial Analytics**: Enterprise-grade GIS capabilities with spatial indexing, geometric operations, and comprehensive spatial analysis
+* **Enhanced Virtual Tables**: Smart CSV/JSON import with automatic data type inference, nested object flattening, and schema analysis
+* **Semantic/Vector Search**: AI-native semantic search with embedding storage, cosine similarity, and hybrid keyword+semantic ranking
+* **Vector Index Optimization**: Approximate Nearest Neighbor (ANN) search with k-means clustering and spatial indexing for sub-linear O(log n) performance
+* **Intelligent MCP Resources**: Dynamic database meta-awareness with real-time schema, capabilities, statistics, search indexes, and performance insights
+* **Guided MCP Prompts**: Intelligent workflow automation with semantic query translation, table summarization, database optimization, and hybrid search recipes
 
-⚠️ Tool Count Consideration
-The SQLite MCP Server exposes 67 tools by default. MCP clients such as Cursor typically start warning users around 80 tools total, and stability issues can appear above ~100–120 tools depending on your setup. To keep your workspace responsive, you can disable any tools you don’t need directly in your MCP client settings. This makes it easy to slim down the server for your specific use case (e.g., only enabling query, JSON, or vector tools).
+**⚠️ Tool Count Consideration**
+The server exposes **67 tools** by default. MCP clients (e.g., Cursor) may warn around 80 tools and can become unstable past \~100–120. You can disable unneeded tools in client settings to slim down usage for your workflow.
 
 ## Attribution
 
-This project is based on the original SQLite MCP Server from the [Model Context Protocol Servers](https://github.com/modelcontextprotocol/servers/tree/2025.4.24/src/sqlite) repository. We extend our sincere gratitude to the original developers and the Model Context Protocol team for creating the foundational server that made this enhanced version possible.
+This project is based on the original SQLite MCP Server from the [Model Context Protocol Servers](https://github.com/modelcontextprotocol/servers/tree/2025.4.24/src/sqlite) repository.
 
-**Original Authors**: Model Context Protocol Team  
-**Original Repository**: https://github.com/modelcontextprotocol/servers  
+**Original Authors**: Model Context Protocol Team
+**Original Repository**: [https://github.com/modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers)
 **License**: MIT License
 
-## Docker Hub Deployment
+## Getting Started
 
-The SQLite MCP Server is available on Docker Hub at `writenotenow/sqlite-mcp-server` with both `latest` and version-specific tags.
+### Installation Requirements
 
-### Available Docker Images
+* **Python 3.10+** – required runtime
+* **SQLite 3.45.0+** – with JSONB support (current: 3.50.2)
+* **MCP 1.14.0+** – Model Context Protocol library
+
+**Optional (advanced users):**
+
+* **Node.js 18+** – extra JSONB utilities (ESLint compliant)
+* **Visual Studio C++ Build Tools** – only for Node.js + better-sqlite3
+* ⚠️ Core server is Python-only and works without Node.js
+
+### Known Minor Issues
+
+* **JSON formatting**: Always use valid JSON with double quotes
+* **Complex queries**: Use parameter binding for advanced queries
+
+### Quick Start (Python)
+
+```bash
+# Auto-detect project root (default)
+python start_sqlite_mcp.py
+
+# Create organized data directory
+python start_sqlite_mcp.py --create-data-dir
+
+# Use specific database
+python start_sqlite_mcp.py --db-path /path/to/database.db
+
+# In-memory (testing only)
+python start_sqlite_mcp.py --db-path :memory:
+```
+
+### MCP Client Configuration
+
+**Local Python:**
+
+```json
+{
+  "mcpServers": {
+    "sqlite-mcp-server": {
+      "command": "python",
+      "args": [
+        "/path/to/sqlite-mcp-server/start_sqlite_mcp.py",
+        "--db-path", "/path/to/database.db"
+      ]
+    }
+  }
+}
+```
+
+**Docker:**
+
+```json
+{
+  "mcpServers": {
+    "sqlite-mcp-server": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-v", "/host/project:/workspace",
+        "writenotenow/sqlite-mcp-server:latest",
+        "--db-path", "/workspace/database.db"
+      ]
+    }
+  }
+}
+```
+
+### Docker Hub Deployment
+
+Available on Docker Hub at [`writenotenow/sqlite-mcp-server`](https://hub.docker.com/r/writenotenow/sqlite-mcp-server).
 
 ```bash
 # Pull latest version
@@ -525,6 +616,25 @@ read_query({
 
 Note: The explicit `jsonb()` function should only be used in specific advanced cases or when required for parameter binding pattern. For direct SQL statements, standard JSON strings work efficiently.
 
+### JSON Validation and JSONB Support
+
+The SQLite MCP Server includes comprehensive JSON validation capabilities:
+
+1. **Automatic JSON Field Validation**:
+   - Validates formatting across all JSON fields in 32 columns
+   - Ensures valid JSON structure during operations
+   - Reports malformed JSON through notifications
+
+2. **Validation Triggers**:
+   - Automatically created SQLite triggers for INSERT/UPDATE operations
+   - Prevents invalid JSON from being inserted or updated
+   - Covers 16 tables with JSON/JSONB columns
+
+3. **Repair Capabilities**:
+   - Attempts to repair malformed JSON when found
+   - Preserves as much data as possible during repairs
+   - Records repair attempts in maintenance logs
+
 ### Transaction Safety
 
 All write operations are now automatically wrapped in transactions with proper rollback on error:
@@ -763,134 +873,6 @@ If you encounter JSON-related errors:
 - **`./sqlite_mcp.db`** - Simple option for small projects  
 - **Existing databases** - Use `--db-path` to connect to any SQLite database
 - **`:memory:`** - Temporary database for testing (data not persisted)
-
-### Quick Start Options
-
-```bash
-# Use project root with auto-detection
-python start_sqlite_mcp.py
-
-# Create data directory structure  
-python start_sqlite_mcp.py --create-data-dir
-
-# Use specific database file
-python start_sqlite_mcp.py --db-path /path/to/your/database.db
-
-# Use in-memory database (testing)
-python start_sqlite_mcp.py --db-path :memory:
-```
-
-### MCP Client Configuration
-
-```json
-{
-  "mcpServers": {
-    "sqlite-local": {
-      "command": "python",
-      "args": [
-        "/path/to/sqlite-mcp-server/start_sqlite_mcp.py",
-        "--db-path", "/path/to/your/database.db"
-      ]
-    }
-  }
-}
-```
-
-### Known Minor Issues (Non-Critical)
-- **JSON Formatting**: Standard JSON formatting resolves any escaping issues
-- **Complex Queries**: Advanced parameterized queries supported with proper parameter binding
-
-## Installation Requirements
-
-### Core Requirements (Required)
-- **Python 3.10+**: Programming language runtime
-- **SQLite 3.45.0+**: Core database engine with JSONB support (current system: 3.50.2)
-- **MCP 1.14.0+**: Model Context Protocol library
-
-### Optional JavaScript Utilities (Advanced Users Only)
-- **Node.js 18+**: For optional JavaScript JSONB utilities (fully reconstructed and ESLint compliant)
-- **Visual Studio C++ Build Tools**: Required only if using JavaScript utilities with better-sqlite3
-- **Note**: The main MCP server is Python-based and works perfectly without any JavaScript dependencies
-
-**For most users**: You only need Python requirements. The JavaScript utilities are optional helpers for advanced use cases.
-
-### Quick Start Options
-
-**Use existing database**:
-```bash
-python start_sqlite_mcp.py --db-path /path/to/your/database.db
-```
-
-**Auto-detect project structure** (default):
-```bash
-python start_sqlite_mcp.py
-# Automatically finds project root and creates sqlite_mcp.db
-```
-
-**Create organized data directory**:
-```bash
-python start_sqlite_mcp.py --create-data-dir
-# Creates ./data/sqlite_mcp.db in your project
-```
-
-### MCP Client Configuration
-
-**For Cursor/Claude Desktop**:
-```json
-{
-  "mcpServers": {
-    "sqlite-mcp-server": {
-      "command": "python",
-      "args": [
-        "/path/to/sqlite-mcp-server/start_sqlite_mcp.py",
-        "--db-path", "/path/to/your/database.db"
-      ]
-    }
-  }
-}
-```
-
-**For Docker**:
-```json
-{
-  "mcpServers": {
-    "sqlite-mcp-server": {
-      "command": "docker",
-      "args": [
-        "run", "-i", "--rm",
-        "-v", "/host/project:/workspace",
-        "ghcr.io/neverinfamous/sqlite-mcp-server:latest",
-        "--db-path", "/workspace/database.db"
-      ]
-    }
-  }
-}
-```
-
-## JSON Validation and JSONB Support
-
-### JSON Validation System
-
-The SQLite MCP Server includes comprehensive JSON validation capabilities:
-
-1. **Automatic JSON Field Validation**:
-   - Validates formatting across all JSON fields in 32 columns
-   - Ensures valid JSON structure during operations
-   - Reports malformed JSON through notifications
-
-2. **Validation Triggers**:
-   - Automatically created SQLite triggers for INSERT/UPDATE operations
-   - Prevents invalid JSON from being inserted or updated
-   - Covers 16 tables with JSON/JSONB columns
-
-3. **Repair Capabilities**:
-   - Attempts to repair malformed JSON when found
-   - Preserves as much data as possible during repairs
-   - Records repair attempts in maintenance logs
-
-### JSONB Binary Storage Migration
-
-The migration to JSONB is transparent to users - simply continue using standard JSON operations as shown in the examples.
 
 ## Virtual Table Management
 
@@ -1693,16 +1675,6 @@ MCP Prompts provide intelligent workflow automation, acting as "recipes" that gu
 **Meta-Awareness**: Server becomes self-aware of its own capabilities and limitations
 **Consistency**: Standardized approaches to common database operations
 **Efficiency**: Eliminates repetitive queries for metadata and schema information
-
-## Planned Future Enhancements
-
-#### **1. Advanced Data Connectors - LOW PRIORITY**
-- **Planned**: Direct database connectors (PostgreSQL, MySQL, MongoDB)
-- **Examples**: Cross-database queries, data synchronization
-
-#### **2. Real-time Data Streaming - LOW PRIORITY**
-- **Planned**: Live data ingestion from streaming sources
-- **Examples**: Kafka, WebSocket, API polling integration
 
 ## Contributing
 
