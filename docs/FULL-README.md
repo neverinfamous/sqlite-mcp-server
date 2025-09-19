@@ -1,10 +1,10 @@
 # SQLite MCP Server
 
-*Last Updated: September 18, 2025 1:24 PM EST – v2.3.0*
+*Last Updated: September 19, 2025 2:05 AM EST – v2.4.0*
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/writenotenow/sqlite-mcp-server)](https://hub.docker.com/r/writenotenow/sqlite-mcp-server)
 ![License](https://img.shields.io/badge/license-MIT-blue)
-![Version](https://img.shields.io/badge/version-v2.3.0-green)
+![Version](https://img.shields.io/badge/version-v2.4.0-green)
 [![GitHub Stars](https://img.shields.io/github/stars/neverinfamous/sqlite-mcp-server?style=social)](https://github.com/neverinfamous/sqlite-mcp-server)
 
 ## 🚀 Quick Try
@@ -79,7 +79,7 @@ python test_runner.py --full
 
 **Expected output:**
 ```
-🚀 SQLite MCP Server Comprehensive Test Suite v2.3.0
+🚀 SQLite MCP Server Comprehensive Test Suite v2.4.0
 ================================================================
 
 🔍 Environment Detection:
@@ -175,12 +175,12 @@ Available on Docker Hub at [`writenotenow/sqlite-mcp-server`](https://hub.docker
 docker pull writenotenow/sqlite-mcp-server:latest
 
 # Pull specific version
-docker pull writenotenow/sqlite-mcp-server:v2.3.0
+docker pull writenotenow/sqlite-mcp-server:v2.4.0
 ```
 
 ## Advanced Text Processing
 
-The SQLite MCP Server v2.3.0 includes a comprehensive text processing toolkit with 8 specialized functions for advanced text analysis, pattern matching, and data cleaning. This brings the total server capabilities to **67 tools** for complete database and text processing operations.
+The SQLite MCP Server v2.4.0 includes a comprehensive text processing toolkit with 8 specialized functions for advanced text analysis, pattern matching, and data cleaning. This brings the total server capabilities to **67 tools** for complete database and text processing operations.
 
 ### Available Text Processing Functions
 
@@ -278,7 +278,7 @@ The SQLite MCP Server v2.3.0 includes a comprehensive text processing toolkit wi
 
 ## Statistical Analysis Library
 
-The SQLite MCP Server v2.3.0 includes a comprehensive statistical analysis library with 8 specialized functions for data analysis and business intelligence.
+The SQLite MCP Server v2.4.0 includes a comprehensive statistical analysis library with 8 specialized functions for data analysis and business intelligence.
 
 ### Available Statistical Functions
 
@@ -1334,7 +1334,7 @@ spatial_query({
 # Extract mod_spatialite.dll to your system PATH
 ```
 
-**Enhanced Windows Compatibility:** The SQLite MCP Server v2.3.0+ includes automatic GeomFromText preprocessing for Windows compatibility. `GeomFromText()` calls in INSERT and UPDATE statements are automatically converted to equivalent functions that work reliably on Windows:
+**Enhanced Windows Compatibility:** The SQLite MCP Server v2.4.0+ includes automatic GeomFromText preprocessing for Windows compatibility. `GeomFromText()` calls in INSERT and UPDATE statements are automatically converted to equivalent functions that work reliably on Windows:
 
 ```javascript
 // These now work seamlessly on Windows (automatically converted):
@@ -1347,7 +1347,7 @@ write_query({"query": "UPDATE table SET geom = GeomFromText('POINT(10 20)', 3857
 // GeomFromText('LINESTRING(...)', srid) → GeomFromWKB(GeomFromText('LINESTRING(...)', srid))
 ```
 
-> **Windows Compatibility Solved:** SpatiaLite v2.3.0+ automatically handles GeomFromText compatibility issues on Windows through intelligent query preprocessing. All standard WKT operations now work seamlessly without manual workarounds.
+> **Windows Compatibility Solved:** SpatiaLite v2.4.0+ automatically handles GeomFromText compatibility issues on Windows through intelligent query preprocessing. All standard WKT operations now work seamlessly without manual workarounds.
 
 **macOS (Homebrew):**
 ```bash
