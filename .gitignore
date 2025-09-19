@@ -301,4 +301,52 @@ cython_debug/
 test_env/
 *.db
 __pycache__/
-sqlite-workspace.code-workspace
+
+# VS Code workspace files
+*.code-workspace
+
+# Test databases
+test_*.db
+*.db
+
+# Log files
+sqlite_custom_mcp.log
+sqlite_mcp.log
+
+# Coverage reports
+htmlcov/
+
+# Temporary and cache files
+.python-version
+
+# SpatiaLite binaries (Windows)
+mod_spatialite-*/
+spatialite-tools-*/
+
+# uv lock file (keep this for reproducible builds)
+# uv.lock
+
+# Pyright configuration (project-specific, keep this)
+# pyrightconfig.json
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
