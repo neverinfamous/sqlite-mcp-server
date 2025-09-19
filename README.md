@@ -7,7 +7,6 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/writenotenow/sqlite-mcp-server)](https://hub.docker.com/r/writenotenow/sqlite-mcp-server)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Version](https://img.shields.io/badge/version-v2.3.0-green)
-[![GitHub Stars](https://img.shields.io/github/stars/neverinfamous/sqlite-mcp-server?style=social)](https://github.com/neverinfamous/sqlite-mcp-server)
 
 Transform SQLite into a powerful, AI-ready database engine with **67 specialized tools** for advanced analytics, text processing, vector search, geospatial operations, and intelligent workflow automation.
 
