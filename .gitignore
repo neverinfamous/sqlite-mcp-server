@@ -353,3 +353,4 @@ Thumbs.db
 
 # External docs folder (never commit)
 ../docs/
+.cursor/rules/desktop-commander.mdc

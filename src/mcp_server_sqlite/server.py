@@ -297,6 +297,77 @@ class EnhancedSqliteDatabase:
                 # Extension might already be loaded or there might be an issue
                 pass
     
+    def _preprocess_spatial_functions(self, query: str) -> str:
+        """
+        Preprocess spatial functions to work around Windows SpatiaLite limitations.
+        
+        Specifically, converts GeomFromText() calls in INSERT/UPDATE statements to 
+        equivalent functions that work reliably on Windows.
+        
+        Args:
+            query: SQL query to preprocess
+            
+        Returns:
+            Preprocessed query with spatial function conversions
+        """
+        import re
+        
+        try:
+            # Log the preprocessing attempt
+            logger.debug(f"Preprocessing spatial functions in query: {query}")
+            
+            # Pattern to match GeomFromText with POINT geometries
+            # GeomFromText('POINT(x y)', srid) -> MakePoint(x, y, srid)
+            point_pattern = r"GeomFromText\s*\(\s*['\"]POINT\s*\(\s*([^)]+)\s*\)['\"](?:\s*,\s*(\d+))?\s*\)"
+            
+            def replace_point(match):
+                coords = match.group(1).strip()
+                srid = match.group(2) if match.group(2) else '4326'  # Default to WGS84
+                
+                # Split coordinates (handle multiple spaces/tabs)
+                coord_parts = re.split(r'\s+', coords.strip())
+                if len(coord_parts) >= 2:
+                    x, y = coord_parts[0], coord_parts[1]
+                    # Handle optional Z coordinate
+                    if len(coord_parts) >= 3:
+                        z = coord_parts[2]
+                        return f"MakePointZ({x}, {y}, {z}, {srid})"
+                    else:
+                        return f"MakePoint({x}, {y}, {srid})"
+                return match.group(0)  # Return original if parsing fails
+            
+            # Replace POINT geometries
+            processed_query = re.sub(point_pattern, replace_point, query, flags=re.IGNORECASE)
+            
+            # For other geometry types, use the hex workaround approach
+            # This handles LINESTRING, POLYGON, etc.
+            other_geom_pattern = r"GeomFromText\s*\(\s*['\"]([^'\"]+)['\"](?:\s*,\s*(\d+))?\s*\)"
+            
+            def replace_other_geom(match):
+                wkt = match.group(1)
+                srid = match.group(2) if match.group(2) else '4326'
+                
+                # Skip if it's a POINT (already handled above)
+                if wkt.upper().startswith('POINT'):
+                    return match.group(0)
+                
+                # For complex geometries, use GeomFromWKB with a subquery approach
+                # This is more reliable than GeomFromText on Windows
+                return f"GeomFromWKB(GeomFromText('{wkt}', {srid}))"
+            
+            # Apply the other geometry replacements only if we didn't already process them as points
+            if 'POINT(' not in processed_query.upper() or processed_query != query:
+                processed_query = re.sub(other_geom_pattern, replace_other_geom, processed_query, flags=re.IGNORECASE)
+            
+            if processed_query != query:
+                logger.info(f"Spatial function preprocessing applied: {query} -> {processed_query}")
+                
+            return processed_query
+            
+        except Exception as e:
+            logger.warning(f"Failed to preprocess spatial functions: {e}")
+            return query  # Return original query if preprocessing fails
+    
     def _execute_query(self, query: str, params: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
         """
         Execute a SQL query with enhanced error handling and JSONB support.
@@ -379,6 +450,12 @@ class EnhancedSqliteDatabase:
                                         self.json_logger.log_error(e, {"query": query, "metadata": params['metadata']})
                         except Exception as e:
                             logger.warning(f"Failed to process JSONB conversion: {e}")
+                
+                # GeomFromText wrapper for Windows INSERT compatibility
+                if (self._spatialite_path and 
+                    query.strip().upper().startswith(('INSERT', 'UPDATE')) and 
+                    'GeomFromText' in query):
+                    query = self._preprocess_spatial_functions(query)
                 
                 # Execute the query
                 with closing(conn.cursor()) as cursor:

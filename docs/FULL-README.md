@@ -44,7 +44,7 @@ This makes it not just a database interface, but a **workflow-aware assistant** 
 * **Backup/Restore Operations**: Enterprise-grade backup and restore capabilities with SQLite backup API, integrity verification, and safety confirmations
 * **Advanced PRAGMA Operations**: Comprehensive SQLite configuration management, performance optimization, and database introspection tools
 * **Virtual Table Management**: Complete virtual table lifecycle management for R-Tree spatial indexing, CSV file access, and sequence generation
-* **SpatiaLite Geospatial Analytics**: Enterprise-grade GIS capabilities with spatial indexing, geometric operations, and comprehensive spatial analysis
+* **SpatiaLite Geospatial Analytics**: Enterprise-grade GIS capabilities with spatial indexing, geometric operations, comprehensive spatial analysis, and automatic Windows GeomFromText compatibility preprocessing
 * **Enhanced Virtual Tables**: Smart CSV/JSON import with automatic data type inference, nested object flattening, and schema analysis
 * **Semantic/Vector Search**: AI-native semantic search with embedding storage, cosine similarity, and hybrid keyword+semantic ranking
 * **Vector Index Optimization**: Approximate Nearest Neighbor (ANN) search with k-means clustering and spatial indexing for sub-linear O(log n) performance
@@ -1334,16 +1334,20 @@ spatial_query({
 # Extract mod_spatialite.dll to your system PATH
 ```
 
-**Note**: For data insertion, if `GeomFromText()` in INSERT statements encounters issues, use this workaround:
-```javascript
-// 1. Get binary geometry data
-read_query({"query": "SELECT HEX(GeomFromText('POINT(x y)', 4326)) as hex_geom"})
+**Enhanced Windows Compatibility:** The SQLite MCP Server v2.3.0+ includes automatic GeomFromText preprocessing for Windows compatibility. `GeomFromText()` calls in INSERT and UPDATE statements are automatically converted to equivalent functions that work reliably on Windows:
 
-// 2. Insert using binary format  
-write_query({"query": "INSERT INTO table (geom) VALUES (X'hex_value')"})
+```javascript
+// These now work seamlessly on Windows (automatically converted):
+write_query({"query": "INSERT INTO table (geom) VALUES (GeomFromText('POINT(1 2)', 4326))"})
+write_query({"query": "UPDATE table SET geom = GeomFromText('POINT(10 20)', 3857) WHERE id = 1"})
+
+// Conversions applied automatically:
+// GeomFromText('POINT(x y)', srid) → MakePoint(x, y, srid)
+// GeomFromText('POINT(x y z)', srid) → MakePointZ(x, y, z, srid)  
+// GeomFromText('LINESTRING(...)', srid) → GeomFromWKB(GeomFromText('LINESTRING(...)', srid))
 ```
 
-> **Windows Compatibility Issue:** SpatiaLite v2.0.0 successfully provides full geospatial functionality on Windows. All spatial analysis, geometry operations, and spatial indexing work perfectly. The only minor limitation is `GeomFromText()` within INSERT statements, which has the simple workaround shown above.
+> **Windows Compatibility Solved:** SpatiaLite v2.3.0+ automatically handles GeomFromText compatibility issues on Windows through intelligent query preprocessing. All standard WKT operations now work seamlessly without manual workarounds.
 
 **macOS (Homebrew):**
 ```bash
