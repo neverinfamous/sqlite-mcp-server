@@ -58,8 +58,8 @@ class ComprehensiveTestSuite:
     
     def __init__(self, test_level: str = "standard"):
         self.test_level = test_level
-        self.db_path = None
-        self.db = None
+        self.db_path: Optional[str] = None
+        self.db: Optional[EnhancedSqliteDatabase] = None
         self.results: List[TestResult] = []
         self.start_time = time.time()
         
@@ -90,6 +90,12 @@ class ComprehensiveTestSuite:
         print(f"Test Level: {test_level.upper()} - {self.config['description']}")
         print()
 
+    def _ensure_db(self) -> EnhancedSqliteDatabase:
+        """Ensure database is initialized and return it"""
+        if self.db is None:
+            raise RuntimeError("Database not initialized. Call setup_test_database() first.")
+        return self.db
+    
     def setup_test_database(self) -> bool:
         """Setup test database"""
         try:
@@ -295,7 +301,8 @@ class ComprehensiveTestSuite:
     def _test_list_tables(self) -> Dict[str, Any]:
         """Test list_tables functionality"""
         try:
-            result = self.db._execute_query("SELECT name FROM sqlite_master WHERE type='table'")
+            db = self._ensure_db()
+            result = db._execute_query("SELECT name FROM sqlite_master WHERE type='table'")
             return {"success": True, "message": f"Found {len(result)} tables"}
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -303,7 +310,7 @@ class ComprehensiveTestSuite:
     def _test_create_table(self) -> Dict[str, Any]:
         """Test create_table functionality"""
         try:
-            self.db._execute_query("""
+            self._ensure_db()._execute_query("""
                 CREATE TABLE test_users (
                     id INTEGER PRIMARY KEY,
                     name TEXT NOT NULL,
@@ -320,7 +327,7 @@ class ComprehensiveTestSuite:
     def _test_describe_table(self) -> Dict[str, Any]:
         """Test describe_table functionality"""
         try:
-            result = self.db._execute_query("PRAGMA table_info(test_users)")
+            result = self._ensure_db()._execute_query("PRAGMA table_info(test_users)")
             if len(result) >= 5:  # Should have at least 5 columns
                 return {"success": True, "message": f"Table schema retrieved ({len(result)} columns)"}
             else:
@@ -339,7 +346,7 @@ class ComprehensiveTestSuite:
             ]
             
             for name, email, age, data in test_data:
-                self.db._execute_query(
+                self._ensure_db()._execute_query(
                     "INSERT INTO test_users (name, email, age, data) VALUES (?, ?, ?, ?)",
                     [name, email, age, data]
                 )
@@ -351,7 +358,7 @@ class ComprehensiveTestSuite:
     def _test_read_query(self) -> Dict[str, Any]:
         """Test read_query functionality"""
         try:
-            result = self.db._execute_query("SELECT COUNT(*) as count FROM test_users")
+            result = self._ensure_db()._execute_query("SELECT COUNT(*) as count FROM test_users")
             count = result[0]["count"] if result else 0
             
             if count >= 3:
@@ -364,13 +371,13 @@ class ComprehensiveTestSuite:
     def _test_write_query_update(self) -> Dict[str, Any]:
         """Test write_query UPDATE functionality"""
         try:
-            self.db._execute_query(
+            self._ensure_db()._execute_query(
                 "UPDATE test_users SET age = ? WHERE name = ?",
                 [31, "John Doe"]
             )
             
             # Verify update
-            result = self.db._execute_query(
+            result = self._ensure_db()._execute_query(
                 "SELECT age FROM test_users WHERE name = ?", 
                 ["John Doe"]
             )
@@ -386,13 +393,13 @@ class ComprehensiveTestSuite:
         """Test write_query DELETE functionality"""
         try:
             # Count before delete
-            before = self.db._execute_query("SELECT COUNT(*) as count FROM test_users")[0]["count"]
+            before = self._ensure_db()._execute_query("SELECT COUNT(*) as count FROM test_users")[0]["count"]
             
             # Delete one record
-            self.db._execute_query("DELETE FROM test_users WHERE name = ?", ["Bob Wilson"])
+            self._ensure_db()._execute_query("DELETE FROM test_users WHERE name = ?", ["Bob Wilson"])
             
             # Count after delete
-            after = self.db._execute_query("SELECT COUNT(*) as count FROM test_users")[0]["count"]
+            after = self._ensure_db()._execute_query("SELECT COUNT(*) as count FROM test_users")[0]["count"]
             
             if after == before - 1:
                 return {"success": True, "message": "Delete successful"}
@@ -459,10 +466,10 @@ class ComprehensiveTestSuite:
         """Test JSON validation"""
         try:
             # Test valid JSON
-            valid_result = self.db._execute_query("SELECT json_valid(?) as is_valid", ['{"valid": true}'])
+            valid_result = self._ensure_db()._execute_query("SELECT json_valid(?) as is_valid", ['{"valid": true}'])
             
             # Test invalid JSON  
-            invalid_result = self.db._execute_query("SELECT json_valid(?) as is_valid", ['{invalid: json}'])
+            invalid_result = self._ensure_db()._execute_query("SELECT json_valid(?) as is_valid", ['{invalid: json}'])
             
             if (valid_result[0]["is_valid"] == 1 and invalid_result[0]["is_valid"] == 0):
                 return {"success": True, "message": "JSON validation working correctly"}
@@ -477,13 +484,13 @@ class ComprehensiveTestSuite:
         try:
             # Insert JSON data
             json_data = '{"user": {"name": "Alice", "age": 28}, "preferences": {"theme": "dark"}}'
-            self.db._execute_query(
+            self._ensure_db()._execute_query(
                 "INSERT INTO test_users (name, email, data) VALUES (?, ?, ?)",
                 ["Alice Test", "alice@test.com", json_data]
             )
             
             # Extract JSON values
-            result = self.db._execute_query("""
+            result = self._ensure_db()._execute_query("""
                 SELECT 
                     json_extract(data, '$.user.name') as user_name,
                     json_extract(data, '$.user.age') as user_age,
@@ -505,14 +512,14 @@ class ComprehensiveTestSuite:
         """Test JSON modification operations"""
         try:
             # Update JSON using json_set
-            self.db._execute_query("""
+            self._ensure_db()._execute_query("""
                 UPDATE test_users 
                 SET data = json_set(data, '$.user.age', 29) 
                 WHERE name = 'Alice Test'
             """)
             
             # Verify update
-            result = self.db._execute_query("""
+            result = self._ensure_db()._execute_query("""
                 SELECT json_extract(data, '$.user.age') as age 
                 FROM test_users 
                 WHERE name = 'Alice Test'
@@ -535,7 +542,7 @@ class ComprehensiveTestSuite:
                 return {"success": True, "message": "JSONB not supported (SQLite < 3.45.0)", "skipped": True}
             
             # Test JSONB conversion
-            self.db._execute_query("""
+            self._ensure_db()._execute_query("""
                 CREATE TABLE IF NOT EXISTS test_jsonb (
                     id INTEGER PRIMARY KEY,
                     jsonb_data BLOB
@@ -544,13 +551,13 @@ class ComprehensiveTestSuite:
             
             # Insert JSONB data
             json_str = '{"test": "jsonb", "number": 42}'
-            self.db._execute_query(
+            self._ensure_db()._execute_query(
                 "INSERT INTO test_jsonb (jsonb_data) VALUES (jsonb(?))",
                 [json_str]
             )
             
             # Query JSONB data
-            result = self.db._execute_query("""
+            result = self._ensure_db()._execute_query("""
                 SELECT json_extract(jsonb_data, '$.test') as test_value 
                 FROM test_jsonb
             """)
@@ -580,13 +587,13 @@ class ComprehensiveTestSuite:
                 }
             }
             
-            self.db._execute_query(
+            self._ensure_db()._execute_query(
                 "INSERT INTO test_users (name, email, data) VALUES (?, ?, ?)",
                 ["Complex Test", "complex@test.com", json.dumps(complex_json)]
             )
             
             # Test deep extraction
-            result = self.db._execute_query("""
+            result = self._ensure_db()._execute_query("""
                 SELECT 
                     json_extract(data, '$.user.profile.personal.name') as name,
                     json_extract(data, '$.user.profile.contacts[0].value') as email,
@@ -616,13 +623,13 @@ class ComprehensiveTestSuite:
                 "total": 3
             }
             
-            self.db._execute_query(
+            self._ensure_db()._execute_query(
                 "INSERT INTO test_users (name, email, data) VALUES (?, ?, ?)",
                 ["Array Test", "array@test.com", json.dumps(array_json)]
             )
             
             # Test array extraction
-            result = self.db._execute_query("""
+            result = self._ensure_db()._execute_query("""
                 SELECT 
                     json_extract(data, '$.items[1].name') as second_item,
                     json_extract(data, '$.items[2].price') as third_price,
@@ -681,7 +688,7 @@ class ComprehensiveTestSuite:
     def _setup_text_test_data(self):
         """Setup test data for text processing"""
         try:
-            self.db._execute_query("""
+            self._ensure_db()._execute_query("""
                 CREATE TABLE IF NOT EXISTS test_text (
                     id INTEGER PRIMARY KEY,
                     content TEXT,
@@ -698,7 +705,7 @@ class ComprehensiveTestSuite:
             ]
             
             for content, category in test_texts:
-                self.db._execute_query(
+                self._ensure_db()._execute_query(
                     "INSERT INTO test_text (content, category) VALUES (?, ?)",
                     [content, category]
                 )
@@ -710,7 +717,7 @@ class ComprehensiveTestSuite:
         """Test regex extraction and replacement"""
         try:
             # Test email extraction
-            result = self.db._execute_query("""
+            result = self._ensure_db()._execute_query("""
                 SELECT content FROM test_text WHERE category = 'emails'
             """)
             
@@ -726,7 +733,7 @@ class ComprehensiveTestSuite:
         """Test fuzzy text matching"""
         try:
             # Simple fuzzy matching test using basic string similarity
-            result = self.db._execute_query("""
+            result = self._ensure_db()._execute_query("""
                 SELECT content FROM test_text WHERE content LIKE '%quick%'
             """)
             
@@ -742,7 +749,7 @@ class ComprehensiveTestSuite:
         """Test text similarity calculations"""
         try:
             # Basic similarity test
-            result = self.db._execute_query("""
+            result = self._ensure_db()._execute_query("""
                 SELECT COUNT(*) as count FROM test_text WHERE content IS NOT NULL
             """)
             
@@ -758,7 +765,7 @@ class ComprehensiveTestSuite:
         """Test text normalization operations"""
         try:
             # Test basic text cleaning
-            result = self.db._execute_query("""
+            result = self._ensure_db()._execute_query("""
                 SELECT TRIM(content) as cleaned FROM test_text WHERE category = 'messy'
             """)
             
@@ -842,7 +849,7 @@ class ComprehensiveTestSuite:
             else:
                 status = "❌"
             
-            print(f"{status} {category} ({passed}/{len(results)} passed")
+            print(f"{status} {category} ({passed}/{len(results)} passed)")
             if skipped > 0:
                 print(f"    {skipped} skipped")
         

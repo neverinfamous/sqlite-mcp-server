@@ -297,7 +297,7 @@ class EnhancedSqliteDatabase:
                 # Extension might already be loaded or there might be an issue
                 pass
     
-    def _execute_query(self, query: str, params: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def _execute_query(self, query: str, params: Optional[List[Any]] = None) -> List[Dict[str, Any]]:
         """
         Execute a SQL query with enhanced error handling and JSONB support.
         

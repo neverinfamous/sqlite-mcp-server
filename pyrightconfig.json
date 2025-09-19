@@ -1,0 +1,24 @@
+{
+  "include": [
+    "src",
+    "tests",
+    "*.py"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__"
+  ],
+  "pythonVersion": "3.13",
+  "pythonPlatform": "Windows",
+  "executionEnvironments": [
+    {
+      "root": ".",
+      "pythonVersion": "3.13",
+      "extraPaths": [
+        "./src",
+        "C:\\Users\\chris\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages"
+      ]
+    }
+  ]
+}
+

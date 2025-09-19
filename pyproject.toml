@@ -60,11 +60,6 @@ target-version = ['py310']
 profile = "black"
 line_length = 88
 
-[tool.pyright]
-include = ["src"]
-exclude = ["**/node_modules", "**/__pycache__"]
-venvPath = "."
-venv = ".venv"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
