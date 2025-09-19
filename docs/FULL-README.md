@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated: September 19, 2025 2:05 AM EST – v2.4.0*
+*Last Updated: September 19, 2025 2:23 AM EST – v2.4.0*
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/writenotenow/sqlite-mcp-server)](https://hub.docker.com/r/writenotenow/sqlite-mcp-server)
 ![License](https://img.shields.io/badge/license-MIT-blue)

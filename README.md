@@ -1,18 +1,18 @@
 # SQLite MCP Server
 
-*Last Updated: September 18, 2025 8:41 PM EST*
+*Last Updated: September 18, 2025 2:23 AM EST*
 
-*Enterprise-grade SQLite with AI-native capabilities – v2.3.0*
+*Enterprise-grade SQLite with AI-native capabilities – v2.4.0*
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/writenotenow/sqlite-mcp-server)](https://hub.docker.com/r/writenotenow/sqlite-mcp-server)
 ![License](https://img.shields.io/badge/license-MIT-blue)
-![Version](https://img.shields.io/badge/version-v2.3.0-green)
+![Version](https://img.shields.io/badge/version-v2.4.0-green)
 
 Transform SQLite into a powerful, AI-ready database engine with **67 specialized tools** for advanced analytics, text processing, vector search, geospatial operations, and intelligent workflow automation.
 
 ## ✅ **Quick Test - Verify Everything Works**
 
-**NEW in v2.3.0: Test all 67 tools in 30 seconds!**
+**NEW in v2.4.0: Test all 67 tools in 30 seconds!**
 
 ```bash
 # Quick smoke test
@@ -27,7 +27,7 @@ python test_runner.py --full
 
 **Expected output:**
 ```
-🚀 SQLite MCP Server Comprehensive Test Suite v2.3.0
+🚀 SQLite MCP Server Comprehensive Test Suite v2.4.0
 ================================================================
 
 🔍 Environment Detection:
@@ -76,14 +76,6 @@ git clone https://github.com/neverinfamous/sqlite-mcp-server.git
 cd sqlite-mcp-server
 python test_runner.py --quick
 ```
-
-## 🎯 **Key Features**
-
-### **🆕 NEW in v2.3.0: Comprehensive Testing & Validation**
-- ✅ **Test all 67 tools in 30 seconds** - Instant validation of your installation
-- ✅ **Smart environment detection** - Auto-detects capabilities and dependencies
-- ✅ **Multi-level testing** - Quick (30s), Standard (2-3min), Full (5-10min) options
-- ✅ **CI/CD ready** - Professional testing infrastructure with proper exit codes
 
 ### **🔥 Core Capabilities**
 - 📊 **Statistical Analysis** - Descriptive stats, percentiles, time series analysis
