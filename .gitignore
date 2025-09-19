@@ -350,3 +350,7 @@ Thumbs.db
 *.temp
 *.bak
 *.backup
+
+# External docs folder (never commit)
+../docs/
+docs/
