@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated: September 18, 2025 8:41 PM EST – v2.3.0*
+*Last Updated: September 18, 2025 1:24 PM EST – v2.3.0*
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/writenotenow/sqlite-mcp-server)](https://hub.docker.com/r/writenotenow/sqlite-mcp-server)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -20,12 +20,7 @@ docker run -i --rm \
 
 ## Overview
 
-The SQLite MCP Server transforms SQLite into a powerful, AI-ready database engine. It extends standard relational operations with:
-
-* **Advanced analytics** (statistics, business intelligence)
-* **Rich data operations** (text processing, JSONB, validation, caching)
-* **Specialized domains** (vector search, SpatiaLite geospatial analysis)
-* **AI-native capabilities** (intelligent MCP resources & guided prompts)
+The SQLite MCP Server transforms SQLite into a powerful, AI-ready database engine. It combines standard relational operations with advanced analytics, text and vector search, geospatial capabilities, and intelligent workflow automation. By layering business intelligence tools, semantic resources, and guided prompts on top of SQLite, it enables both developers and AI assistants to interact with data more naturally and effectively.
 
 This makes it not just a database interface, but a **workflow-aware assistant** for developers and AI systems.
 
