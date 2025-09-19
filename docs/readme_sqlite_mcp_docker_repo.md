@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated: September 19, 2025 2:23 AM EST – v2.4.0*
+*Last Updated: September 19, 2025 2:55 AM EST – v2.4.0*
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/writenotenow/sqlite-mcp-server)](https://hub.docker.com/r/writenotenow/sqlite-mcp-server)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -76,17 +76,17 @@ docker run -i --rm \
 
 ## ✅ Quick Test - Verify Everything Works
 
-**NEW in v2.4.0: Enhanced Windows compatibility + optimized container size!**
+**Test all 67 tools in 30 seconds:**
 
 ```bash
-# Run comprehensive test in Docker
-docker run -i --rm \
-  -v $(pwd):/workspace \
-  writenotenow/sqlite-mcp-server:v2.4.0 \
-  --test --quick
+# Quick smoke test
+python test_runner.py --quick
 
-# Or test specific installation
-docker run -i --rm writenotenow/sqlite-mcp-server:v2.4.0 --test --standard
+# Standard comprehensive test (recommended)
+python test_runner.py --standard
+
+# Full test suite with edge cases
+python test_runner.py --full
 ```
 
 **Expected output:**
@@ -106,11 +106,6 @@ docker run -i --rm writenotenow/sqlite-mcp-server:v2.4.0 --test --standard
 ✅ Text Processing (8/8 passed)
 🎉 SUCCESS: 63/67 tools tested successfully!
 ```
-
-**Test Levels:**
-- `--test --quick`
-- `--test --standard`
-- `--test --full`
 
 ## Key Features
 

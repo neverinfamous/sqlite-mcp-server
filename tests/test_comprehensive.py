@@ -166,11 +166,27 @@ class ComprehensiveTestSuite:
         try:
             conn = sqlite3.connect(":memory:")
             conn.enable_load_extension(True)
-            # Try common SpatiaLite locations
+            
+            # Use same detection logic as the main server
+            import os
+            script_dir = os.path.dirname(os.path.dirname(__file__))
+            local_spatialite_dir = os.path.join(script_dir, "mod_spatialite-5.1.0-win-amd64")
+            local_spatialite = os.path.join(local_spatialite_dir, "mod_spatialite.dll")
+            
+            # Add local SpatiaLite directory to PATH for Windows DLL dependencies
+            if os.path.exists(local_spatialite_dir):
+                original_path = os.environ.get('PATH', '')
+                if local_spatialite_dir not in original_path:
+                    os.environ['PATH'] = local_spatialite_dir + os.pathsep + original_path
+            
+            # Try SpatiaLite locations (same order as server)
             spatialite_paths = [
+                local_spatialite,  # Local installation first
                 "mod_spatialite",
                 "mod_spatialite.dll", 
+                "mod_spatialite.so",
                 "/usr/lib/x86_64-linux-gnu/mod_spatialite.so",
+                "/usr/local/lib/mod_spatialite.so",
                 "/usr/local/lib/mod_spatialite.dylib"
             ]
             
