@@ -9,7 +9,6 @@
 ![Version](https://img.shields.io/badge/version-v2.3.0-green)
 [![GitHub Stars](https://img.shields.io/github/stars/neverinfamous/sqlite-mcp-server?style=social)](https://github.com/neverinfamous/sqlite-mcp-server)
 
-
 Transform SQLite into a powerful, AI-ready database engine with **67 specialized tools** for advanced analytics, text processing, vector search, geospatial operations, and intelligent workflow automation.
 
 ## ✅ **Quick Test - Verify Everything Works**
@@ -78,23 +77,6 @@ git clone https://github.com/neverinfamous/sqlite-mcp-server.git
 cd sqlite-mcp-server
 python test_runner.py --quick
 ```
-
-## Available CLI Commands
-
-### **📊 Summary by Use Case**
-
-### **For End Users:**
-| Use Case | Command | Notes |
-|----------|---------|-------|
-| Production Server | `mcp-server-sqlite` | Main production command |
-| Validate Installation | `sqlite-mcp-test --standard` | Recommended after install |
-| Quick Check | `sqlite-mcp-test --quick` | 30-second verification |
-
-### **For Developers & DevOps:**
-| Use Case | Command | Notes |
-|----------|---------|-------|
-| CI/CD Pipeline | `sqlite-mcp-test --quick` | Fast automated testing |
-| Container Validation | `docker run ... --test --standard` | Pre-deployment check |
 
 ## 🎯 **Key Features**
 

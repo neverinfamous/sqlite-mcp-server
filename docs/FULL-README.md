@@ -183,23 +183,6 @@ docker pull writenotenow/sqlite-mcp-server:latest
 docker pull writenotenow/sqlite-mcp-server:v2.3.0
 ```
 
-## Available CLI Commands
-
-### **📊 Summary by Use Case**
-
-### **For End Users:**
-| Use Case | Command | Notes |
-|----------|---------|-------|
-| Production Server | `mcp-server-sqlite` | Main production command |
-| Validate Installation | `sqlite-mcp-test --standard` | Recommended after install |
-| Quick Check | `sqlite-mcp-test --quick` | 30-second verification |
-
-### **For Developers & DevOps:**
-| Use Case | Command | Notes |
-|----------|---------|-------|
-| CI/CD Pipeline | `sqlite-mcp-test --quick` | Fast automated testing |
-| Container Validation | `docker run ... --test --standard` | Pre-deployment check |
-
 ## Advanced Text Processing
 
 The SQLite MCP Server v2.3.0 includes a comprehensive text processing toolkit with 8 specialized functions for advanced text analysis, pattern matching, and data cleaning. This brings the total server capabilities to **67 tools** for complete database and text processing operations.
