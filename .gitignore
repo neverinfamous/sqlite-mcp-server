@@ -301,3 +301,4 @@ cython_debug/
 test_env/
 *.db
 __pycache__/
+sqlite-workspace.code-workspace
