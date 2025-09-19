@@ -1,10 +1,11 @@
 # SQLite MCP Server
 
-*Last Updated: September 18, 2025 7:03 PM EST – v2.3.0*
+*Last Updated: September 18, 2025 8:41 PM EST – v2.3.0*
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/writenotenow/sqlite-mcp-server)](https://hub.docker.com/r/writenotenow/sqlite-mcp-server)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Version](https://img.shields.io/badge/version-v2.3.0-green)
+[![GitHub Stars](https://img.shields.io/github/stars/neverinfamous/sqlite-mcp-server?style=social)](https://github.com/neverinfamous/sqlite-mcp-server)
 
 ## 🚀 Quick Try
 
@@ -181,6 +182,23 @@ docker pull writenotenow/sqlite-mcp-server:latest
 # Pull specific version
 docker pull writenotenow/sqlite-mcp-server:v2.3.0
 ```
+
+## Available CLI Commands
+
+### **📊 Summary by Use Case**
+
+### **For End Users:**
+| Use Case | Command | Notes |
+|----------|---------|-------|
+| Production Server | `mcp-server-sqlite` | Main production command |
+| Validate Installation | `sqlite-mcp-test --standard` | Recommended after install |
+| Quick Check | `sqlite-mcp-test --quick` | 30-second verification |
+
+### **For Developers & DevOps:**
+| Use Case | Command | Notes |
+|----------|---------|-------|
+| CI/CD Pipeline | `sqlite-mcp-test --quick` | Fast automated testing |
+| Container Validation | `docker run ... --test --standard` | Pre-deployment check |
 
 ## Advanced Text Processing
 
