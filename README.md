@@ -1,6 +1,6 @@
 # SQLite MCP Server
 
-*Last Updated: September 20, 2025 4:05 PM EST*
+*Last Updated: September 20, 2025 12:11 PM EST – v2.4.0*
 
 *Enterprise-grade SQLite with AI-native capabilities – v2.4.0*
 
